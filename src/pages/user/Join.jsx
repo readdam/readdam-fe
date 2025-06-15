@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { UserIcon } from 'lucide-react';
+import axios from 'axios';
+import { url } from '../../config/config';
+import { useNavigate } from 'react-router-dom'
 
 const Join = () => {
   const [step, setStep] = useState(1);
@@ -10,15 +13,46 @@ const Join = () => {
     privacy: false,
   });
   const [formData, setFormData] = useState({
+    username: '',
     name: '',
     nickname: '',
     password: '',
     passwordConfirm: '',
     phone: '',
     email: '',
-    birthdate: '',
+    birth: '',
     introduction: '',
   });
+
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const payload = {
+        username: formData.username, // ✅ 직접 받은 아이디
+        name: formData.name,
+        nickname: formData.nickname,
+        password: formData.password,
+        phone: formData.phone,
+        email: formData.email,
+        birth: formData.birthdate,
+        introduce: formData.introduction,
+      };
+
+      const res = await axios.post(`${url}/join`, payload);
+      if (res.status === 200) {
+        alert('회원가입이 완료되었습니다.');
+        navigate('/login'); // ✅ 회원가입 후 로그인 페이지로 이동
+      }
+    } catch (err) {
+      console.error('회원가입 실패', err);
+      alert('회원가입 중 오류가 발생했습니다.');
+    }
+  };
+
+
 
   const handleAllAgreements = (checked) => {
     setAgreements({
@@ -96,8 +130,8 @@ const Join = () => {
                         {key === 'age'
                           ? '만 14세 이상입니다 (필수)'
                           : key === 'terms'
-                          ? '이용약관에 동의합니다 (필수)'
-                          : '개인정보 수집 및 이용에 동의합니다 (필수)'}
+                            ? '이용약관에 동의합니다 (필수)'
+                            : '개인정보 수집 및 이용에 동의합니다 (필수)'}
                       </span>
                     </label>
                   ))}
@@ -116,22 +150,29 @@ const Join = () => {
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-gray-800 mb-2">회원 기본정보를 입력해 주세요</h1>
               </div>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="space-y-4">
                   {[
+                    ['username', '아이디'], // ✅ 아이디 추가
                     ['name', '이름'],
+                    ['email', '이메일'],
                     ['nickname', '닉네임'],
                     ['password', '비밀번호'],
                     ['passwordConfirm', '비밀번호 확인'],
                     ['phone', '전화번호'],
-                    ['email', '이메일'],
                   ].map(([name, label]) => (
                     <div key={name}>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         {label} <span className="text-red-500">*</span>
                       </label>
                       <input
-                        type={name.includes('password') ? 'password' : name === 'email' ? 'email' : 'text'}
+                        type={
+                          name.includes('password')
+                            ? 'password'
+                            : name === 'email'
+                              ? 'email'
+                              : 'text'
+                        }
                         name={name}
                         value={formData[name]}
                         onChange={handleFormChange}
@@ -141,6 +182,7 @@ const Join = () => {
                     </div>
                   ))}
                 </div>
+
                 <div className="pt-8 border-t">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">
                     {formData.nickname ? `'${formData.nickname}'님이 어떤 사람인지 알려주세요.` : '추가 정보'}

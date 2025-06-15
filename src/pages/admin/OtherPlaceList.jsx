@@ -1,14 +1,8 @@
 import { useState } from 'react';
-import {
-  PlusIcon,
-  HeartIcon,
-  SearchIcon,
-  FilterIcon,
-  MapPinIcon,
-} from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { PlusIcon, HeartIcon, SearchIcon, FilterIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export default function PlaceList() {
+export default function OtherPlaceList() {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
@@ -51,10 +45,10 @@ export default function PlaceList() {
   return (
     <div className="p-6 max-w-7xl mx-auto overflow-x-auto">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">장소 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-800">외부 장소 목록</h1>
         <button
           className="flex items-center gap-2 px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-all duration-200 cursor-pointer"
-          onClick={() => navigate('/placeAdd')}
+          onClick={() => navigate('/otherPlaceAdd')}
         >
           <PlusIcon className="w-5 h-5" />새 장소 추가
         </button>
@@ -99,12 +93,7 @@ export default function PlaceList() {
               {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 등록일
               </th> */}
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                상태
-              </th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                관리
-              </th> */}
+
               <th className="px-6 py-3"></th>
             </tr>
           </thead>
@@ -155,17 +144,6 @@ export default function PlaceList() {
                   </div>
                 </td>
                 {/* <td className="px-6 py-4 text-gray-500">{place.createdAt}</td> */}
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold text-nowrap ${
-                      place.status === '운영중단'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {place.status}
-                  </span>
-                </td>
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
                     <button className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
