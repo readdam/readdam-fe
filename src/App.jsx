@@ -50,6 +50,7 @@ import PlaceEdit from "@pages/admin/PlaceEdit";
 import OtherPlaceEdit from "@pages/admin/OtherPlaceEdit";
 import WriteModify from "@pages/user/WriteModify";
 import PrivateRoute from "@routes/PrivateRoute";
+import AdminNotice from "@pages/admin/AdminNotice";
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
           <Route path="/otherPlaceList" element={<OtherPlaceList />} />
           <Route path="/placeEdit" element={<PlaceEdit />} />
           <Route path="/otherPlaceEdit" element={<OtherPlaceEdit />} />
+          <Route path="/adminNotice" element={<AdminNotice />} />
         </Route>
 
         <Route element={<UserRoutes />}>
