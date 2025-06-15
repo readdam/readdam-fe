@@ -44,7 +44,7 @@ const sidebarMenus = [
   {
     title: "포인트 매출 조회",
     icon: <DollarSign className="w-4 h-4 mr-2" />,
-    path: "/adminPointIn",
+    path: "/adminPointStats",
     submenus: [],
   },
   {
