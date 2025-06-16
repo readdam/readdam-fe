@@ -13,6 +13,12 @@ import AdminNotice from '@pages/admin/AdminNotice';
 import AdminPointStats from '@pages/admin/AdminPointStats';
 import AdminEventReg from '@pages/admin/AdminEventReg';
 import AdminEventJoinedList from '@pages/admin/AdminEventJoinedList';
+import AdminBannerList from '@pages/admin/AdminBannerList';
+import AdminAlertList from '@pages/admin/AdminAlertList';
+import AdminAlertCreate from '@pages/admin/AdminAlertCreate';
+import AdminReportList from '@pages/admin/AdminReportList';
+import AdminClassList from '@pages/admin/AdminClassList';
+import AdminClassDetail from '@pages/admin/AdminClassDetail';
 
 function App() {
   return (
@@ -21,13 +27,19 @@ function App() {
         <Route element={<AdminRoutes />}>
           <Route path="/adminUserList" element={<AdminUserList />} />
           <Route path="/adminUserDeletedList" element={<AdminUserDeletedList />} />
+          <Route path="/adminClassList" element={<AdminClassList />} />
+          <Route path="/adminClassDetail" element={<AdminClassDetail />} />
           <Route path="/placeList" element={<PlaceList />} />
           <Route path="/placeAdd" element={<PlaceAdd />} />
           <Route path='/adminInquiryList' element={<AdminInquiryList />}/>
+          <Route path='/adminReportList' element={<AdminReportList />}/>
+          <Route path='/adminAlertList' element={<AdminAlertList />}/>
+          <Route path='/adminAlertCreate' element={<AdminAlertCreate />}/>
           <Route path='/adminNotice' element={<AdminNotice />}/>
           <Route path='/adminEventReg' element={<AdminEventReg />}/>
           <Route path='/adminEventJoinedList' element={<AdminEventJoinedList />}/>
           <Route path='/adminPointStats' element={<AdminPointStats />}/>
+          <Route path='/adminBannerList' element={<AdminBannerList />}/>
 
         </Route>
       </Routes>
@@ -40,5 +52,6 @@ function App() {
     </>
   );
 }
+
 
 export default App;

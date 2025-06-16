@@ -14,7 +14,7 @@ const sidebarMenus = [
   }, {
     title: '모임',
     icon: <BookIcon className="w-4 h-4 mr-2" />,
-    path:"/adminClass",
+    path:"/adminClassList",
     submenus: []
   }, {
     title: '장소',
@@ -32,13 +32,16 @@ const sidebarMenus = [
   }, {
     title: '신고',
     icon: <FlagIcon className="w-4 h-4 mr-2" />,
-    path:"#",
+    path:"/adminReportList",
     submenus: []
   }, {
     title: '알림',
     icon: <LucideBell className="w-4 h-4 mr-2" />, 
     path:"#",
-    submenus: []
+    submenus: [
+      {name: '알림 목록', path:"/adminAlertList"}, 
+      {name: '알림 보내기', path:"/adminAlertCreate"}
+    ]
   }, {
     title: '공지사항',
     icon: <MegaphoneIcon className="w-4 h-4 mr-2" />,
@@ -60,7 +63,7 @@ const sidebarMenus = [
   }, {
     title: '배너',
     icon: <ImagesIcon className="w-4 h-4 mr-2" />,
-    path:"#",
+    path:"/adminBannerList",
     submenus: []
   }, 
 ];
