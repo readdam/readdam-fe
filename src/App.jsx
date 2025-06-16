@@ -16,12 +16,38 @@ import MyAlert from '@pages/my/MyAlert';
 import MyInquiry from '@pages/my/MyInquiry';
 import MyPointList from '@pages/my/MyPointList';
 import Join from '@pages/user/Join';
+import AdminUserList from '@pages/admin/AdminUserList';
+import AdminUserDeletedList from '@pages/admin/AdminUserDeletedList';
+import AdminClassList from '@pages/admin/AdminClassList';
+import AdminClassDetail from '@pages/admin/AdminClassDetail';
+import Login from '@pages/user/Login';
+import OAuthRedirect from '@pages/user/OAuthRedirect';
+import Home from '@pages/user/Home';
+import SearchResult from '@pages/user/SearchResult';
+import WriteList from '@pages/user/WriteList';
+import WriteShortList from '@pages/user/WriteShortList';
+import Place from '@pages/user/Place';
+import BookPage from '@pages/user/BookPage';
+import BookSearch from '@pages/user/BookSearch';
+import BookDetail from '@pages/user/BookDetail';
+import Notice from '@pages/user/Notice';
+import WriteDetail from '@pages/user/WriteDetail';
+import WriteCreate from '@pages/user/WriteCreate';
+import WriteModify from '@pages/user/WriteModify';
+import MyLibrary from '@pages/my/MyLibrary';
+import MyClassContinue from '@pages/my/MyClassContinue';
+import MyClassEnd from '@pages/my/MyClassEnd';
+import MyWrite from '@pages/my/MyWrite';
+import MyWriteComment from '@pages/my/MyWriteComment';
+import MyReviewBook from '@pages/my/MyReviewBook';
+import MyReviewClass from '@pages/my/MyReviewClass';
+import MyReservation from '@pages/my/MyReservation';
 
 function App() {
   return (
     <>
       <Routes>
-        <Route path="/token" element={<Token />} />
+        {/* <Route path="/token" element={<Token />} /> */}
         <Route element={<AdminRoutes />}>
           <Route path="/adminUserList" element={<AdminUserList />} />
           <Route path="/adminUserDeletedList" element={<AdminUserDeletedList />} />
@@ -60,17 +86,17 @@ function App() {
           <Route path="/myLikeBook" element={<MyLikeBook />} />
           <Route path="/myClassContinue" element={<MyClassContinue />} />
           <Route path="/myClassEnd" element={<MyClassEnd />} />
-          <Route path="/myClassIMade" element={<MyClassIMade />} />
+          {/* <Route path="/myClassIMade" element={<MyClassIMade />} /> */}
           <Route path="/myWrite" element={<MyWrite />} />
           <Route path="/myWriteComment" element={<MyWriteComment />} />
-          <Route path="/myWriteShort" element={<MyWriteShort />} />
+          {/* <Route path="/myWriteShort" element={<MyWriteShort />} /> */}
           <Route path="/myReviewBook" element={<MyReviewBook />} />
           <Route path="/myReviewClass" element={<MyReviewClass />} />
           <Route path="/myReservation" element={<MyReservation />} />
-          <Route path="/myPointCharge" element={<MyPointCharge />} />
-          <Route path="/myPointList" element={<MyPointList />} />
-          <Route path="/myAlert" element={<MyAlert />} />
-          <Route path="/myInquiry" element={<MyInquiry />} />
+          {/* <Route path="/myPointCharge" element={<MyPointCharge />} /> */}
+          {/* <Route path="/myPointList" element={<MyPointList />} /> */}
+          {/* <Route path="/myAlert" element={<MyAlert />} /> */}
+          {/* <Route path="/myInquiry" element={<MyInquiry />} /> */}
         </Route>
 
       </Routes>
