@@ -5,6 +5,8 @@ import { useSetAtom } from 'jotai';
 import { userAtom, tokenAtom } from '../../atoms';
 import axios from 'axios';
 import { url } from '../../config/config';
+import { jwtDecode } from 'jwt-decode';
+
 
 const Login = () => {
   const [userId, setUserId] = useState('');
@@ -55,7 +57,18 @@ const Login = () => {
 
       if (access_token) {
         setToken({ access_token, refresh_token: '' });
-        setUser({ username: userId });
+
+        const decoded = jwtDecode(access_token);
+
+        setUser(prev => ({
+          ...prev,
+          username: decoded.sub,
+          nickname: decoded.nickname,
+          isAdmin: decoded.isAdmin,
+          lat: decoded.lat,
+          lng: decoded.lng,
+        }));
+
         window.location.href = '/';
       } else {
         alert('로그인 응답이 올바르지 않습니다.');

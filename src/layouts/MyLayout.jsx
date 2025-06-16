@@ -2,6 +2,8 @@ import Footer from '../components/Footer';
 import Header from '../components/Header';
 import React from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import { userAtom } from '../atoms';
 import {
     BookmarkIcon,
     HeartIcon,
@@ -14,6 +16,7 @@ import {
     BellIcon,
     HelpCircleIcon,
 } from 'lucide-react';
+
 
 const groupedSidebarItems = [
     {
@@ -57,7 +60,9 @@ const groupedSidebarItems = [
 
 const MyLayout = ({ children }) => {
     const location = useLocation();
-
+    const [user] = useAtom(userAtom);
+    console.log(user);
+    
     return (
         <>
             <Header />
@@ -69,7 +74,7 @@ const MyLayout = ({ children }) => {
                         className="flex flex-col items-center mb-4 cursor-pointer hover:opacity-80"
                     >
                         <div className="w-16 h-16 bg-gray-200 rounded-full mb-2" />
-                        <p className="text-sm font-semibold">닉네임</p>
+                        <p className="text-sm font-semibold">{user?.nickname || '닉네임'}</p>
                     </Link>
                     <hr className="w-48 border-gray-200 mb-4" />
                     <div className="w-full">
