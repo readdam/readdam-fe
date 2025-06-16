@@ -1,6 +1,20 @@
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from "../atoms";
 import { SearchIcon, BookOpenIcon, MapPinIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate  } from 'react-router-dom';
 const Header = () => {
+  const [token, setToken] = useAtom(tokenAtom);
+  const [user, setUser] = useAtom(userAtom);
+  const navigate = useNavigate();
+  
+  const logout = () => {
+    sessionStorage.clear();  // 모든 세션 제거
+    setToken(null);
+    setUser(null);
+    navigate('/');
+
+  };  
+  
   return (
     <header className="w-full py-4 bg-white shadow-sm">
       <div className="container mx-auto px-4">
@@ -58,17 +72,36 @@ const Header = () => {
               <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
           </div>
-          {/* 로그인/회원가입 버튼 */}
+
+          {/* 로그인 상태에 따른 버튼 */}
           <div className="flex items-center space-x-2">
             <button className="px-3 py-1.5 text-sm text-[#006989] hover:text-[#005C78] flex items-center">
               <MapPinIcon className="w-4 h-4 mr-1" />내 위치
             </button>
-            <Link to="/login" className="px-3 py-1.5 text-sm text-white bg-[#006989] rounded hover:bg-[#005C78]">
-              로그인
-            </Link>
-            <Link to="/join" className="px-3 py-1.5 text-sm text-white bg-[#E88D67] rounded hover:opacity-90">
-              회원가입
-            </Link>
+
+            {token ? (
+              <>
+                <span className="text-sm text-[#006989] font-semibold">{user?.nickname ?? user?.username} 님</span>
+                <button
+                  onClick={logout}
+                  className="px-3 py-1.5 text-sm text-white bg-[#006989] rounded hover:bg-[#005C78]"
+                >
+                  로그아웃
+                </button>
+                <Link to="/myLibrary" className="px-3 py-1.5 text-sm text-white bg-[#E88D67] rounded hover:opacity-90">
+                  마이페이지
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="px-3 py-1.5 text-sm text-white bg-[#006989] rounded hover:bg-[#005C78]">
+                  로그인
+                </Link>
+                <Link to="/join" className="px-3 py-1.5 text-sm text-white bg-[#E88D67] rounded hover:opacity-90">
+                  회원가입
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

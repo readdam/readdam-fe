@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
-import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from '../../atoms';
+import axios from 'axios';
+import { url } from '../../config/config';
 import {
   BookIcon,
   ClockIcon,
@@ -21,34 +24,50 @@ const WriteCreate = () => {
     needReview: false,
     reviewDeadline: '',
     title: '',
-    summary: '',
     tags: '',
     content: '',
-    image: null 
-  })
+    image: null
+  });
   const [showGuideQuestions, setShowGuideQuestions] = useState(true)
   const [isSpellchecking, setIsSpellchecking] = useState(false)
+  const [token] = useAtom(tokenAtom);
+  const [user] = useAtom(userAtom);
   const [write, setWrite]  = useState({num:'',title:'',content:''});
-  const user = useSelector(state=>state.persistedReducer.user);
   const [ifile, setIfile] = useState(null);
   const navigate = useNavigate();
   const submit = (e) => {
     e.preventDefault();
-
-    const formData = new FormData();
-    formData.append("title", write.title);
-    formData.append("content", write.content);
-    formData.append("username", user.username); 
-    formData.append("tag1", write.tag1 || "");
-    formData.append("tag2", write.tag2 || "");
-    formData.append("tag3", write.tag3 || "");
-    formData.append("tag4", write.tag4 || "");
-    formData.append("tag5", write.tag5 || "");
-    formData.append("isHide", write.isHide || false);
-    formData.append("endDate", write.endDate || ""); 
-    if (ifile) formData.append("ifile", ifile); 
-
-    axios.post(`${url}/write`, formData)
+    //일반필드
+    const submitData = new FormData();
+    submitData.append("type", formData.type);
+    submitData.append("title", formData.title);
+    submitData.append("content", formData.content);
+    submitData.append("username", user.username); 
+    submitData.append("visibility", formData.visibility);
+    if (formData.needReview && formData.reviewDeadline) {
+      const formattedDeadline = formData.reviewDeadline.length === 16
+        ? formData.reviewDeadline + ':00'
+        : formData.reviewDeadline;
+      submitData.append("endDate", formattedDeadline);
+    }
+    //태그 파싱
+    const tagArray = formData.tags 
+    .split('#')
+    .map(tag => tag.trim())
+    .filter(tag => tag); // 공백 제거 + 빈 문자열 제거
+    submitData.append("tag1", tagArray[0] || "");
+    submitData.append("tag2", tagArray[1] || "");
+    submitData.append("tag3", tagArray[2] || "");
+    submitData.append("tag4", tagArray[3] || "");
+    submitData.append("tag5", tagArray[4] || "");
+    //이미지
+    if (ifile) submitData.append("ifile", ifile); 
+    console.log(token);
+      axios.post(`${url}/user/write`, submitData, {
+        headers: {
+          Authorization: token.access_token,
+        }
+      })
       .then((res) => {
         console.log(res);
         navigate(`/writeDetail/${res.data.writeId}`); 
@@ -83,6 +102,9 @@ const WriteCreate = () => {
       reader.readAsDataURL(file);
       setIfile(file); 
     };
+    const edit = (e) => {
+        setWrite({...write, [e.target.name]:e.target.value});
+    }
 
   const handleSearchCover = () => {
     // 북커버 검색 로직 구현 필요
@@ -118,7 +140,7 @@ const WriteCreate = () => {
                     required
                   >
                     <option value="">선택해주세요</option>
-                    <option value="review">독후감</option>
+                    <option value="bookreview">독후감</option>
                     <option value="essay">수필</option>
                     <option value="personal">자기소개서</option>
                     <option value="assignment">과제</option>
