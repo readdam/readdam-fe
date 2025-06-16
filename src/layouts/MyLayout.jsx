@@ -1,9 +1,12 @@
 import Footer from '../components/Footer';
 import Header from '../components/Header';
-import React from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { userAtom } from '../atoms';
+import axios from 'axios';
+import { url } from '../config/config';
+import React, { useEffect } from 'react';
+import { tokenAtom } from '../atoms';
 import {
     BookmarkIcon,
     HeartIcon,
@@ -60,9 +63,23 @@ const groupedSidebarItems = [
 
 const MyLayout = ({ children }) => {
     const location = useLocation();
-    const [user] = useAtom(userAtom);
-    console.log(user);
+    const [user, setUser] = useAtom(userAtom);
+    const [token] = useAtom(tokenAtom);
     
+
+    useEffect(() => {
+        if (!token?.access_token) return;
+
+        axios.post(`${url}/myProfile`, null, {
+            headers: { Authorization: token.access_token },
+            withCredentials: true,
+        }).then(res => {
+            setUser(res.data);
+        }).catch(err => {
+            console.error('사이드바 프로필 불러오기 실패', err);
+        });
+    }, [token?.access_token]);
+
     return (
         <>
             <Header />
@@ -73,9 +90,18 @@ const MyLayout = ({ children }) => {
                         to="/myProfile"
                         className="flex flex-col items-center mb-4 cursor-pointer hover:opacity-80"
                     >
-                        <div className="w-16 h-16 bg-gray-200 rounded-full mb-2" />
+                        {user?.profileImg ? (
+                            <img
+                                src={`${url}/image?filename=${user.profileImg}`}
+                                alt="프로필"
+                                className="w-16 h-16 rounded-full object-cover mb-2"
+                            />
+                        ) : (
+                            <div className="w-16 h-16 bg-gray-200 rounded-full mb-2" />
+                        )}
                         <p className="text-sm font-semibold">{user?.nickname || '닉네임'}</p>
                     </Link>
+
                     <hr className="w-48 border-gray-200 mb-4" />
                     <div className="w-full">
                         {groupedSidebarItems.map((group, idx) => (
@@ -89,17 +115,17 @@ const MyLayout = ({ children }) => {
                                     const isLikeGroupActive =
                                         label === '좋아요' &&
                                         location.pathname.startsWith('/myLike');
-                                    
+
                                     const isClassGroupActive =
                                         label === '나의 모임' &&
                                         location.pathname.startsWith('/myClass');
-                                    
+
                                     const isWriteGroupActive =
                                         label === '내가 쓴 글' &&
                                         (location.pathname === '/myWrite' || location.pathname === '/myWriteShort');
 
 
-                                    return (    
+                                    return (
                                         <NavLink
                                             to={path}
                                             key={path}

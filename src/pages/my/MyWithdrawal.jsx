@@ -1,16 +1,38 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from '../../atoms';
+import { url } from '../../config/config';
 
 const WithdrawalModal = ({ isOpen, onClose }) => {
     const [reason, setReason] = useState('');
+    const [customReason, setCustomReason] = useState('');
+    const [token] = useAtom(tokenAtom);
+    const [, setUser] = useAtom(userAtom);
 
     if (!isOpen) return null;
 
-    const reasons = [
-        '서비스 불만족',
-        '필요한 기능이 없음',
-        '유사 서비스 이용중',
-        '기타',
-    ];
+    const reasons = ['서비스 불만족', '필요한 기능이 없음', '유사 서비스 이용중', '기타'];
+
+    const handleWithdraw = async () => {
+        const finalReason = reason === '기타' ? customReason.trim() : reason;
+        if (!finalReason) return alert('탈퇴 사유를 입력해주세요.');
+
+        try {
+            await axios.post(`${url}/myWithdrawal`, { reason: finalReason }, {
+                headers: { Authorization: token.access_token },
+                withCredentials: true,
+            });
+
+            alert('탈퇴가 완료되었습니다.');
+            setUser(null); // 로그인 상태 해제
+            onClose();
+            window.location.href = '/'; // 홈으로 리디렉트
+        } catch (err) {
+            console.error('탈퇴 실패', err);
+            alert('탈퇴 처리 중 오류가 발생했습니다.');
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[9999] bg-gray-800/30 flex items-center justify-center">
@@ -36,24 +58,22 @@ const WithdrawalModal = ({ isOpen, onClose }) => {
                             </label>
                         ))}
                     </div>
+
+                    {reason === '기타' && (
+                        <textarea
+                            placeholder="기타 사유를 입력하세요"
+                            value={customReason}
+                            onChange={(e) => setCustomReason(e.target.value)}
+                            className="mt-3 w-full border rounded-md p-2 text-sm"
+                        />
+                    )}
                 </div>
 
                 <div className="flex justify-between mt-6">
-                    <button
-                        onClick={onClose}
-                        className="bg-teal-800 text-white px-5 py-2 rounded-md"
-                    >
+                    <button onClick={onClose} className="bg-teal-800 text-white px-5 py-2 rounded-md">
                         취소
                     </button>
-                    <button
-                        onClick={() => {
-                            if (!reason) return alert('탈퇴 사유를 선택해주세요.');
-                            // 여기서 탈퇴 요청 로직 호출
-                            console.log('탈퇴 사유:', reason);
-                            onClose(); // 탈퇴 완료 후 닫기
-                        }}
-                        className="bg-gray-100 border px-5 py-2 rounded-md text-gray-800"
-                    >
+                    <button onClick={handleWithdraw} className="bg-gray-100 border px-5 py-2 rounded-md text-gray-800">
                         탈퇴하기
                     </button>
                 </div>
