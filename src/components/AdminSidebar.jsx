@@ -27,7 +27,7 @@ const sidebarMenus = [
   }, {
     title: '포인트 매출 조회',
     icon: <DollarSign className="w-4 h-4 mr-2" />,
-    path:"/adminPointIn",
+    path:"/adminPointStats",
     submenus: []
   }, {
     title: '신고',
@@ -42,7 +42,7 @@ const sidebarMenus = [
   }, {
     title: '공지사항',
     icon: <MegaphoneIcon className="w-4 h-4 mr-2" />,
-    path:"#",
+    path:"/adminNotice",
     submenus: []
   }, {
     title: '이벤트',
@@ -50,7 +50,7 @@ const sidebarMenus = [
     path:"#",
     submenus: [
       {name: '이벤트 등록/포인트 지급', path: "/adminEventReg"}, 
-      {name: '이벤트 참여 내역 조회', path:"/adminPlaceReservation"}
+      {name: '이벤트 참여 내역', path:"/adminEventJoinedList"}
     ]
   }, {
     title: '1:1문의/피드백',
