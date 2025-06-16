@@ -1,10 +1,9 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Upload, X, CheckSquare, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { UNSAFE_NavigationContext as NavigationContext } from 'react-router-dom';
 import { usePrompt } from '@hooks/usePrompt'; // 경로는 맞게 수정
 
-export default function PlaceAdd() {
+export default function PlaceEdit() {
   const [keywords, setKeywords] = useState([]);
   const [newKeyword, setNewKeyword] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
@@ -237,10 +236,10 @@ export default function PlaceAdd() {
         <button className="p-2 hover:bg-gray-100 rounded-lg">
           <ArrowLeft
             className="w-6 h-6"
-            onClick={() => navigate('/otherPlaceList')}
+            onClick={() => navigate('/placeList')}
           />
         </button>
-        <h1 className="text-2xl font-bold">새 장소 추가</h1>
+        <h1 className="text-2xl font-bold">장소 수정</h1>
       </div>
 
       <form className="space-y-8" onChange={() => setIsFormDirty(true)}>
