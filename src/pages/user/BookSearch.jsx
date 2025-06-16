@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { searchBook } from '@api/kakaoApi';
+import { searchBook, toggleBookLike } from '@api/kakaoApi';
 import AddToLibraryModal from '@components/book/AddToLibraryModal';
 import { SearchIcon, StarIcon, HeartIcon } from 'lucide-react';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../../atoms';
 
 export default function BookSearch() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,6 +19,7 @@ export default function BookSearch() {
   const target = searchParams.get('target') || '';
   const [searchInput, setSearchInput] = useState(searchTerm);
   const [targetInput, setTargetInput] = useState(target); // ✅ select 입력값용 상태
+  const token = useAtomValue(tokenAtom);
 
   const totalPages = Math.ceil(totalCount / 10);
   const visiblePages = 5;
@@ -42,6 +45,26 @@ export default function BookSearch() {
 
   const toggleLike = (key) => {
     setLikedMap((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleToggleLike = async (book) => {
+    const bookIsbn = book.isbn?.split(' ')[0]; // 카카오 API는 ISBN10 + ISBN13을 같이 줌
+
+    console.log(bookIsbn);
+    try {
+      const result = await toggleBookLike(token, bookIsbn);
+      setLikedMap((prev) => ({
+        ...prev,
+        [bookIsbn]: !prev[bookIsbn],
+      }));
+      alert(result); // => "좋아요 완료" or "좋아요 취소"
+    } catch (e) {
+      if (e.response?.status === 401) {
+        alert('로그인 후 이용 가능합니다.');
+      } else {
+        alert('요청 중 오류 발생');
+      }
+    }
   };
 
   return (
@@ -87,7 +110,6 @@ export default function BookSearch() {
           books.map((book, index) => {
             const bookKey = book.isbn || `${book.title}-${index}`;
             const isLiked = likedMap[bookKey];
-
             return (
               <div
                 key={bookKey}
@@ -121,7 +143,7 @@ export default function BookSearch() {
                         ? 'fill-[#E88D67] text-[#E88D67]'
                         : 'text-gray-400'
                     } absolute top-8 right-8`}
-                    onClick={() => toggleLike(bookKey)}
+                    onClick={() => handleToggleLike(book)}
                   />
                   <button
                     className="bg-[#006989] text-white w-24 h-10 rounded-lg text-xs font-bold cursor-pointer"
