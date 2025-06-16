@@ -9,23 +9,28 @@ const NotificationPage = () => {
   const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
-    if (!token?.access_token) return;
+  console.log('token 상태:', token);
+  console.log('access_token 확인:', token?.access_token);
 
-    const fetchAlerts = async () => {
-      try {
-        const res = await axios.post(`${url}/myAlertList`, null, {
-          headers: {
-            Authorization: token.access_token,
-          },
-        });
-        setAlerts(res.data);
-      } catch (err) {
-        console.error('알림 불러오기 실패:', err);
-      }
-    };
+  if (!token?.access_token || token.access_token.trim() === '') return;
 
-    fetchAlerts();
-  }, [token]);
+  const fetchAlerts = async () => {
+    try {
+      const res = await axios.post(`${url}/myAlertList`, null, {
+        headers: {
+          Authorization: token.access_token,
+        },
+      });
+      setAlerts(res.data);
+    } catch (err) {
+      console.error('알림 불러오기 실패:', err);
+    }
+  };
+
+  fetchAlerts();
+}, [token?.access_token]);
+
+
 
   const handleClick = async (alertId) => {
     try {
@@ -57,11 +62,10 @@ const NotificationPage = () => {
           <div
             key={alert.alertId}
             onClick={() => handleClick(alert.alertId)}
-            className={`cursor-pointer border rounded-md p-4 shadow-sm transition ${
-              alert.isChecked
+            className={`cursor-pointer border rounded-md p-4 shadow-sm transition ${alert.isChecked
                 ? 'bg-gray-100 border-gray-200'
                 : 'bg-white border-blue-300'
-            }`}
+              }`}
           >
             <div className="flex justify-between items-start">
               <div>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaComment, FaLeaf } from 'react-icons/fa';
 import { useSetAtom } from 'jotai';
 import { userAtom, tokenAtom } from '../../atoms';
@@ -13,25 +13,57 @@ const Login = () => {
   const setUser = useSetAtom(userAtom);
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('username', userId);
-    formData.append('password', password);
+  // ✅ 1. OAuth 로그인 후 access_token 쿠키에서 꺼내 처리
+  useEffect(() => {
+    if (location.pathname === '/oauth-redirect') {
+      const access_token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('access_token='))
+        ?.split('=')[1];
 
-    axios
-      .post(`${url}/login`, formData)
-      .then((res) => {
-        const token = res.headers.authorization;
-        setToken(token);
-        setUser(res.data);
+      if (access_token) {
+        setToken({ access_token, refresh_token: '' });
+        setUser({ username: '' }); // 필요 시 /me API 호출해서 사용자 정보 가져와도 됨
         navigate('/');
-      })
-      .catch((err) => {
-        alert('로그인에 실패했습니다.');
-        console.error(err);
-      });
+      } else {
+        alert('access_token이 없습니다. 다시 로그인해주세요.');
+        navigate('/login');
+      }
+    }
+  }, [location.pathname]);
+
+  // ✅ 2. 일반 로그인 처리
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post(
+        `${url}/loginProc`,
+        {
+          username: userId,
+          password: password,
+        },
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      const access_token = response.headers['authorization'];
+
+      if (access_token) {
+        setToken({ access_token, refresh_token: '' });
+        setUser({ username: userId });
+        window.location.href = '/';
+      } else {
+        alert('로그인 응답이 올바르지 않습니다.');
+      }
+    } catch (err) {
+      alert('로그인에 실패했습니다.');
+      console.error(err);
+    }
   };
 
   return (

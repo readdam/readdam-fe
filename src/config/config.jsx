@@ -10,3 +10,4 @@ export const themeObj = {
    emphTextColor: "", 		// 강조 글자색
    outlineColor: "" 		// 테두리
 };
+
