@@ -47,6 +47,8 @@ import PlaceEdit from '@pages/admin/PlaceEdit';
 import OtherPlaceEdit from '@pages/admin/OtherPlaceEdit';
 import WriteModify from '@pages/user/WriteModify';
 import PrivateRoute from '@routes/PrivateRoute';
+import OAuthRedirect from '@pages/user/OAuthRedirect';
+
 
 function App() {
   return (
@@ -70,7 +72,7 @@ function App() {
           <Route path="/join" element={<Join />} />
           <Route path="/placeDetail" element={<PlaceDetail />} />
           <Route path="/login" element={<Login />} />
-
+          <Route path="/oauth-redirect" element={<OAuthRedirect />} />
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<SearchResult />} />
           <Route path="/writeList" element={<WriteList />} />
