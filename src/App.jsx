@@ -48,6 +48,8 @@ import OtherPlaceEdit from '@pages/admin/OtherPlaceEdit';
 import WriteModify from '@pages/user/WriteModify';
 import PrivateRoute from '@routes/PrivateRoute';
 import OAuthRedirect from '@pages/user/OAuthRedirect';
+import Success from '@pages/my/Success';
+import Fail from '@pages/my/Fail';
 
 
 function App() {
@@ -55,6 +57,9 @@ function App() {
     <>
       <Routes>
         <Route path="/token" element={<Token />} />
+        <Route path="/success" element={<Success />} />
+        <Route path="/fail" element={<Fail />} />
+        
         <Route element={<AdminRoutes />}>
           <Route path="/placeList" element={<PlaceList />} />
           <Route path="/placeAdd" element={<PlaceAdd />} />
@@ -108,6 +113,7 @@ function App() {
           <Route path="/myPointList" element={<MyPointList />} />
           <Route path="/myAlert" element={<MyAlert />} />
           <Route path="/myInquiry" element={<MyInquiry />} />
+         
         </Route>
 
       </Routes>
