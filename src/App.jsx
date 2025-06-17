@@ -42,19 +42,47 @@ import MyWriteComment from '@pages/my/MyWriteComment';
 import MyReviewBook from '@pages/my/MyReviewBook';
 import MyReviewClass from '@pages/my/MyReviewClass';
 import MyReservation from '@pages/my/MyReservation';
+import Token from '@pages/user/Token';
+import PlaceReservationList from '@pages/admin/PlaceReservationList';
+import OtherPlaceList from '@pages/admin/OtherPlaceList';
+import OtherPlaceAdd from '@pages/admin/OtherPlaceAdd';
+import AdminPointStats from '@pages/admin/AdminPointStats';
+import AdminReportList from '@pages/admin/AdminReportList';
+import AdminAlertList from '@pages/admin/AdminAlertList';
+import AdminAlertCreate from '@pages/admin/AdminAlertCreate';
+import AdminNotice from '@pages/admin/AdminNotice';
+import AdminEventReg from '@pages/admin/AdminEventReg';
+import AdminEventJoinedList from '@pages/admin/AdminEventJoinedList';
+import AdminInquiryList from '@pages/admin/AdminInquiryList';
+import AdminBannerList from '@pages/admin/AdminBannerList';
+import ClassList from '@pages/user/ClassList';
+import ClassCreate from '@pages/user/ClassCreate';
+import ClassDetail from '@pages/user/ClassDetail';
 
 function App() {
   return (
     <>
       <Routes>
-        {/* <Route path="/token" element={<Token />} /> */}
+        <Route path="/token" element={<Token />} /> 
         <Route element={<AdminRoutes />}>
           <Route path="/adminUserList" element={<AdminUserList />} />
           <Route path="/adminUserDeletedList" element={<AdminUserDeletedList />} />
           <Route path="/adminClassList" element={<AdminClassList />} />
           <Route path="/adminClassDetail" element={<AdminClassDetail />} />
-          <Route path="/placeList" element={<PlaceList />} />
-          <Route path="/placeAdd" element={<PlaceAdd />} />
+          <Route path="/adminPlaceList" element={<PlaceList />} />
+          <Route path="/adminPlaceAdd" element={<PlaceAdd />} />
+          <Route path="/adminPlaceReservationList" element={<PlaceReservationList />} />
+          <Route path="/adminOtherPlaceList" element={<OtherPlaceList />} />
+          <Route path="/adminOtherPlaceAdd" element={<OtherPlaceAdd />} />
+          <Route path="/adminPointStats" element={<AdminPointStats />} />
+          <Route path="/adminReportList" element={<AdminReportList />} />
+          <Route path="/adminAlertList" element={<AdminAlertList />} />
+          <Route path="/adminAlertCreate" element={<AdminAlertCreate />} />
+          <Route path="/adminNotice" element={<AdminNotice />} />
+          <Route path="/adminEventReg" element={<AdminEventReg />} />
+          <Route path="/adminEventJoinedList" element={<AdminEventJoinedList />} />
+          <Route path="/adminInquiryList" element={<AdminInquiryList />} />
+          <Route path="/adminBannerList" element={<AdminBannerList />} />
         </Route>
 
         <Route element={<UserRoutes />}>
@@ -74,6 +102,9 @@ function App() {
           <Route path="/writeDetail" element={<WriteDetail />} />
           <Route path="/writeCreate" element={<WriteCreate />} />
           <Route path="/writeModify" element={<WriteModify />} />
+          <Route path="/classList" element={<ClassList />} />
+          <Route path="/classCreate" element={<ClassCreate />} />
+          <Route path="/classDetail" element={<ClassDetail />} />
         </Route>
 
         {/* <Route element={<PrivateRoute />}> */}
