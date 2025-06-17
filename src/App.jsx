@@ -58,13 +58,9 @@ import AdminBannerList from '@pages/admin/AdminBannerList';
 import ClassList from '@pages/user/ClassList';
 import ClassCreate from '@pages/user/ClassCreate';
 import ClassDetail from '@pages/user/ClassDetail';
-import BookSearch from '@pages/user/BookSearch';
-import BookDetail from '@pages/user/BookDetail';
 import PlaceEdit from '@pages/admin/PlaceEdit';
 import OtherPlaceEdit from '@pages/admin/OtherPlaceEdit';
-import WriteModify from '@pages/user/WriteModify';
 import PrivateRoute from '@routes/PrivateRoute';
-import OAuthRedirect from '@pages/user/OAuthRedirect';
 import Success from '@pages/my/Success';
 import Fail from '@pages/my/Fail';
 
@@ -130,22 +126,17 @@ function App() {
           <Route path="/myLikeBook" element={<MyLikeBook />} />
           <Route path="/myClassContinue" element={<MyClassContinue />} />
           <Route path="/myClassEnd" element={<MyClassEnd />} />
-          {/* <Route path="/myClassIMade" element={<MyClassIMade />} /> */}
+          <Route path="/myClassIMade" element={<MyClassIMade />} />
           <Route path="/myWrite" element={<MyWrite />} />
           <Route path="/myWriteComment" element={<MyWriteComment />} />
-          {/* <Route path="/myWriteShort" element={<MyWriteShort />} /> */}
+          <Route path="/myWriteShort" element={<MyWriteShort />} />
           <Route path="/myReviewBook" element={<MyReviewBook />} />
           <Route path="/myReviewClass" element={<MyReviewClass />} />
           <Route path="/myReservation" element={<MyReservation />} />
-          {/* <Route path="/myPointCharge" element={<MyPointCharge />} /> */}
-          {/* <Route path="/myPointList" element={<MyPointList />} /> */}
-          {/* <Route path="/myAlert" element={<MyAlert />} /> */}
-          {/* <Route path="/myInquiry" element={<MyInquiry />} /> */}
           <Route path="/myPointCharge" element={<MyPointCharge />} />
           <Route path="/myPointList" element={<MyPointList />} />
           <Route path="/myAlert" element={<MyAlert />} />
           <Route path="/myInquiry" element={<MyInquiry />} />
-         
         </Route>
 
       </Routes>
