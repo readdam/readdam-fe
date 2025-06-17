@@ -16,38 +16,53 @@ import MyAlert from '@pages/my/MyAlert';
 import MyInquiry from '@pages/my/MyInquiry';
 import MyPointList from '@pages/my/MyPointList';
 import Join from '@pages/user/Join';
-import MyClassContinue from '@pages/my/MyClassContinue';
-import MyClassEnd from '@pages/my/MyClassEnd';
-import MyClassIMade from '@pages/my/MyClassIMade';
-import MyWrite from '@pages/my/MyWrite';
-import MyWriteComment from '@pages/my/MyWriteComment';
-import MyWriteShort from '@pages/my/MyWriteShort';
-import MyReviewBook from '@pages/my/MyReviewBook';
-import MyReviewClass from '@pages/my/MyReviewClass';
-import MyReservation from '@pages/my/MyReservation';
-import MyLibrary from '@pages/my/MyLibrary';
+import AdminUserList from '@pages/admin/AdminUserList';
+import AdminUserDeletedList from '@pages/admin/AdminUserDeletedList';
+import AdminClassList from '@pages/admin/AdminClassList';
+import AdminClassDetail from '@pages/admin/AdminClassDetail';
 import Login from '@pages/user/Login';
-import Token from '@pages/user/Token';
+import OAuthRedirect from '@pages/user/OAuthRedirect';
 import Home from '@pages/user/Home';
 import SearchResult from '@pages/user/SearchResult';
 import WriteList from '@pages/user/WriteList';
 import WriteShortList from '@pages/user/WriteShortList';
+import Place from '@pages/user/Place';
+import BookPage from '@pages/user/BookPage';
+import BookSearch from '@pages/user/BookSearch';
+import BookDetail from '@pages/user/BookDetail';
 import Notice from '@pages/user/Notice';
 import WriteDetail from '@pages/user/WriteDetail';
 import WriteCreate from '@pages/user/WriteCreate';
-
+import WriteModify from '@pages/user/WriteModify';
+import MyLibrary from '@pages/my/MyLibrary';
+import MyClassContinue from '@pages/my/MyClassContinue';
+import MyClassEnd from '@pages/my/MyClassEnd';
+import MyWrite from '@pages/my/MyWrite';
+import MyWriteComment from '@pages/my/MyWriteComment';
+import MyReviewBook from '@pages/my/MyReviewBook';
+import MyReviewClass from '@pages/my/MyReviewClass';
+import MyReservation from '@pages/my/MyReservation';
+import Token from '@pages/user/Token';
 import PlaceReservationList from '@pages/admin/PlaceReservationList';
-import Place from '@pages/user/Place';
-import BookPage from '@pages/user/BookPage';
-import OtherPlaceAdd from '@pages/admin/OtherPlaceAdd';
 import OtherPlaceList from '@pages/admin/OtherPlaceList';
-import BookSearch from '@pages/user/BookSearch';
-import BookDetail from '@pages/user/BookDetail';
+import OtherPlaceAdd from '@pages/admin/OtherPlaceAdd';
+import AdminPointStats from '@pages/admin/AdminPointStats';
+import AdminReportList from '@pages/admin/AdminReportList';
+import AdminAlertList from '@pages/admin/AdminAlertList';
+import AdminAlertCreate from '@pages/admin/AdminAlertCreate';
+import AdminNotice from '@pages/admin/AdminNotice';
+import AdminEventReg from '@pages/admin/AdminEventReg';
+import AdminEventJoinedList from '@pages/admin/AdminEventJoinedList';
+import AdminInquiryList from '@pages/admin/AdminInquiryList';
+import AdminBannerList from '@pages/admin/AdminBannerList';
+import ClassList from '@pages/user/ClassList';
+import ClassCreate from '@pages/user/ClassCreate';
+import ClassDetail from '@pages/user/ClassDetail';
 import PlaceEdit from '@pages/admin/PlaceEdit';
 import OtherPlaceEdit from '@pages/admin/OtherPlaceEdit';
-import WriteModify from '@pages/user/WriteModify';
 import PrivateRoute from '@routes/PrivateRoute';
-import OAuthRedirect from '@pages/user/OAuthRedirect';
+import Success from '@pages/my/Success';
+import Fail from '@pages/my/Fail';
 
 
 function App() {
@@ -55,17 +70,28 @@ function App() {
     <>
       <Routes>
         <Route path="/token" element={<Token />} />
+        <Route path="/success" element={<Success />} />
+        <Route path="/fail" element={<Fail />} />
+        
         <Route element={<AdminRoutes />}>
-          <Route path="/placeList" element={<PlaceList />} />
-          <Route path="/placeAdd" element={<PlaceAdd />} />
-          <Route
-            path="/placeReservationList"
-            element={<PlaceReservationList />}
-          />
-          <Route path="/otherPlaceAdd" element={<OtherPlaceAdd />} />
-          <Route path="/otherPlaceList" element={<OtherPlaceList />} />
-          <Route path="/placeEdit" element={<PlaceEdit />} />
-          <Route path="/otherPlaceEdit" element={<OtherPlaceEdit />} />
+          <Route path="/adminUserList" element={<AdminUserList />} />
+          <Route path="/adminUserDeletedList" element={<AdminUserDeletedList />} />
+          <Route path="/adminClassList" element={<AdminClassList />} />
+          <Route path="/adminClassDetail" element={<AdminClassDetail />} />
+          <Route path="/adminPlaceList" element={<PlaceList />} />
+          <Route path="/adminPlaceAdd" element={<PlaceAdd />} />
+          <Route path="/adminPlaceReservationList" element={<PlaceReservationList />} />
+          <Route path="/adminOtherPlaceList" element={<OtherPlaceList />} />
+          <Route path="/adminOtherPlaceAdd" element={<OtherPlaceAdd />} />
+          <Route path="/adminPointStats" element={<AdminPointStats />} />
+          <Route path="/adminReportList" element={<AdminReportList />} />
+          <Route path="/adminAlertList" element={<AdminAlertList />} />
+          <Route path="/adminAlertCreate" element={<AdminAlertCreate />} />
+          <Route path="/adminNotice" element={<AdminNotice />} />
+          <Route path="/adminEventReg" element={<AdminEventReg />} />
+          <Route path="/adminEventJoinedList" element={<AdminEventJoinedList />} />
+          <Route path="/adminInquiryList" element={<AdminInquiryList />} />
+          <Route path="/adminBannerList" element={<AdminBannerList />} />
         </Route>
 
         <Route element={<UserRoutes />}>
@@ -86,6 +112,9 @@ function App() {
           <Route path="/writeDetail" element={<WriteDetail />} />
           <Route path="/writeCreate" element={<WriteCreate />} />
           <Route path="/writeModify" element={<WriteModify />} />
+          <Route path="/classList" element={<ClassList />} />
+          <Route path="/classCreate" element={<ClassCreate />} />
+          <Route path="/classDetail" element={<ClassDetail />} />
         </Route>
 
         {/* <Route element={<PrivateRoute />}> */}
@@ -115,5 +144,6 @@ function App() {
     </>
   );
 }
+
 
 export default App;
