@@ -1,79 +1,80 @@
-import React from 'react'
-import { MapPinIcon, ClockIcon, CreditCardIcon } from 'lucide-react'
+import React, { useEffect, useState } from 'react';
+import { useAtom } from 'jotai';
+import { userAtom } from '../../atoms';
+import PlaceCard from '@components/place/PlaceCard';
+
 const HomePlace = () => {
-  const spaces = [
-    {
-      id: 1,
-      name: '북카페 리드미',
-      location: '서울 마포구 연남동',
-      price: '시간당 5,000원',
-      hours: '10:00 - 22:00',
-      image:
-        'https://images.unsplash.com/photo-1600431521340-491eca880813?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
-    },
-    {
-      id: 2,
-      name: '책방 오후',
-      location: '서울 서초구 방배동',
-      price: '무료 (음료 주문 필수)',
-      hours: '11:00 - 20:00',
-      image:
-        'https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
-    },
-    {
-      id: 3,
-      name: '스터디룸 페이지',
-      location: '서울 강남구 역삼동',
-      price: '시간당 10,000원',
-      hours: '24시간',
-      image:
-        'https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1169&q=80',
-    },
-  ]
+  const [places, setPlaces] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user] = useAtom(userAtom); // 사용자 위치(lat/lng) 접근용
+
+  // ✅ 기본 최신순 장소 불러오기 (4개만)
+  useEffect(() => {
+    const fetchLatestPlaces = async () => {
+      try {
+        const res = await fetch('/api/places?sort=latest&limit=4');
+        if (!res.ok) throw new Error('요청 실패');
+        const data = await res.json();
+        setPlaces(data);
+      } catch (err) {
+        console.error('장소 불러오기 실패:', err);
+        setPlaces([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLatestPlaces();
+  }, []);
+
+  // ✅ userAtom에 저장된 위치 기반 정렬 (Header → user.lat/lng 갱신된 경우)
+  useEffect(() => {
+    const isLocationValid = user?.lat !== 0 && user?.lng !== 0;
+    if (!isLocationValid) return;
+
+    const fetchLocationBasedPlaces = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(
+          `/api/places?sort=location&lat=${user.lat}&lng=${user.lng}&limit=4`
+        );
+        if (!res.ok) throw new Error('위치 기반 요청 실패');
+        const data = await res.json();
+        setPlaces(data);
+      } catch (err) {
+        console.error('위치 기반 장소 불러오기 실패:', err);
+        // 실패해도 fallback은 필요 없음 (기존 목록 유지)
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLocationBasedPlaces();
+  }, [user.lat, user.lng]);
+
   return (
-    <section className="w-full py-16 bg-[#F3F7EC]">
+    <section className="w-full py-16 bg-white">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
-          책을 나누기 좋은 공간이에요
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {spaces.map((space) => (
-            <div
-              key={space.id}
-              className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-            >
-              <div className="h-48 overflow-hidden">
-                <img
-                  src={space.image}
-                  alt={space.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-4">
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">
-                  {space.name}
-                </h3>
-                <div className="flex items-center text-gray-600 mb-2">
-                  <MapPinIcon className="w-4 h-4 mr-2" />
-                  <span>{space.location}</span>
-                </div>
-                <div className="flex items-center text-gray-600 mb-2">
-                  <CreditCardIcon className="w-4 h-4 mr-2" />
-                  <span>{space.price}</span>
-                </div>
-                <div className="flex items-center text-gray-600 mb-4">
-                  <ClockIcon className="w-4 h-4 mr-2" />
-                  <span>{space.hours}</span>
-                </div>
-                <button className="w-full px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors">
-                  공간 예약하기
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="flex justify-center items-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-800">
+            {user?.lat && user?.lng ? '내 근처 추천 장소' : '최근 등록된 장소'}
+          </h2>
         </div>
+
+        {isLoading ? (
+          <p className="text-gray-500">불러오는 중...</p>
+        ) : places.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {places.map((place) => (
+              <PlaceCard key={place.id} place={place} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-400">등록된 장소가 없습니다.</div>
+        )}
       </div>
     </section>
-  )
-}
-export default HomePlace
+  );
+};
+
+export default HomePlace;

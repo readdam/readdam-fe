@@ -2,13 +2,35 @@ import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from "../atoms";
 import { SearchIcon, BookOpenIcon, MapPinIcon } from 'lucide-react';
 import { Link, useNavigate  } from 'react-router-dom';
+import React, { useEffect } from 'react';
 const Header = () => {
   const [token, setToken] = useAtom(tokenAtom);
   const [user, setUser] = useAtom(userAtom);
   const navigate = useNavigate();
-  
+
+  // ✅ 저장된 토큰/유저 복원
+  useEffect(() => {
+    const savedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+    if (savedToken && savedUser) {
+      setToken(JSON.parse(savedToken)); // 중첩방지
+      setUser(JSON.parse(savedUser));
+      //setToken({ access_token: savedToken, refresh_token: '' });
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+      } catch (e) {
+        console.error('❌ 유저 정보 파싱 실패:', e);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+    }
+  }, []);
   const logout = () => {
     sessionStorage.clear();  // 모든 세션 제거
+    localStorage.removeItem("token"); //자동로그인 정보 제거
+    localStorage.removeItem("user"); //자동로그인 정보 제거
     setToken(null);
     setUser(null);
     navigate('/');
@@ -79,7 +101,7 @@ const Header = () => {
               <MapPinIcon className="w-4 h-4 mr-1" />내 위치
             </button>
 
-            {token ? (
+            {token && user && (user.nickname || user.username) ?  (
               <>
                 <span className="text-sm text-[#006989] font-semibold">{user?.nickname ?? user?.username} 님</span>
                 <button

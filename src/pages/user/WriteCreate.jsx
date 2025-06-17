@@ -63,14 +63,14 @@ const WriteCreate = () => {
     //이미지
     if (ifile) submitData.append("ifile", ifile); 
     console.log(token);
-      axios.post(`${url}/user/write`, submitData, {
+      axios.post(`${url}/my/write`, submitData, {
         headers: {
           Authorization: token.access_token,
         }
       })
       .then((res) => {
         console.log(res);
-        navigate(`/writeDetail/${res.data.writeId}`); 
+        navigate(`writeDetail/${res.data.writeId}`); 
       })
       .catch((err) => {
         console.error(err);

@@ -100,6 +100,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/oauth-redirect" element={<OAuthRedirect />} />
           <Route path="/" element={<Home />} />
+          <Route path="/writeDetail/:id" element={<WriteDetail />} />
           <Route path="/search" element={<SearchResult />} />
           <Route path="/writeList" element={<WriteList />} />
           <Route path="/writeShortList" element={<WriteShortList />} />

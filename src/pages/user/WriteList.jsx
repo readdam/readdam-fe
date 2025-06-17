@@ -8,11 +8,23 @@ import {
   BookOpenIcon,
   ClockIcon,
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 const WriteList = () => {
   const navigate = useNavigate()
 
+const getReviewStatus = (needReview, endDate) => {
+  if (!needReview || !endDate) return '첨삭제외'
+  return new Date(endDate) > new Date() ? '첨삭가능' : '첨삭종료'
+}
+
+const typeMap = {
+  bookreview: '독후감',
+  essay: '수필',
+  personal: '자기소개서',
+  assignment: '과제',
+  other: '기타',
+};
   const dummyPosts = [
     {
       id: 1,
@@ -57,10 +69,10 @@ const WriteList = () => {
               읽담한줄
             </button>
           </div>
-          <button className="px-6 py-2.5 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center">
+          <Link to="/writeCreate" className="px-6 py-2.5 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center">
             <PenIcon className="w-5 h-5 mr-2" />
             글쓰기
-          </button>
+          </Link>
         </div>
 
         {/* 필터 및 검색 영역 */}
@@ -118,10 +130,10 @@ const WriteList = () => {
               <div className="flex-1">
                 <div className="flex gap-2 mb-2">
                   <span className="px-3 py-1 text-sm rounded-full bg-[#F3F7EC] text-[#006989]">
-                    {post.category}
+                    {typeMap[post.type]}
                   </span>
                   <span className="px-3 py-1 text-sm rounded-full bg-[#FDF3F0] text-[#E88D67]">
-                    {post.subCategory}
+                    {getReviewStatus(post.needReview, post.endDate)}
                   </span>
                 </div>
                 <h3 className="text-lg font-bold mb-2">{post.title}</h3>
