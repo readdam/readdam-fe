@@ -1,55 +1,84 @@
-import {
-  Users2Icon,
-  HomeIcon,
-  BookIcon,
-  CalendarIcon,
-  BellIcon,
-  SettingsIcon,
-} from 'lucide-react';
-const AdminLayout = ({ children }) => {
+import React, { useState } from 'react';
+import { AdminHeader } from '../components/AdminHeader';
+import { AdminSidebar } from '../components/AdminSidebar';
+import PlaceAdd from '@pages/admin/PlaceAdd';
+import Footer from '@components/Footer';
+import { Outlet } from "react-router-dom";
+import AdminInquiryList from '@pages/admin/AdminInquiryList';
+
+const sidebarMenus = [
+  {
+    id: 'members',
+    title: '회원',
+    submenus: [
+      '회원 조회', '탈퇴회원']
+  }, {
+    id: 'meetings',
+    title: '모임',
+    submenus: []
+  },
+  {
+    id: 'places',
+    title: '장소',
+    submenus: ['읽담 장소 등록', '읽담 예약 관리','외부 장소 등록']
+  }, {
+    id: 'revenue',
+    title: '포인트 매출 조회',
+    submenus: []
+  }, {
+    id: 'reports',
+    title: '신고',
+    submenus: []
+  },
+  {
+    id: 'alert',
+    title: '알림',
+    submenus: []
+  }, {
+    id: 'notices',
+    title: '공지사항',
+    submenus: []
+  }, {
+    id: 'event',
+    title: '이벤트',
+    submenus: []
+  },{
+    id: 'banners',
+    title: '배너',
+    submenus: []
+  },{
+    id: 'inquiries',
+    title: '1:1문의/피드백',
+    submenus: []
+  }
+];
+
+export function AdminLayout() {
+  const [sidebarMenus, setSidebarMenus] = useState('');
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 w-64 h-full bg-[#1B2A3B] text-white">
-        <div className="p-4 border-b border-gray-700">
-          <h1 className="text-xl font-bold">읽담 관리자(예시임 바뀔예정)</h1>
+    <>
+      {/* 상단 관리자 헤더 */}
+      <AdminHeader />
+
+      {/* 사이드바 + 메인 */}
+      <div className="flex flex-1 overflow-hidden">
+        <AdminSidebar sidebarMenus={sidebarMenus} />
+
+        {/* 메인 콘텐츠 */}
+        <div className="flex-1 flex flex-col">
+          <main className="flex-1 overflow-auto p-6">
+            <Outlet />
+            {sidebarMenus === 'places' && <PlaceAdd />}
+            {sidebarMenus === 'inquiries' && <AdminInquiryList />}
+
+
+          </main>
         </div>
-        <nav className="p-4">
-          <ul className="space-y-2">
-            <li>
-              <a
-                href="#"
-                className="flex items-center gap-3 p-3 rounded hover:bg-[#2C3E50] text-gray-300 hover:text-white"
-              >
-                <Users2Icon className="w-5 h-5" />
-                회원관리
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="flex items-center gap-3 p-3 rounded hover:bg-[#2C3E50] text-gray-300 hover:text-white"
-              >
-                <HomeIcon className="w-5 h-5" />
-                장소관리
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="flex items-center gap-3 p-3 rounded hover:bg-[#2C3E50] text-gray-300 hover:text-white"
-              >
-                <CalendarIcon className="w-5 h-5" />
-                예약관리
-              </a>
-            </li>
-            {/* Add other menu items */}
-          </ul>
-        </nav>
       </div>
-      {/* Main Content */}
-      <div className="ml-64 p-8">{children}</div>
-    </div>
-  );
+
+    {/* 하단 푸터(공통) */}
+    <Footer />
+    </>
+    );
 };
 export default AdminLayout;
