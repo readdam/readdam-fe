@@ -19,10 +19,12 @@ const sidebarMenus = [
   }, {
     title: '장소',
     icon: <MapPin className="w-4 h-4 mr-2" />,
-    path: "/adminPlace",
+    path: "/adminPlaceList",
     submenus: [
-      {name: '읽담 장소 등록', path: "/placeAdd"}, 
-      {name: '읽담 예약 관리', path:"/adminPlaceReservation"},
+      {name: '읽담 장소', path: "/adminPlaceList"}, 
+      {name: '읽담 예약 관리', path:"/adminPlaceReservationList"},
+      {name: '읽담 장소 등록', path:"/adminPlaceAdd"},
+      {name: '외부 장소', path:"/adminOtherPlaceList"},
       {name: '외부 장소 등록', path:"/adminOtherPlaceAdd"}]
   }, {
     title: '포인트 매출 조회',
