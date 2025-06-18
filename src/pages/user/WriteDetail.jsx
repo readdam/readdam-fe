@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ThumbsUpIcon, ShareIcon, PencilIcon, MessageSquareIcon, CheckCircleIcon } from 'lucide-react';
+import { ThumbsUpIcon, ShareIcon, PencilIcon, MessageSquareIcon, CheckCircleIcon, UserIcon, HeartIcon } from 'lucide-react';
 import singoIcon from '@assets/singo.png';
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from '../../atoms';
+
 
 // 모달 컴포넌트들을 별도로 분리
 import ReportModal from './ReportModal';
@@ -10,7 +13,9 @@ import ReportConfirmModal from './ReportConfirmModal';
 
 const WriteDetail = () => {
   const [post, setPost] = useState(null);
-  const [comments, setComments] = useState([]);
+  const [error, setError] = useState(null); // ✅ 디버깅용 에러 상태 추가
+  const [comments, setComments] = useState([]); // 댓글 목록
+  const [commentContent, setCommentContent] = useState(''); // 단일 댓글
   const [isLoggedIn, setIsLoggedIn] = useState(true); // 로그인 여부
   const [isAuthor, setIsAuthor] = useState(true); // 작성자 여부
   const [liked, setLiked] = useState(false);
@@ -19,22 +24,35 @@ const WriteDetail = () => {
   const [showReportConfirm, setShowReportConfirm] = useState(false);
   const [reportType, setReportType] = useState('');
   const [reportContent, setReportContent] = useState('');
-  const [showAuthorOnly, setShowAuthorOnly] = useState(false);
+  const [isSecret, setIsSecret] = useState(false);
 
+  const [token] = useAtom(tokenAtom);
+  const [user] = useAtom(userAtom); // ← comment 작성자 확인용도
   const { id } = useParams();
   const navigate = useNavigate();
 
   // 글 상세 정보를 가져오는 함수
-  const fetchWriteDetail = async (id) => {
-    try {
-      const response = await axios.get(`/writedetail/${id}`);
-      const data = response.data;
-      setPost(data.write);
-      setComments(data.comments);
-    } catch (error) {
-      console.error('Error fetching write detail:', error);
-    }
-  };
+  // const fetchWriteDetail = async (id) => {
+  //   try {
+  //     const response = await axios.get(`/writedetail/${id}`);
+  //     const data = response.data;
+  //     setPost(data.write);
+  //     setComments(data.comments);
+  //   } catch (error) {
+  //     console.error('Error fetching write detail:', error);
+  //   }
+  // };
+      const fetchWriteDetail = async (id) => {
+      try {
+        const response = await axios.get(`/writedetail/${id}`);
+        console.log("✅ response.data:", response.data);
+        const data = response.data;
+        setPost(data.write);
+        setComments(data.comments);
+      } catch (error) {
+        console.error('❌ Error fetching write detail:', error);
+      }
+    };
 
   // 페이지가 처음 렌더링될 때 데이터 가져오기
   useEffect(() => {
@@ -42,6 +60,50 @@ const WriteDetail = () => {
       fetchWriteDetail(id);
     }
   }, [id]);
+
+
+      const getReviewStatus = (endDate) => {
+      if (!endDate) return '첨삭정보 없음';
+      const now = new Date();
+      const deadline = new Date(endDate);
+      return deadline > now ? '첨삭가능' : '첨삭종료';
+    };
+
+    const getTimeLeft = (endDate) => {
+      const now = new Date();
+      const deadline = new Date(endDate);
+      const diffMs = deadline - now;
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      return diffDays > 0 ? `${diffDays}일 남음` : null;
+    };
+
+    const handleSubmitComment = async () => {
+      if (!commentContent.trim()) {
+        alert('댓글 내용을 입력해주세요.');
+        return;
+      }
+
+      try {
+        await axios.post('/comments', {
+          content: commentContent,
+          isSecret: isSecret,
+          writeId: post.writeId,
+        }, {
+          headers: {
+            Authorization: `Bearer ${token?.access_token}`, // 로그인 상태로 보호된 경우
+          },
+        });
+
+        // 등록 후 상태 초기화
+        setCommentContent('');
+        setIsSecret(false);
+        fetchWriteDetail(id); // 댓글 목록 다시 불러오기
+
+      } catch (err) {
+        console.error('댓글 등록 실패', err);
+        alert('댓글 등록 중 오류가 발생했습니다.');
+      }
+    };
 
   // 좋아요 처리
   const handleLike = () => {
@@ -73,9 +135,9 @@ const WriteDetail = () => {
     setReportContent('');
   };
 
-  if (!post) {
-    return <div>Loading...</div>;
-  }
+  // ✅ return문 시작 직전에 아래 조건 추가
+  if (!post && !error) return <div>Loading...</div>;
+  if (error) return <div>에러 발생: {error.message}</div>;
 
   return (
     <div className="w-full bg-gray-50 py-8">
@@ -84,8 +146,8 @@ const WriteDetail = () => {
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
           <div className="flex">
             <div className="w-96 h-96 flex-shrink-0">
-              {post.thumbnail ? (
-                <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" />
+              {post.img ? (
+                <img src={post.img} alt={post.title} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-[#E88D67] flex items-center justify-center">
                   <BookIcon className="w-24 h-24 text-white" />
@@ -96,7 +158,7 @@ const WriteDetail = () => {
             <div className="flex-1 p-8">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm font-medium rounded-full">{post.category}</span>
+                  <span className="px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm font-medium rounded-full">{post.type}</span>
                   <h1 className="text-3xl font-bold text-gray-800 mt-4 mb-6">{post.title}</h1>
                 </div>
 
@@ -129,20 +191,34 @@ const WriteDetail = () => {
               {/* 작성자 프로필 */}
               <div className="mt-8 p-6 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-4">
-                  <img src={post.author.profile} alt={post.author.name} className="w-16 h-16 rounded-full" />
+                  {post.profileImg ? (
+                    <img
+                      src={post.profileImg}
+                      alt={post.nickname}
+                      className="w-16 h-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-[#F3D5C9] rounded-full flex items-center justify-center">
+                      <UserIcon className="w-8 h-8 text-[#E88D67]" />
+                    </div>
+                  )}
                   <div>
-                    <h3 className="font-medium text-gray-800 mb-1">{post.author.name}</h3>
-                    <p className="text-sm text-gray-600">{post.author.introduction}</p>
+                    <h3 className="font-medium text-gray-800 mb-1">{post.nickname}</h3>
+                    <p className="text-sm text-gray-600">{post.introduce || '자기소개가 없습니다.'}</p>
                   </div>
                 </div>
               </div>
 
               {/* 첨삭 상태 */}
               <div className="mt-6 flex items-center gap-3 text-sm text-gray-500">
-                <span className={`font-medium ${post.status === '첨삭가능' ? 'text-[#E88D67]' : 'text-gray-500'}`}>{post.status}</span>
-                {post.timeLeft && <span>마감까지 {post.timeLeft}</span>}
+                <span className={`font-medium ${getReviewStatus(post.endDate) === '첨삭가능' ? 'text-[#E88D67]' : 'text-gray-500'}`}>
+                  {getReviewStatus(post.endDate)}
+                </span>
+                {getReviewStatus(post.endDate) === '첨삭가능' && (
+                  <span>마감까지 {getTimeLeft(post.endDate)}</span>
+                )}
                 <span>•</span>
-                <span>{post.createdAt}</span>
+                <span>{post.regDate?.split('T')[0]}</span>
               </div>
             </div>
           </div>
@@ -163,47 +239,99 @@ const WriteDetail = () => {
           {/* 댓글 작성 폼 */}
           {isLoggedIn && (
             <div className="mb-8">
-              <textarea placeholder="첨삭 의견을 작성해주세요." className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:border-[#006989] min-h-[120px] mb-3" />
-              <button className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors">작성하기</button>
+            <textarea
+              value={commentContent}
+              onChange={(e) => setCommentContent(e.target.value)}
+              placeholder="첨삭 의견을 작성해주세요."
+              className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:border-[#006989] min-h-[120px] mb-3"
+            />
+
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                id="isSecret"
+                checked={isSecret}
+                onChange={(e) => setIsSecret(e.target.checked)}
+                className="w-4 h-4 accent-[#006989]"
+              />
+              <label htmlFor="isSecret" className="text-sm text-gray-600">
+                글 작성자에게만 보이기
+              </label>
             </div>
+
+            <button
+              onClick={handleSubmitComment}
+              className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
+            >
+              작성하기
+            </button>
+          </div>
+            
           )}
 
-          {/* 댓글 목록 */}
+          {/* 첨삭 댓글 목록 */}
           <div className="space-y-6">
-            {comments.map((comment) => (
-              <div key={comment.id} className={`p-6 rounded-lg ${comment.isAccepted ? 'bg-[#F3F7EC] border-[#006989]' : 'bg-gray-50'}`}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="font-medium text-[#006989]">{comment.author}</span>
-                      <span className="text-sm text-gray-500">{comment.createdAt}</span>
+            {comments
+              .filter((comment) => !comment.isHide) // 숨김 처리된 댓글 제외
+              .map((comment) => {
+                const isOwner = user?.username === post.username; // 글 작성자 여부
+                const isCommentAuthor = user?.username === comment.username; // 댓글 작성자 여부
+
+                return (
+                  <div
+                    key={comment.writeCommentId}
+                    className={`p-6 rounded-lg border ${comment.adopted ? 'bg-[#F3F7EC] border-[#006989]' : 'bg-gray-50 border-transparent'}`}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      {/* 작성자 정보 */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="font-medium text-[#006989]">{comment.nickname}</span>
+                          <span className="text-sm text-gray-500">{comment.regDate?.split('T')[0]}</span>
+                        </div>
+                        {comment.adopted && (
+                          <span className="flex items-center gap-1 text-sm text-[#006989]">
+                            <CheckCircleIcon className="w-4 h-4" />
+                            채택된 첨삭
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 채택/신고 버튼 */}
+                      <div className="flex items-center gap-2">
+                        {isOwner && !comment.adopted && (
+                          <button
+                            className="px-3 py-1 text-sm text-[#006989] border border-[#006989] rounded hover:bg-[#F3F7EC] transition-colors"
+                            onClick={() => handleAdopt(comment.writeCommentId)}
+                          >
+                            채택하기
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleReport('comment', comment.writeCommentId)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <img src={singoIcon} alt="신고" className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    {comment.isAccepted && (
-                      <span className="flex items-center gap-1 text-sm text-[#006989]">
-                        <CheckCircleIcon className="w-4 h-4" />
-                        채택된 첨삭
-                      </span>
+
+                    {/* 댓글 내용 */}
+                    {(comment.isSecret && !(isOwner || isCommentAuthor)) ? (
+                      <p className="text-gray-400 italic">비밀 첨삭 댓글입니다.</p>
+                    ) : (
+                      <p className="text-gray-600">{comment.content}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {isAuthor && !comment.isAccepted && (
-                      <button className="px-3 py-1 text-sm text-[#006989] border border-[#006989] rounded hover:bg-[#F3F7EC] transition-colors">채택하기</button>
-                    )}
-                    <button onClick={() => handleReport('comment', comment.id)} className="text-gray-500 hover:text-gray-700">
-                      <img src={singoIcon} alt="신고" className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                <p className="text-gray-600">{comment.content}</p>
-              </div>
-            ))}
+                );
+              })}
           </div>
-        </div>
 
         {/* 모달 */}
         {showReportModal && <ReportModal />}
         {showReportConfirm && <ReportConfirmModal />}
       </div>
+    </div>
     </div>
   );
 };

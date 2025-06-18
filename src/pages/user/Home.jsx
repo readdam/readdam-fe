@@ -10,7 +10,7 @@ const Home = () => {
     <div className="space-y-16">
       <Banner />
       <HomeClass />
-      <HomePlace />
+      {/* <HomePlace /> */}
       <HomeWrite />
       <HomeShort />
       <About />

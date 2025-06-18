@@ -127,10 +127,10 @@ function App() {
           <Route path="/myLikeBook" element={<MyLikeBook />} />
           <Route path="/myClassContinue" element={<MyClassContinue />} />
           <Route path="/myClassEnd" element={<MyClassEnd />} />
-          <Route path="/myClassIMade" element={<MyClassIMade />} />
+          {/* <Route path="/myClassIMade" element={<MyClassIMade />} /> */}
           <Route path="/myWrite" element={<MyWrite />} />
           <Route path="/myWriteComment" element={<MyWriteComment />} />
-          <Route path="/myWriteShort" element={<MyWriteShort />} />
+          {/* <Route path="/myWriteShort" element={<MyWriteShort />} /> */}
           <Route path="/myReviewBook" element={<MyReviewBook />} />
           <Route path="/myReviewClass" element={<MyReviewClass />} />
           <Route path="/myReservation" element={<MyReservation />} />
