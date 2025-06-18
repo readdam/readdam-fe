@@ -1,4 +1,8 @@
 import React, { useState } from 'react'
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from '../../atoms';
+import axios from 'axios';
+import { url } from 'src/config/config';
 import {
   CalendarIcon,
   ImageIcon,
@@ -9,7 +13,6 @@ import {
 } from 'lucide-react'
 
 const ClassCreate = () => {
-  const [showTempSaveModal, setShowTempSaveModal] = useState(false)
   const [form, setForm] = useState({
     title: '',
     shortDescription: '',
@@ -27,21 +30,56 @@ const ClassCreate = () => {
     description: '',
     leaderDescription: '',
   })
+  const [token] = useAtom(tokenAtom);
+  const [user] = useAtom(userAtom);
+  const [showTempSaveModal, setShowTempSaveModal] = useState(false);
+  const [mainImg, setMainImg] = useState(null);
   const handleSubmit = (e) => {
     e.preventDefault()
     // Handle form submission
     console.log('Form submitted:', form)
+    const submitData = new FormData();
+    submitData.append("title", form.title);
+    submitData.append("shortIntro", form.shortDescription);
+    submitData.append("minPerson", form.minParticipants);
+    submitData.append("maxPerson", form.maxParticipants);
+    submitData.append("classIntro", form.description);
+    submitData.append("leaderintro", form.leaderDescription);
+
+    //태그 파싱
+    const tagArray = form.tags
+    .split('#')
+    .map(tag => tag.trim())
+    .filter(tag => tag);  // 공백 제거 + 빈 문자열 제거
+    submitData.append("tag1", tagArray[0] || "");
+    submitData.append("tag2", tagArray[1] || "");
+    submitData.append("tag3", tagArray[2] || "");
+
+    // 이미지 시작
+    if (mainImg) submitData.append("mainImg", mainImg);
+    console.log(token);
+    axios.post()
+
+    //회차 선택 -> (1) 3회차: 모임일정, 상세내용 3개만 출력 (2) 4회차: 모임일정, 상세내용 4개 출력
+    //장소 선택 -> (1) 읽담: 예약한 장소 있으면 불러오기 (모임일정도 불러오는지는 확인 후 구현)
+    //            (2) 외부: 장소 이름 입력, 장소주소선택(주소 API), 모임일정 선택
+
+
   }
+
   const addDays = (dateString, days) => {
     const date = new Date(dateString)
     date.setDate(date.getDate() + days)
     return date.toISOString().split("T")[0]
     }
+
+    //임시저장
   const handleTempSave = () => {
     setShowTempSaveModal(true)
-    // Handle temporary save logic
+    // 임시저장 로직 추가 예정
     console.log('Temporary saved:', form)
   }
+
   const handleTagToggle = (tag) => {
     if (form.tags.includes(tag)) {
       setForm({
@@ -55,6 +93,8 @@ const ClassCreate = () => {
       })
     }
   }
+
+  // 모임회차 선택(3회, 4회)에 따라 회차별 진행 상세내용 입력
   const handleSessionCountChange = (count) => {
     setForm({
       ...form,
@@ -343,9 +383,21 @@ const ClassCreate = () => {
                     <div className="flex gap-4 mb-4">
                       <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
                         <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                        <span className="text-sm text-gray-500">
+                        <label className="text-sm text-gray-500">
                           이미지 업로드
-                        </span>
+                        </label>
+                        {/* {formData.image ? (
+                            <img
+                            src={formData.image}
+                            alt="업로드 이미지"
+                            className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#E88D67]">
+                            <BookIcon className="w-20 h-20 text-white" />
+                            </div>
+                    )} */}
+
                       </div>
                       <textarea
                         className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
