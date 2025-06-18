@@ -1,7 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StarIcon, HeartIcon, LockIcon } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { searchBook } from '@api/kakaoApi';
 
 export default function BookDetail() {
+  const param = useParams();
+  const { data, isLoading } = useQuery({
+    queryKey: ['bookDetail', param.isbn],
+    queryFn: () =>
+      searchBook({
+        query: param.isbn.split(' ')[0],
+      }),
+    enabled: !!param.isbn,
+  });
+
+  const isbnParam = decodeURIComponent(param.isbn); // 공백 포함된 ISBN 복원
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+
   const allReviews = [
     {
       id: 1,
@@ -46,6 +65,7 @@ export default function BookDetail() {
       avatar: 'https://i.ibb.co/SBRM8hH/dog2.png',
     },
   ];
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,22 +76,33 @@ export default function BookDetail() {
   const currentReviews = allReviews.slice(indexOfFirst, indexOfLast);
 
   const handlePageChange = (page) => setCurrentPage(page);
+
+  if (isLoading || !data?.documents?.[0]) {
+    return (
+      <div className="text-center py-10 text-gray-500">로딩 중입니다...</div>
+    );
+  }
+
+  const book = data.documents.find((doc) => doc.isbn.includes(isbnParam));
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       {/* 책 정보 */}
       <div className="flex gap-8">
         <div className="w-80 h-80 flex justify-center items-center bg-[#F6F6F6]">
           <img
-            src="https://search1.kakaocdn.net/thumb/R120x174.q85/?fname=http%3A%2F%2Ft1.daumcdn.net%2Flbook%2Fimage%2F1467038"
-            alt="미움받을 용기"
+            src={`${book.thumbnail}`}
+            alt={`${book.thumbnail}`}
             className=" h-fit"
           />
         </div>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold mb-2">미움받을 용기</h1>
-          <p className="text-sm mb-1">저자 기시미 이치로, 고가 후미타케</p>
-          <p className="text-sm mb-1">출판 인플루엔셜</p>
-          <p className="text-sm mb-2">발행 2014.11.17</p>
+          <h1 className="text-2xl font-bold mb-2">{book.title}</h1>
+          <p className="text-sm mb-1">저자 {book.authors.join(', ')}</p>
+          <p className="text-sm mb-1">출판 {book.publisher}</p>
+          <p className="text-sm mb-2">
+            발행 {book.datetime.split('T')[0].split('-').join('.')}
+          </p>
 
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -93,12 +124,7 @@ export default function BookDetail() {
             </div>
           </div>
 
-          <p className="text-sm text-gray-700 mb-4">
-            2014 아마존 일본 ‘종합’ 베스트셀러 1위. &lt;미움받을 용기&gt;는
-            아들러 심리학을 바탕으로 하는 책이다. 아들러 심리학에 관한 일본의
-            제1인자인 철학자 기시미 이치로의 명 해석과 베스트셀러 작가인 고가
-            후미타케의 맛깔스러운 글이 잘 결합되어 새로운 형식을 선보인다.
-          </p>
+          <p className="text-sm text-gray-700 mb-4">{book.contents}</p>
 
           <button
             className="bg-[#006989] text-white w-24 h-10 rounded-lg text-xs font-bold cursor-pointer"
