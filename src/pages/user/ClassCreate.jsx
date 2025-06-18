@@ -14,8 +14,8 @@ const ClassCreate = () => {
     title: '',
     shortDescription: '',
     tags: [],
-    minParticipants: 2,
-    maxParticipants: 4,
+    minParticipants: null,
+    maxParticipants: null,
     sessionCount: 3,
     venue: '읽담',
     venueName: '',
@@ -32,6 +32,11 @@ const ClassCreate = () => {
     // Handle form submission
     console.log('Form submitted:', form)
   }
+  const addDays = (dateString, days) => {
+    const date = new Date(dateString)
+    date.setDate(date.getDate() + days)
+    return date.toISOString().split("T")[0]
+    }
   const handleTempSave = () => {
     setShowTempSaveModal(true)
     // Handle temporary save logic
@@ -153,13 +158,19 @@ const ClassCreate = () => {
                   <select
                     className="px-4 py-2 border border-gray-300 rounded-lg"
                     value={form.minParticipants}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                       const newMin = parseInt(e.target.value)
+                       const adjustedmax = form.maxParticipants < newMin ? newMin : form.maxParticipants 
                       setForm({
                         ...form,
-                        minParticipants
+                        minParticipants: newMin,
+                        maxParticipants: adjustedmax,
                       })
-                    }
+                    }}
                   >
+                    <option value="" disabled>
+                        최소 인원 선택
+                    </option>
                     {[2, 3, 4, 5, 6, 7, 8].map((num) => (
                       <option key={num} value={num}>
                         {num}명
@@ -173,11 +184,17 @@ const ClassCreate = () => {
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        maxParticipants
+                        maxParticipants: parseInt(e.target.value),
                       })
                     }
+                    disabled={!form.minParticipants}    //비활성화 조건
                   >
-                    {[4, 5, 6, 7, 8, 9, 10].map((num) => (
+                      <option value="" disabled>
+                            최대 인원 선택
+                        </option>
+                    {[4, 5, 6, 7, 8, 9, 10]
+                        .filter((num) => num >= form.minParticipants)
+                        .map((num) => (
                       <option key={num} value={num}>
                         {num}명
                       </option>
@@ -282,15 +299,21 @@ const ClassCreate = () => {
               <div className="space-y-4">
                 {Array.from({
                   length: form.sessionCount,
-                }).map((_, index) => (
+                }).map((_, index) => {
+                   const prevDate = form.dates[index - 1]
+                    const minDate = prevDate ? addDays(prevDate, 1) : undefined 
+      
+                return (
                   <div key={index} className="flex items-center gap-4">
                     <span className="text-sm text-gray-600 w-20">
                       {index + 1}회차:
                     </span>
                     <input
                       type="date"
+                      disabled={index > 0 && !form.dates[index - 1]}
                       className="px-4 py-2 border border-gray-300 rounded-lg"
                       value={form.dates[index] || ''}
+                      min={minDate}
                       onChange={(e) => {
                         const newDates = [...form.dates]
                         newDates[index] = e.target.value
@@ -301,7 +324,8 @@ const ClassCreate = () => {
                       }}
                     />
                   </div>
-                ))}
+                )
+                })}
               </div>
             </div>
             <div>
