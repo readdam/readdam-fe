@@ -11,7 +11,7 @@ import { jwtDecode } from 'jwt-decode';
 const Login = () => {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
-  const [saveId, setSaveId] = useState(false);
+  const [saveId, setSaveId] = useState(false);  // ✅ 로그인 상태 유지 체크박스
   const setUser = useSetAtom(userAtom);
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
@@ -26,8 +26,10 @@ const Login = () => {
         ?.split('=')[1];
 
       if (access_token) {
-        setToken({ access_token, refresh_token: '' });
+        const tokenObj = { access_token, refresh_token: '' };
+        setToken(tokenObj);
         setUser({ username: '' }); // 필요 시 /me API 호출해서 사용자 정보 가져와도 됨
+        sessionStorage.setItem('token', access_token); // 최소한 저장
         navigate('/');
       } else {
         alert('access_token이 없습니다. 다시 로그인해주세요.');
@@ -56,18 +58,27 @@ const Login = () => {
       const access_token = response.headers['authorization'];
 
       if (access_token) {
-        setToken({ access_token, refresh_token: '' });
-
         const decoded = jwtDecode(access_token);
-
-        setUser(prev => ({
-          ...prev,
+        const userInfo = {
           username: decoded.sub,
           nickname: decoded.nickname,
           isAdmin: decoded.isAdmin,
           lat: decoded.lat,
           lng: decoded.lng,
-        }));
+        };
+          const tokenObj = {
+            access_token: access_token.startsWith("Bearer") ? access_token : `Bearer ${access_token}`,
+            refresh_token: '',
+          };
+
+        // ✅ Jotai 상태 설정
+        setToken(tokenObj);
+        setUser(userInfo);
+
+        // ✅ 저장소 결정: 로그인 상태 유지 시 localStorage, 아니면 sessionStorage
+        const storage = saveId ? localStorage : sessionStorage;
+        storage.setItem('token', JSON.stringify(tokenObj));
+        storage.setItem('user', JSON.stringify(userInfo));
 
         window.location.href = '/';
       } else {

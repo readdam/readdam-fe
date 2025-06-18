@@ -58,12 +58,21 @@ import AdminBannerList from '@pages/admin/AdminBannerList';
 import ClassList from '@pages/user/ClassList';
 import ClassCreate from '@pages/user/ClassCreate';
 import ClassDetail from '@pages/user/ClassDetail';
+import PlaceEdit from '@pages/admin/PlaceEdit';
+import OtherPlaceEdit from '@pages/admin/OtherPlaceEdit';
+import PrivateRoute from '@routes/PrivateRoute';
+import Success from '@pages/my/Success';
+import Fail from '@pages/my/Fail';
+
 
 function App() {
   return (
     <>
       <Routes>
-        <Route path="/token" element={<Token />} /> 
+        <Route path="/token" element={<Token />} />
+        <Route path="/success" element={<Success />} />
+        <Route path="/fail" element={<Fail />} />
+        
         <Route element={<AdminRoutes />}>
           <Route path="/adminUserList" element={<AdminUserList />} />
           <Route path="/adminUserDeletedList" element={<AdminUserDeletedList />} />
@@ -91,6 +100,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/oauth-redirect" element={<OAuthRedirect />} />
           <Route path="/" element={<Home />} />
+          <Route path="/writeDetail/:id" element={<WriteDetail />} />
           <Route path="/search" element={<SearchResult />} />
           <Route path="/writeList" element={<WriteList />} />
           <Route path="/writeShortList" element={<WriteShortList />} />
@@ -124,10 +134,10 @@ function App() {
           <Route path="/myReviewBook" element={<MyReviewBook />} />
           <Route path="/myReviewClass" element={<MyReviewClass />} />
           <Route path="/myReservation" element={<MyReservation />} />
-          {/* <Route path="/myPointCharge" element={<MyPointCharge />} /> */}
-          {/* <Route path="/myPointList" element={<MyPointList />} /> */}
-          {/* <Route path="/myAlert" element={<MyAlert />} /> */}
-          {/* <Route path="/myInquiry" element={<MyInquiry />} /> */}
+          <Route path="/myPointCharge" element={<MyPointCharge />} />
+          <Route path="/myPointList" element={<MyPointList />} />
+          <Route path="/myAlert" element={<MyAlert />} />
+          <Route path="/myInquiry" element={<MyInquiry />} />
         </Route>
 
       </Routes>

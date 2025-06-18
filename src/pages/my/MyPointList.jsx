@@ -21,7 +21,7 @@ const PointHistory = () => {
 
         const fetchPoints = async () => {
             try {
-                const res = await axios.post(`${url}/myPointList`, null, {
+                const res = await axios.post(`${url}/my/myPointList`, null, {
                     headers: {
                         Authorization: token.access_token,
                     },
