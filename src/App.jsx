@@ -64,7 +64,6 @@ import PrivateRoute from '@routes/PrivateRoute';
 import Success from '@pages/my/Success';
 import Fail from '@pages/my/Fail';
 
-
 function App() {
   return (
     <>
@@ -72,15 +71,21 @@ function App() {
         <Route path="/token" element={<Token />} />
         <Route path="/success" element={<Success />} />
         <Route path="/fail" element={<Fail />} />
-        
+
         <Route element={<AdminRoutes />}>
           <Route path="/adminUserList" element={<AdminUserList />} />
-          <Route path="/adminUserDeletedList" element={<AdminUserDeletedList />} />
+          <Route
+            path="/adminUserDeletedList"
+            element={<AdminUserDeletedList />}
+          />
           <Route path="/adminClassList" element={<AdminClassList />} />
           <Route path="/adminClassDetail" element={<AdminClassDetail />} />
           <Route path="/adminPlaceList" element={<PlaceList />} />
           <Route path="/adminPlaceAdd" element={<PlaceAdd />} />
-          <Route path="/adminPlaceReservationList" element={<PlaceReservationList />} />
+          <Route
+            path="/adminPlaceReservationList"
+            element={<PlaceReservationList />}
+          />
           <Route path="/adminOtherPlaceList" element={<OtherPlaceList />} />
           <Route path="/adminOtherPlaceAdd" element={<OtherPlaceAdd />} />
           <Route path="/adminPointStats" element={<AdminPointStats />} />
@@ -89,7 +94,10 @@ function App() {
           <Route path="/adminAlertCreate" element={<AdminAlertCreate />} />
           <Route path="/adminNotice" element={<AdminNotice />} />
           <Route path="/adminEventReg" element={<AdminEventReg />} />
-          <Route path="/adminEventJoinedList" element={<AdminEventJoinedList />} />
+          <Route
+            path="/adminEventJoinedList"
+            element={<AdminEventJoinedList />}
+          />
           <Route path="/adminInquiryList" element={<AdminInquiryList />} />
           <Route path="/adminBannerList" element={<AdminBannerList />} />
         </Route>
@@ -107,7 +115,7 @@ function App() {
           <Route path="/place" element={<Place />} />
           <Route path="/book" element={<BookPage />} />
           <Route path="/bookSearch" element={<BookSearch />} />
-          <Route path="/bookDetail" element={<BookDetail />} />
+          <Route path="/bookDetail/:isbn" element={<BookDetail />} />
           <Route path="/notice" element={<Notice />} />
           <Route path="/writeDetail" element={<WriteDetail />} />
           <Route path="/writeCreate" element={<WriteCreate />} />
@@ -118,7 +126,7 @@ function App() {
         </Route>
 
         {/* <Route element={<PrivateRoute />}> */}
-          <Route element={<MyRoutes />}>
+        <Route element={<MyRoutes />}>
           <Route path="/myProfile" element={<MyProfile />} />
           <Route path="/myLibrary" element={<MyLibrary />} />
           <Route path="/myLikeClass" element={<MyLikeClass />} />
@@ -139,11 +147,9 @@ function App() {
           <Route path="/myAlert" element={<MyAlert />} />
           <Route path="/myInquiry" element={<MyInquiry />} />
         </Route>
-
       </Routes>
     </>
   );
 }
-
 
 export default App;
