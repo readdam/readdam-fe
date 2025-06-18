@@ -12,3 +12,28 @@ export const getReviews = async ({ isbn, username, page = 0, size = 5 }) => {
   });
   return res.data; // Page<BookReviewDto>
 };
+
+export const writeReview = async ({
+  comment,
+  rating,
+  isHide,
+  bookIsbn,
+  token,
+}) => {
+  const res = await axios.post(
+    `${url}/book/reviews`,
+    {
+      comment,
+      rating,
+      isHide,
+      bookIsbn,
+    },
+    {
+      headers: {
+        Authorization: token.access_token,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  return res.data;
+};

@@ -1,14 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StarIcon, HeartIcon, LockIcon } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { searchBook } from '@api/kakaoApi';
-import { getReviews } from '@api/book';
+import { getReviews, writeReview } from '@api/book';
 import { useAtomValue } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms'; // 로그인 사용자 정보
+import StarRatingInput from '@components/book/StarRatingInput';
+import StarRatingSvg from '@components/book/StarRatingSvg';
 
 export default function BookDetail() {
+  const token = useAtomValue(tokenAtom);
   const param = useParams();
+
+  const queryClient = useQueryClient();
+
   const { data, isLoading } = useQuery({
     queryKey: ['bookDetail', param.isbn],
     queryFn: () =>
@@ -24,51 +30,6 @@ export default function BookDetail() {
     console.log(data);
     console.log(param.isbn);
   }, [data, param]);
-
-  const allReviews = [
-    {
-      id: 1,
-      name: '강강지',
-      date: '2025.05.24',
-      rating: 5,
-      content:
-        '아 정말 도움이 되는 내용이었고 앞으로의 삶에 잘 녹여낼 수 있을 것 같다. 아직 안읽었다면 빨리 읽어보기 바란다!',
-      avatar: 'https://i.ibb.co/X8xG7VG/dog1.png',
-    },
-    {
-      id: 2,
-      name: '독서광',
-      date: '2025.05.21',
-      rating: 4,
-      content:
-        '책이 정말 인상 깊었어요. 특히 인간관계에 대한 통찰이 놀라웠습니다.',
-      avatar: 'https://i.ibb.co/SBRM8hH/dog2.png',
-    },
-    {
-      id: 3,
-      name: '책사랑',
-      date: '2025.05.19',
-      rating: 5,
-      content: '시간 가는 줄 모르고 읽었습니다. 지인들에게 추천하고 싶네요.',
-      avatar: 'https://i.ibb.co/bNzNCKP/dog3.png',
-    },
-    {
-      id: 4,
-      name: '리더',
-      date: '2025.05.17',
-      rating: 3,
-      content: '좋은 책이긴 했지만, 기대보다는 평범했어요.',
-      avatar: 'https://i.ibb.co/X8xG7VG/dog1.png',
-    },
-    {
-      id: 5,
-      name: '생각가',
-      date: '2025.05.15',
-      rating: 5,
-      content: '철학적 관점에서 인생을 다시 바라보게 만든 책입니다.',
-      avatar: 'https://i.ibb.co/SBRM8hH/dog2.png',
-    },
-  ];
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -100,9 +61,39 @@ export default function BookDetail() {
 
   const indexOfLast = currentPage * reviewsPerPage;
   const indexOfFirst = indexOfLast - reviewsPerPage;
-  const currentReviews = allReviews.slice(indexOfFirst, indexOfLast);
+  // const currentReviews = allReviews.slice(indexOfFirst, indexOfLast);
 
   const handlePageChange = (page) => setCurrentPage(page);
+  const [rating, setRating] = useState(0);
+
+  const [comment, setComment] = useState('');
+  const [isHide, setIsHide] = useState(false);
+
+  const handleSubmitReview = async () => {
+    if (!comment.trim()) {
+      alert('리뷰 내용을 입력하세요!');
+      return;
+    }
+
+    try {
+      await writeReview({
+        comment,
+        rating,
+        isHide,
+        bookIsbn: isbnParam,
+        token,
+      });
+      alert('리뷰가 등록되었습니다!');
+      setComment('');
+      setRating(0);
+      setIsHide(false);
+      setCurrentPage(0); // 첫 페이지로 이동
+      queryClient.invalidateQueries(['bookReviews']); // 목록 다시 불러오기
+    } catch (err) {
+      console.error(err);
+      alert('리뷰 등록에 실패했습니다.');
+    }
+  };
 
   if (isLoading || !data?.documents?.[0]) {
     return (
@@ -173,18 +164,27 @@ export default function BookDetail() {
         </div>
 
         <div className="mb-4">
-          <span className="text-sm">평점</span>
-          <div className="flex gap-1 mb-2">
-            {[...Array(5)].map((_, i) => (
-              <StarIcon key={i} className="w-5 h-5 text-[#E88D67]" />
-            ))}
-          </div>
+          <span className="text-sm">평점 </span>
+          <StarRatingSvg rating={rating} setRating={setRating} />
           <span className="text-sm">내용</span>
           <textarea
             className="w-full border rounded-md p-3 text-sm resize-none h-24"
             placeholder="리뷰를 입력해주세요"
-          />
-          <button className="mt-2 bg-[#006989] text-white px-4 py-2 rounded-md text-sm font-semibold">
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />{' '}
+          <label className="text-sm flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={isHide}
+              onChange={(e) => setIsHide(e.target.checked)}
+            />
+            비공개
+          </label>
+          <button
+            className="mt-2 bg-[#006989] text-white px-4 py-2 rounded-md text-sm font-semibold"
+            onClick={handleSubmitReview}
+          >
             리뷰 작성
           </button>
         </div>
