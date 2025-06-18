@@ -66,7 +66,10 @@ const Login = () => {
           lat: decoded.lat,
           lng: decoded.lng,
         };
-        const tokenObj = { access_token, refresh_token: '' };
+          const tokenObj = {
+            access_token: access_token.startsWith("Bearer") ? access_token : `Bearer ${access_token}`,
+            refresh_token: '',
+          };
 
         // ✅ Jotai 상태 설정
         setToken(tokenObj);
@@ -74,7 +77,7 @@ const Login = () => {
 
         // ✅ 저장소 결정: 로그인 상태 유지 시 localStorage, 아니면 sessionStorage
         const storage = saveId ? localStorage : sessionStorage;
-        storage.setItem('token', access_token);
+        storage.setItem('token', JSON.stringify(tokenObj));
         storage.setItem('user', JSON.stringify(userInfo));
 
         window.location.href = '/';

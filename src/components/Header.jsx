@@ -18,8 +18,7 @@ const Header = () => {
       setUser(JSON.parse(savedUser));
       //setToken({ access_token: savedToken, refresh_token: '' });
       try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
+        setUser(JSON.parse(savedUser));
       } catch (e) {
         console.error('❌ 유저 정보 파싱 실패:', e);
         localStorage.removeItem("token");
