@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getLikeList, searchBook, toggleBookLike } from '@api/kakaoApi';
 import AddToLibraryModal from '@components/book/AddToLibraryModal';
@@ -200,7 +200,9 @@ export default function BookSearch() {
                   className="object-cover w-[120px] h-[174px]"
                 />
                 <div className="flex flex-col text-sm text-gray-800 flex-grow">
-                  <div className="font-bold text-base mb-1">{book.title}</div>
+                  <Link to={`/bookDetail/${encodeURIComponent(book.isbn)}`}>
+                    <div className="font-bold text-base mb-1">{book.title}</div>
+                  </Link>
                   <div className="mb-1">저자 | {book.authors.join(', ')}</div>
                   <div className="mb-1">출판 | {book.publisher}</div>
                   <div className="mb-1">

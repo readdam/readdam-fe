@@ -19,20 +19,5 @@ export default defineConfig({
 
      ],
   },
-  server: {
-    proxy: {
-      '/writes': {
-        target: 'http://localhost:8080', // Spring 서버 주소
-        changeOrigin: true,
-      },
-            '/writedetail': {
-        target: 'http://localhost:8080', 
-        changeOrigin: true,
-      },
-      '/comments': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-    },
-  },
+
 });

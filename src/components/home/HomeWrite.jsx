@@ -28,7 +28,7 @@ const HomeWrite = () => {
   useEffect(() => {
     const fetchLatestWrites = async () => {
       try {
-        const res = await fetch('/writes?limit=4')
+        const res = await fetch(`${url}/writes?limit=4`)
         // const text = await res.text();
         // console.log('서버 응답:', text);
         if (!res.ok) throw new Error('글 불러오기 실패')
