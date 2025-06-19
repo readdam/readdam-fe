@@ -70,7 +70,7 @@ const WriteCreate = () => {
       })
       .then((res) => {
         console.log(res);
-        navigate(`writeDetail/${res.data.writeId}`); 
+        navigate(`/writeDetail/${res.data.writeId}`); 
       })
       .catch((err) => {
         console.error(err);
@@ -159,6 +159,7 @@ const WriteCreate = () => {
                       setFormData({
                         ...formData,
                         visibility: e.target.value,
+                        needReview: e.target.value === 'private' ? false : formData.needReview // 비공개 선택 시 첨삭 해제
                       })
                     }
                     required
@@ -229,10 +230,15 @@ const WriteCreate = () => {
                       needReview: e.target.checked,
                     })
                   }
+                  disabled={formData.visibility === 'private'} //비공개 선택 시 체크박스 비활성
                 />
                 <label
                   htmlFor="needReview"
-                  className="text-sm font-medium text-gray-700"
+                    className={`text-sm font-medium ${
+                    formData.visibility === 'private'
+                      ? 'text-gray-400 cursor-not-allowed' //비공개 선택 시 텍스트 흐리게
+                      : 'text-gray-700'
+                  }`}
                 >
                   첨삭 받기를 원합니다
                 </label>
