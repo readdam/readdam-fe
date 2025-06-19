@@ -16,7 +16,7 @@ const ProfileEdit = () => {
     useEffect(() => {
         if (!token?.access_token || token.access_token.trim() === '') return;
 
-        axios.post(`${url}/myProfile`, null, {
+        axios.post(`${url}/my/myProfile`, null, {
             headers: { Authorization: token.access_token },
             withCredentials: true,
         })
@@ -41,7 +41,7 @@ const ProfileEdit = () => {
                 password: password !== '' ? password : null,
             };
     
-            await axios.post(`${url}/myProfileEdit`, payload, {
+            await axios.post(`${url}/my/myProfileEdit`, payload, {
                 headers: { Authorization: token.access_token },
                 withCredentials: true,
             });
@@ -69,7 +69,7 @@ const ProfileEdit = () => {
             formData.append('file', file);
     
             try {
-                const res = await axios.post(`${url}/uploadImage`, formData, {
+                const res = await axios.post(`${url}/my/uploadImage`, formData, {
                     headers: {
                         Authorization: token.access_token,
                         'Content-Type': 'multipart/form-data',

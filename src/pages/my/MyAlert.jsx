@@ -16,7 +16,7 @@ const NotificationPage = () => {
 
   const fetchAlerts = async () => {
     try {
-      const res = await axios.post(`${url}/myAlertList`, null, {
+      const res = await axios.post(`${url}/my/myAlertList`, null, {
         headers: {
           Authorization: token.access_token,
         },
@@ -34,7 +34,7 @@ const NotificationPage = () => {
 
   const handleClick = async (alertId) => {
     try {
-      await axios.post(`${url}/myAlertCheck`, { alertId }, {
+      await axios.post(`${url}/my/myAlertCheck`, { alertId }, {
         headers: {
           Authorization: token.access_token,
         },

@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 const MyLibraryShow = ({ category, books, onClose, onEdit }) => {
   const navigate = useNavigate();
 
-  const handleBookClick = (id) => {
-    navigate(`/book/${id}`);
+  const handleBookClick = (isbn) => {
+    navigate(`/bookDetail/${isbn}`);
   };
 
   return (
@@ -30,17 +30,23 @@ const MyLibraryShow = ({ category, books, onClose, onEdit }) => {
           {books.length > 0 ? (
             books.map((book) => (
               <div
-                key={book.id}
-                onClick={() => handleBookClick(book.id)}
+                key={book.librarybookId || book.isbn}
+                onClick={() => handleBookClick(book.isbn)}
                 className="cursor-pointer"
               >
                 <img
-                  src={book.image}
-                  alt={book.title}
+                  src={book.thumbnail || book.bookImg || '/no-image.png'}
+                  alt={book.bookName || book.title}
                   className="w-full h-40 object-cover rounded"
                 />
-                <p className="mt-2 text-sm text-center line-clamp-2">
-                  {book.title}
+                <p className="mt-2 text-sm font-semibold text-center line-clamp-2">
+                  {book.bookName || book.title}
+                </p>
+                <p className="text-xs text-gray-600 text-center">
+                  {book.bookWriter || (book.authors?.join(', ') || '저자 정보 없음')}
+                </p>
+                <p className="text-xs text-gray-600 text-center">
+                  {book.publisher || '출판사 정보 없음'}
                 </p>
               </div>
             ))
