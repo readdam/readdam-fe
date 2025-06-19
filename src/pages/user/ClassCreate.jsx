@@ -30,42 +30,132 @@ const ClassCreate = () => {
     description: '',
     leaderDescription: '',
   })
+
+  // 이미지(미리보기용 포함) 
+  const [mainImg, setMainImg] = useState(null);
+  const [mainImgPreview, setMainImgPreview] = useState(null);
+
+  const [leaderImg, setLeaderImg] = useState(null);
+  const [leaderImgPreview, setLeaderImgPreview] = useState(null);
+
+  const [roundImgs, setRoundImgs] = useState({
+    round1Img: null,
+    round1Bookimg: null,
+    round2Img: null,
+    round2Bookimg: null,
+    round3Img: null,
+    round3Bookimg: null,
+    round4Img: null,
+    round4Bookimg: null,
+  });
+  const [roundImgPreviews, setRoundImgPreviews] = useState({});
+
+  const handleRoundImageChange = (e, field) => {
+    const file = e.target.files[0];
+    if(file){
+    setRoundImgs((prev) => ({
+      ...prev,
+      [field]: file, 
+    }));
+    setRoundImgPreviews((prev)=>({
+      ...prev,
+      [field]: URL.createObjectURL(file),
+    }));
+    }
+  };
+
+  const handleMainImgChange = (e) => {
+    const file = e.target.files[0];
+    if(file) {
+      setMainImg(file);
+      setMainImgPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleLeaderImgChange = (e) => {
+    const file = e.target.files[0];
+    if(file){
+      setLeaderImg(file);
+      setLeaderImgPreview(URL.createObjectURL(file));
+    }
+  };
+
   const [token] = useAtom(tokenAtom);
   const [user] = useAtom(userAtom);
   const [showTempSaveModal, setShowTempSaveModal] = useState(false);
-  const [mainImg, setMainImg] = useState(null);
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     // Handle form submission
     console.log('Form submitted:', form)
     const submitData = new FormData();
     submitData.append("title", form.title);
     submitData.append("shortIntro", form.shortDescription);
-    submitData.append("minPerson", form.minParticipants);
-    submitData.append("maxPerson", form.maxParticipants);
+    submitData.append("minPerson", String(form.minParticipants ?? ''));
+    submitData.append("maxPerson", String(form.maxParticipants ?? ''));
     submitData.append("classIntro", form.description);
-    submitData.append("leaderintro", form.leaderDescription);
+    submitData.append("leaderIntro", form.leaderDescription);
+    submitData.append("leaderUsername", user.username);
 
     //태그 파싱
-    const tagArray = form.tags
-    .split('#')
-    .map(tag => tag.trim())
-    .filter(tag => tag);  // 공백 제거 + 빈 문자열 제거
+    const tagArray = form.tags.map(tag => tag.trim()).filter(tag => tag);  // 공백 제거 + 빈 문자열 제거
     submitData.append("tag1", tagArray[0] || "");
     submitData.append("tag2", tagArray[1] || "");
     submitData.append("tag3", tagArray[2] || "");
-
+   
     // 이미지 시작
-    if (mainImg) submitData.append("mainImg", mainImg);
-    console.log(token);
-    axios.post()
+    // 대표 이미지
+  if (mainImg) submitData.append("mainImg", mainImg);
 
-    //회차 선택 -> (1) 3회차: 모임일정, 상세내용 3개만 출력 (2) 4회차: 모임일정, 상세내용 4개 출력
-    //장소 선택 -> (1) 읽담: 예약한 장소 있으면 불러오기 (모임일정도 불러오는지는 확인 후 구현)
-    //            (2) 외부: 장소 이름 입력, 장소주소선택(주소 API), 모임일정 선택
+  // 리더 이미지
+  if (leaderImg) submitData.append("leaderImg", leaderImg);
 
+  // 회차 이미지들
+  Object.entries(roundImgs).forEach(([key, file]) => {
+    if (file) {
+      submitData.append(key, file);
+    }
+  });
 
+    // === 회차별 공통 필드 ===
+  const sessionCount = form.sessionCount;
+
+  for (let i = 0; i < sessionCount; i++) {
+    const round = i + 1; // 1-based
+    const date = form.dates[i] || '';  // YYYY-MM-DD
+    const datetime = date ? `${date}T10:00:00` : '';  // ISO 형식으로 변환
+
+    submitData.append(`round${round}Date`, datetime);
+    submitData.append(`round${round}PlaceName`, form.venueName || '');
+    submitData.append(`round${round}PlaceLoc`, form.venueAddress || '');
+    submitData.append(`round${round}Content`, form.sessionDetails[i]?.description || '');
+    submitData.append(`round${round}Bookname`, '');     // 책 제목 (추후 구현)
+    submitData.append(`round${round}Bookwriter`, '');   // 책 저자
+    submitData.append(`round${round}Lat`, '');          // 위도
+    submitData.append(`round${round}Log`, '');          // 경도
+}
+
+// submitData 전송 확인 로그
+    for(let [key,value] of submitData.entries()){ 
+    console.log(`${key}: ${value}`);
   }
+
+// 데이터 전송(axios)
+    console.log(token);
+    console.log('axios 전송 시작');
+     axios.post(`${url}/my/createClass`,submitData, {
+        headers: {
+          Authorization: token.access_token,
+        }
+      })
+            .then((res)=>{
+                console.log(res);
+                navigate(`/classDetail/${res.data.classId}`)
+            })
+            .catch((err)=>{
+                console.log('axios에러 발생:', err);
+            });
+  };
 
   const addDays = (dateString, days) => {
     const date = new Date(dateString)
@@ -382,22 +472,21 @@ const ClassCreate = () => {
                     </h3>
                     <div className="flex gap-4 mb-4">
                       <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                        <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                        <label className="text-sm text-gray-500">
-                          이미지 업로드
+                        <label htmlFor="roundImgsUpload" >
+                        {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
+                        {!roundImgPreviews && (
+                          <>
+                            <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                                <label className="text-sm text-gray-500">
+                                  이미지 업로드
+                                </label>
+                          </>
+                        )}
+                        {roundImgPreviews && (
+                          <img src={roundImgPreviews} alt="미리보기" className="w-32 h-32 object-cover mt-2" />
+                        )}
                         </label>
-                        {/* {formData.image ? (
-                            <img
-                            src={formData.image}
-                            alt="업로드 이미지"
-                            className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-[#E88D67]">
-                            <BookIcon className="w-20 h-20 text-white" />
-                            </div>
-                    )} */}
-
+                        <input id="roundImgsUpload" type="file" accept="image/*" onChange={handleRoundImageChange} className='hidden'/>
                       </div>
                       <textarea
                         className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
@@ -431,15 +520,25 @@ const ClassCreate = () => {
           <div className="bg-white p-8 rounded-lg shadow space-y-6">
             <h2 className="text-xl font-bold text-gray-800 mb-6">추가 정보</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                커버 이미지 <span className="text-red-500">*</span>
+              <label htmlFor="mainImgUpload" className="block text-sm font-medium text-gray-700 mb-1">
+                대표 이미지 <span className="text-red-500">*</span>
               </label>
-              <div className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-500">
-                  커버 이미지를 업로드해주세요
-                </span>
-              </div>
+              <label htmlFor="mainImgUpload" className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
+                {!mainImgPreview && (
+                  <>
+                    <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-500">
+                      모임의 대표 이미지를 업로드해주세요
+                    </span>
+                  </>
+                )}
+                {/* 이미지가 있을 때만 미리보기 표시 */}
+                {mainImgPreview && (
+                  <img src={mainImgPreview} alt="미리보기" className="w-40 h-40 object-cover mt-2" />
+                )}
+                </label>
+                <input id="mainImgUpload" type="file" accept="image/*" onChange={handleMainImgChange} className='hidden'/>                  
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -463,8 +562,23 @@ const ClassCreate = () => {
               </label>
               <div className="flex gap-4">
                 <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                  <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-500">이미지 업로드</span>
+                  
+                <label htmlFor="leaderImgUpload" className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                  {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
+                  {!leaderImgPreview && (
+                    <>
+                      <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                        <label className="text-sm text-gray-500">
+                          이미지 업로드
+                        </label>
+                    </>
+                  )}
+                  {/* 이미지가 있을 때만 미리보기 표시 */}
+                  {leaderImgPreview && (
+                    <img src={leaderImgPreview} alt="미리보기" className="w-32 h-32 object-cover mt-2" />
+                  )}
+                  </label>
+                  <input id="leaderImgUpload" type="file" accept="image/*" onChange={handleLeaderImgChange} className='hidden'/>                  
                 </div>
                 <textarea
                   className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
