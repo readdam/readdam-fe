@@ -5,6 +5,7 @@ import { ThumbsUpIcon, ShareIcon, PencilIcon, MessageSquareIcon, CheckCircleIcon
 import singoIcon from '@assets/singo.png';
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
+import { url } from '../../config/config';
 
 
 // 모달 컴포넌트들을 별도로 분리
@@ -25,7 +26,7 @@ const WriteDetail = () => {
   const [reportType, setReportType] = useState('');
   const [reportContent, setReportContent] = useState('');
   const [isSecret, setIsSecret] = useState(false);
-
+  const tags = post ? [post.tag1, post.tag2, post.tag3, post.tag4, post.tag5].filter(Boolean) : [];
   const [token] = useAtom(tokenAtom);
   const [user] = useAtom(userAtom); // ← comment 작성자 확인용도
   const { id } = useParams();
@@ -44,7 +45,7 @@ const WriteDetail = () => {
   // };
       const fetchWriteDetail = async (id) => {
       try {
-        const response = await axios.get(`/writedetail/${id}`);
+        const response = await axios.get(`${url}/writedetail/${id}`);
         console.log("✅ response.data:", response.data);
         const data = response.data;
         setPost(data.write);
@@ -63,7 +64,7 @@ const WriteDetail = () => {
 
 
       const getReviewStatus = (endDate) => {
-      if (!endDate) return '첨삭정보 없음';
+      if (!endDate) return '첨삭 제외';
       const now = new Date();
       const deadline = new Date(endDate);
       return deadline > now ? '첨삭가능' : '첨삭종료';
@@ -78,13 +79,18 @@ const WriteDetail = () => {
     };
 
     const handleSubmitComment = async () => {
+      if (!token || !token.access_token) {
+        alert("로그인이 필요한 서비스입니다."); // 👉 안내 메시지
+        navigate('/login'); // 👉 로그인 페이지로 이동
+        return;
+      }
       if (!commentContent.trim()) {
         alert('댓글 내용을 입력해주세요.');
         return;
       }
 
       try {
-        await axios.post('/comments', {
+        await axios.post('${url}/my/comments', {
           content: commentContent,
           isSecret: isSecret,
           writeId: post.writeId,
@@ -104,7 +110,13 @@ const WriteDetail = () => {
         alert('댓글 등록 중 오류가 발생했습니다.');
       }
     };
-
+    const typeMap = {
+      bookreview: '독후감',
+      essay: '수필',
+      personal: '자기소개서',
+      assignment: '과제',
+      other: '기타',
+    };
   // 좋아요 처리
   const handleLike = () => {
     if (!isLoggedIn) {
@@ -135,7 +147,7 @@ const WriteDetail = () => {
     setReportContent('');
   };
 
-  // ✅ return문 시작 직전에 아래 조건 추가
+  // ✅ 디버깅용
   if (!post && !error) return <div>Loading...</div>;
   if (error) return <div>에러 발생: {error.message}</div>;
 
@@ -147,7 +159,9 @@ const WriteDetail = () => {
           <div className="flex">
             <div className="w-96 h-96 flex-shrink-0">
               {post.img ? (
-                <img src={post.img} alt={post.title} className="w-full h-full object-cover" />
+                <img src={`${url}/image?filename=${post.img}`}
+                alt=""
+                className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-[#E88D67] flex items-center justify-center">
                   <BookIcon className="w-24 h-24 text-white" />
@@ -158,7 +172,19 @@ const WriteDetail = () => {
             <div className="flex-1 p-8">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm font-medium rounded-full">{post.type}</span>
+                  <div className="flex items-center flex-wrap gap-2 mb-4">
+                  <span className="px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm font-medium rounded-full">{typeMap[post.type]}</span>
+                  {[post.tag1, post.tag2, post.tag3, post.tag4, post.tag5]
+                    .filter(Boolean)
+                    .map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 bg-[#FDF3F0] text-[#E88D67] text-sm font-medium rounded-full mr-2"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
                   <h1 className="text-3xl font-bold text-gray-800 mt-4 mb-6">{post.title}</h1>
                 </div>
 
@@ -189,12 +215,12 @@ const WriteDetail = () => {
               </div>
 
               {/* 작성자 프로필 */}
-              <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+              <div className="mt-8 p-6 bg-[#FDF3F0] rounded-lg">
                 <div className="flex items-center gap-4">
                   {post.profileImg ? (
                     <img
-                      src={post.profileImg}
-                      alt={post.nickname}
+                      src={`${url}/image?filename=${post.profileImg}`}
+                      alt=""
                       className="w-16 h-16 rounded-full object-cover"
                     />
                   ) : (
@@ -215,7 +241,7 @@ const WriteDetail = () => {
                   {getReviewStatus(post.endDate)}
                 </span>
                 {getReviewStatus(post.endDate) === '첨삭가능' && (
-                  <span>마감까지 {getTimeLeft(post.endDate)}</span>
+                  <span><span>•</span> 마감까지 {getTimeLeft(post.endDate)}</span>
                 )}
                 <span>•</span>
                 <span>{post.regDate?.split('T')[0]}</span>
@@ -231,9 +257,11 @@ const WriteDetail = () => {
 
         {/* 댓글 영역 */}
         <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">
+          <h2 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-6">
             <MessageSquareIcon className="w-5 h-5 text-[#006989]" />
-            첨삭 댓글 <span className="text-gray-500">({comments.length})</span>
+            <span>
+              첨삭 댓글 <span className="text-gray-500">({comments.length})</span>
+            </span>
           </h2>
 
           {/* 댓글 작성 폼 */}
@@ -246,27 +274,28 @@ const WriteDetail = () => {
               className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:border-[#006989] min-h-[120px] mb-3"
             />
 
-            <div className="flex items-center gap-2 mb-4">
-              <input
-                type="checkbox"
-                id="isSecret"
-                checked={isSecret}
-                onChange={(e) => setIsSecret(e.target.checked)}
-                className="w-4 h-4 accent-[#006989]"
-              />
-              <label htmlFor="isSecret" className="text-sm text-gray-600">
-                글 작성자에게만 보이기
-              </label>
+ 
+              <div className="flex items-center gap-4 mb-4 justify-end">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isSecret"
+                    checked={isSecret}
+                    onChange={(e) => setIsSecret(e.target.checked)}
+                    className="w-4 h-4 accent-[#006989]"
+                  />
+                  <label htmlFor="isSecret" className="text-sm text-gray-600">
+                    글쓴이에게만 보이기
+                  </label>
+                </div>
+                <button
+                  onClick={handleSubmitComment}
+                  className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
+                >
+                  작성하기
+                </button>
+              </div>
             </div>
-
-            <button
-              onClick={handleSubmitComment}
-              className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
-            >
-              작성하기
-            </button>
-          </div>
-            
           )}
 
           {/* 첨삭 댓글 목록 */}
