@@ -6,7 +6,6 @@ import { searchBook } from '@api/kakaoApi';
 import { getReviews, writeReview } from '@api/book';
 import { useAtomValue } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms'; // 로그인 사용자 정보
-import StarRatingInput from '@components/book/StarRatingInput';
 import StarRatingSvg from '@components/book/StarRatingSvg';
 
 export default function BookDetail() {
