@@ -205,15 +205,10 @@ export default function BookSearch() {
                   </Link>
                   <div className="mb-1">저자 | {book.authors.join(', ')}</div>
                   <div className="mb-1">출판 | {book.publisher}</div>
-                  <div className="mb-1">
-                    발행 | {book.datetime.split('T')[0]}
+                  <div className="mb-8">
+                    발행 | {book.datetime.split('T')[0].split('-').join('.')}
                   </div>
 
-                  <div className="flex items-center text-[#E88D67] mb-2 text-sm">
-                    <StarIcon className="w-4 h-4 text-[#E88D67] fill-[#E88D67] mr-2" />
-                    <span className="text-black">4.4</span>
-                    <span className="text-gray-600 ml-1">(152)</span>
-                  </div>
                   <HeartIcon
                     className={`w-6 h-6 ${
                       isLiked

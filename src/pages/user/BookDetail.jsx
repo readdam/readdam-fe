@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StarIcon, HeartIcon, LockIcon } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { searchBook } from '@api/kakaoApi';
-import { getReviews, writeReview } from '@api/book';
+import { getReviews, getReviewStats, writeReview } from '@api/book';
 import { useAtomValue } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms'; // 로그인 사용자 정보
 import StarRatingSvg from '@components/book/StarRatingSvg';
@@ -23,12 +23,14 @@ export default function BookDetail() {
     enabled: !!param.isbn,
   });
 
-  const isbnParam = decodeURIComponent(param.isbn); // 공백 포함된 ISBN 복원
+  const { data: stats, isError } = useQuery({
+    queryKey: ['reviewStats', param.isbn],
+    queryFn: async () => await getReviewStats(param.isbn),
+    enabled: !!param.isbn,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => {
-    console.log(data);
-    console.log(param.isbn);
-  }, [data, param]);
+  const isbnParam = decodeURIComponent(param.isbn); // 공백 포함된 ISBN 복원
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -51,13 +53,6 @@ export default function BookDetail() {
     enabled: !!isbnParam && !!username,
   });
 
-  useEffect(() => {
-    console.log('isbnParam:', isbnParam);
-    console.log('username:', username);
-
-    console.log(reviewPage);
-  }, [reviewPage]);
-
   const indexOfLast = currentPage * reviewsPerPage;
   const indexOfFirst = indexOfLast - reviewsPerPage;
   // const currentReviews = allReviews.slice(indexOfFirst, indexOfLast);
@@ -67,6 +62,10 @@ export default function BookDetail() {
 
   const [comment, setComment] = useState('');
   const [isHide, setIsHide] = useState(false);
+  const [activeTab, setActiveTab] = useState('review');
+  const reviewRef = useRef(null);
+  const meetingRef = useRef(null);
+  const lifeBookRef = useRef(null);
 
   const handleSubmitReview = async () => {
     if (!comment.trim()) {
@@ -124,7 +123,9 @@ export default function BookDetail() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-sm">책 리뷰</span>
-              <span className="text-sm text-[#006989] font-bold">1,032</span>
+              <span className="text-sm text-[#006989] font-bold">
+                {stats.reviewCount.toLocaleString()}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex gap-1">
@@ -132,16 +133,20 @@ export default function BookDetail() {
                   <StarIcon
                     key={i}
                     className={`w-4 h-4 ${
-                      i < 4 ? 'fill-[#E88D67] text-[#E88D67]' : 'text-gray-300'
+                      i < Math.round(stats.averageRating)
+                        ? 'fill-[#E88D67] text-[#E88D67]'
+                        : 'text-gray-300'
                     }`}
                   />
                 ))}
               </div>
-              <span className="font-semibold text-sm">4.4</span>
+              <span className="font-semibold text-sm">
+                {stats.averageRating.toFixed(1)}
+              </span>
             </div>
           </div>
 
-          <p className="text-sm text-gray-700 mb-4">{book.contents}</p>
+          <p className="text-sm text-gray-700 mb-4">{book.contents}...</p>
 
           <button
             className="bg-[#006989] text-white w-24 h-10 rounded-lg text-xs font-bold cursor-pointer"
@@ -153,13 +158,55 @@ export default function BookDetail() {
       </div>
 
       {/* 리뷰 작성 */}
-      <div className="mt-10">
-        <div className="border-b border-gray-300 mb-4 flex gap-6 text-sm">
-          <button className="font-semibold border-b-2 border-[#005C78] pb-1 cursor-pointer text-[#005C78]">
-            리뷰(1,032)
+      <div ref={reviewRef} id="reviewSection" className="mt-10">
+        <div className="sticky pt-4 top-0 bg-white z-10 border-b border-gray-300 mb-4 flex gap-6 text-sm">
+          <button
+            className={`pb-1 cursor-pointer ${
+              activeTab === 'review'
+                ? 'text-[#005C78] font-semibold border-b-2 border-[#005C78]'
+                : 'text-gray-500'
+            }`}
+            onClick={() => {
+              setActiveTab('review');
+              document
+                .getElementById('reviewSection')
+                ?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            리뷰({stats.reviewCount.toLocaleString()})
           </button>
-          <button className="text-gray-500">모임</button>
-          <button className="text-gray-500">인생책</button>
+
+          <button
+            className={`pb-1 cursor-pointer ${
+              activeTab === 'meeting'
+                ? 'text-[#005C78] font-semibold border-b-2 border-[#005C78]'
+                : 'text-gray-500'
+            }`}
+            onClick={() => {
+              setActiveTab('meeting');
+              document
+                .getElementById('meetingSection')
+                ?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            모임
+          </button>
+
+          <button
+            className={`pb-1 cursor-pointer ${
+              activeTab === 'lifeBook'
+                ? 'text-[#005C78] font-semibold border-b-2 border-[#005C78]'
+                : 'text-gray-500'
+            }`}
+            onClick={() => {
+              setActiveTab('lifeBook');
+              document
+                .getElementById('lifeBookSection')
+                ?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            인생책
+          </button>
         </div>
 
         <div className="mb-4">
@@ -267,7 +314,7 @@ export default function BookDetail() {
       </div>
 
       {/* 추천 도서 */}
-      <div className="mt-12">
+      <div ref={meetingRef} id="meetingSection" className="mt-12">
         <h2 className="text-lg font-bold mb-4">📚 이 책을 주제로 한 모임</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((id) => (
@@ -290,7 +337,7 @@ export default function BookDetail() {
       </div>
 
       {/* 이 책이 인생책인 회원 */}
-      <div className="mt-12">
+      <div ref={lifeBookRef} id="lifeBookSection" className="mt-12">
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
           <HeartIcon className="w-6 h-6  text-[#E88D67]" /> 이 책이 인생책인
           회원
