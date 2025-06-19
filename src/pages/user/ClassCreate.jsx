@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
 import axios from 'axios';
-import { url } from 'src/config/config';
+import { url } from '../../config/config';
 import {
   CalendarIcon,
   ImageIcon,
