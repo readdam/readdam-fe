@@ -9,9 +9,14 @@ import {
   ClockIcon,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from '../../atoms';
+
 
 const WriteList = () => {
   const navigate = useNavigate()
+  const [token] = useAtom(tokenAtom);
+
 
 const getReviewStatus = (needReview, endDate) => {
   if (!needReview || !endDate) return '첨삭제외'
@@ -69,10 +74,20 @@ const typeMap = {
               읽담한줄
             </button>
           </div>
-          <Link to="/writeCreate" className="px-6 py-2.5 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center">
-            <PenIcon className="w-5 h-5 mr-2" />
-            글쓰기
-          </Link>
+          <button
+          onClick={() => {
+            if (!token || !token.access_token) {
+              alert("로그인이 필요한 서비스입니다.");
+              navigate("/login");
+              return;
+            }
+            navigate('/writeCreate');
+          }}
+          className="px-6 py-2.5 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center"
+        >
+          <PenIcon className="w-5 h-5 mr-2" />
+          글쓰기
+        </button>
         </div>
 
         {/* 필터 및 검색 영역 */}
