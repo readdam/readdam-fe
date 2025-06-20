@@ -9,7 +9,7 @@ export function RoomList({
   if (rooms.length === 0) return null;
 
   return (
-    <section className="mb-8 space-y-4">
+    <div className="mb-8 space-y-4">
       <h3 className="font-medium text-gray-700">등록된 방 목록</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {rooms.map((room) => (
@@ -66,6 +66,6 @@ export function RoomList({
           </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

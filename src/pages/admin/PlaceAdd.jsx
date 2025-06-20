@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// import { myAxios } from '@utils/axios'; // 네 axios 유틸
 import BasicInfoSection from '@components/admin/place/BasicInfoSection';
 import { AvailableTimeSection } from '@components/admin/place/AvailableTimeSection';
 import PlaceDetailForm from '@components/admin/place/PlaceDetailForm';
 import { RoomList } from '@components/admin/place/RoomList';
 import RoomForm from '@components/admin/place/RoomForm';
+import { ArrowLeft } from 'lucide-react';
+import axios from 'axios';
+import { url } from '../../config/config';
 
 const facilityOptions = {
   airConditioner: { label: '에어컨', emoji: '❄️' },
@@ -75,46 +76,117 @@ export default function PlaceAdd() {
     setRooms(rooms.filter((r) => r.id !== roomId));
   };
 
+  function dataURLtoFile(dataurl, filename) {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], filename, { type: mime });
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const formData = new FormData();
+
+    // ✅ placeDto
     const placeDto = {
       name: placeName,
-      address: placeAddress,
+      location: placeAddress,
       phone: phoneNumber,
       introduce: introduceText,
-      tags: keywords,
-      openWeekdays: selectedWeekdaySlots,
-      openWeekends: selectedWeekendSlots,
-      placeImages: [imagePreview],
+      tag1: keywords[0] || null,
+      tag2: keywords[1] || null,
+      tag3: keywords[2] || null,
+      tag4: keywords[3] || null,
+      tag5: keywords[4] || null,
+      tag6: keywords[5] || null,
+      tag7: keywords[6] || null,
+      tag8: keywords[7] || null,
+      tag9: keywords[8] || null,
+      tag10: keywords[9] || null,
     };
+    formData.append(
+      'placeDto',
+      new Blob([JSON.stringify(placeDto)], { type: 'application/json' })
+    );
 
-    const roomDtos = rooms.map((room) => ({
+    // ✅ roomDtoList
+    const roomDtoList = rooms.map((room) => ({
       name: room.name,
       description: room.description,
       size: room.size,
-      minCapacity: room.minCapacity,
-      maxCapacity: room.maxCapacity,
-      facilities: Object.entries(room.facilities)
-        .filter(([_, v]) => v)
-        .map(([k]) => k),
-      roomImages: room.images,
+      minPerson: room.minCapacity,
+      maxPerson: room.maxCapacity,
+      hasAirConditioner: room.facilities.airConditioner,
+      hasHeater: room.facilities.heater,
+      hasWifi: room.facilities.wifi,
+      hasWindow: room.facilities.window,
+      hasPowerOutlet: room.facilities.socket,
+      hasTv: room.facilities.tv,
+      hasProjector: room.facilities.projector,
+      hasWhiteboard: room.facilities.whiteboard,
     }));
+    formData.append(
+      'roomDtoList',
+      new Blob([JSON.stringify(roomDtoList)], { type: 'application/json' })
+    );
 
-    const payload = {
-      place: placeDto,
-      rooms: roomDtos,
-    };
+    // ✅ sharedTimeSlots
+    const sharedTimeSlots = [
+      ...selectedWeekdaySlots.map((time) => ({
+        time,
+        isWeekend: false,
+        active: true,
+      })),
+      ...selectedWeekendSlots.map((time) => ({
+        time,
+        isWeekend: true,
+        active: true,
+      })),
+    ];
+    formData.append(
+      'sharedTimeSlots',
+      new Blob([JSON.stringify(sharedTimeSlots)], { type: 'application/json' })
+    );
 
-    // try {
-    //   await myAxios().post('/main/place', payload);
-    //   alert('장소 등록 완료!');
-    //   navigate('/otherPlaceList');
-    // } catch (err) {
-    //   alert('등록 실패!');
-    //   console.error(err);
-    // }
+    // ✅ placeImages (imagePreviews → File 변환)
+    imagePreviews.forEach((base64, i) => {
+      const file = dataURLtoFile(base64, `place_${i}.jpg`);
+      formData.append('placeImages', file);
+    });
+
+    // ✅ roomImagesMap
+    rooms.forEach((room, roomIndex) => {
+      room.images.forEach((base64, imageIndex) => {
+        const file = dataURLtoFile(
+          base64,
+          `room_${roomIndex}_${imageIndex}.jpg`
+        );
+        formData.append(
+          'roomImagesMap',
+          file,
+          `room_${roomIndex}_${imageIndex}.jpg`
+        );
+      });
+    });
+
+    try {
+      await axios.post(`${url}/placeAdd`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      alert('장소 등록 완료!');
+      navigate('/adminPlaceList'); //  일단 목록으로 보냄
+    } catch (err) {
+      console.error(err);
+      alert('등록 실패!');
+    }
   };
+
   const [imagePreviews, setImagePreviews] = useState([]);
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
@@ -156,7 +228,16 @@ export default function PlaceAdd() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 max-w-4xl mx-auto space-y-8">
+    <div className="p-6 max-w-4xl mx-auto space-y-8">
+      <div className="flex items-center gap-4 mb-8">
+        <button className="p-2 hover:bg-gray-100 rounded-lg">
+          <ArrowLeft
+            className="w-6 h-6"
+            onClick={() => navigate('/otherPlaceList')}
+          />
+        </button>
+        <h1 className="text-2xl font-bold">새 장소 추가</h1>
+      </div>
       <BasicInfoSection
         placeName={placeName}
         setPlaceName={setPlaceName}
@@ -184,34 +265,36 @@ export default function PlaceAdd() {
         setImagePreviews={setImagePreviews}
         handleImageUpload={handleImageUpload}
       />
+      <section className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-lg font-semibold mb-6">방 정보</h2>
+        <RoomList
+          rooms={rooms}
+          handleEditRoom={handleEditRoom}
+          handleDeleteRoom={handleDeleteRoom}
+          facilityOptions={facilityOptions}
+        />
 
-      <RoomList
-        rooms={rooms}
-        handleEditRoom={handleEditRoom}
-        handleDeleteRoom={handleDeleteRoom}
-        facilityOptions={facilityOptions}
-      />
-
-      <RoomForm
-        currentRoom={currentRoom}
-        setCurrentRoom={setCurrentRoom}
-        editingRoom={editingRoom}
-        handleAddRoom={handleAddRoom}
-        handleCancelEdit={() => {
-          setCurrentRoom(createInitialRoom());
-          setEditingRoom(null);
-        }}
-        images={currentRoom.images}
-        setImages={setImages}
-        handleRoomImageUpload={handleRoomImageUpload}
-        handleRemoveImage={handleRemoveRoomImage}
-        facilityOptions={facilityOptions}
-      />
-
+        <RoomForm
+          currentRoom={currentRoom}
+          setCurrentRoom={setCurrentRoom}
+          editingRoom={editingRoom}
+          handleAddRoom={handleAddRoom}
+          handleCancelEdit={() => {
+            setCurrentRoom(createInitialRoom());
+            setEditingRoom(null);
+          }}
+          images={currentRoom.images}
+          setImages={setImages}
+          handleRoomImageUpload={handleRoomImageUpload}
+          handleRemoveImage={handleRemoveRoomImage}
+          facilityOptions={facilityOptions}
+        />
+      </section>
       <div className="flex gap-4">
         <button
           type="submit"
           className="flex-1 px-6 py-3 bg-[#006989] text-white rounded-lg"
+          onClick={handleSubmit}
         >
           저장하기
         </button>
@@ -223,6 +306,6 @@ export default function PlaceAdd() {
           취소
         </button>
       </div>
-    </form>
+    </div>
   );
 }
