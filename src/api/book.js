@@ -37,3 +37,10 @@ export const writeReview = async ({
   );
   return res.data;
 };
+
+export const getReviewStats = async (isbn) => {
+  const response = await axios.get(`${url}/book/reviews/stats`, {
+    params: { bookIsbn: isbn },
+  });
+  return response.data; // { bookIsbn, reviewCount, averageRating }
+};
