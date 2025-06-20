@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ThumbsUpIcon, ShareIcon, PencilIcon, MessageSquareIcon, CheckCircleIcon, UserIcon, HeartIcon } from 'lucide-react';
+import { BookIcon, ShareIcon, PencilIcon, MessageSquareIcon, CheckCircleIcon, UserIcon, HeartIcon } from 'lucide-react';
 import singoIcon from '@assets/singo.png';
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
@@ -45,7 +45,7 @@ const WriteDetail = () => {
   // };
       const fetchWriteDetail = async (id) => {
       try {
-        const response = await axios.get(`${url}/writedetail/${id}`);
+        const response = await axios.get(`${url}/writeDetail/${id}`);
         console.log("✅ response.data:", response.data);
         const data = response.data;
         setPost(data.write);
@@ -67,7 +67,7 @@ const WriteDetail = () => {
       if (!endDate) return '첨삭 제외';
       const now = new Date();
       const deadline = new Date(endDate);
-      return deadline > now ? '첨삭가능' : '첨삭종료';
+      return deadline > now ? '첨삭 가능' : '첨삭 종료';
     };
 
     const getTimeLeft = (endDate) => {
@@ -90,7 +90,7 @@ const WriteDetail = () => {
       }
 
       try {
-        await axios.post('${url}/my/comments', {
+        await axios.post(`${url}/my/comments`, {
           content: commentContent,
           isSecret: isSecret,
           writeId: post.writeId,
