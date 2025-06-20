@@ -37,8 +37,9 @@ const Join = () => {
         password: formData.password,
         phone: formData.phone,
         email: formData.email,
-        birth: formData.birthdate,
+        birth: formData.birth,
         introduce: formData.introduction,
+        isAdmin: false 
       };
 
       const res = await axios.post(`${url}/join`, payload);
@@ -193,8 +194,8 @@ const Join = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">생년월일</label>
                       <input
                         type="date"
-                        name="birthdate"
-                        value={formData.birthdate}
+                        name="birth"
+                        value={formData.birth}
                         onChange={handleFormChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
                       />

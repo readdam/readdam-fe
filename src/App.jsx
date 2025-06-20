@@ -75,33 +75,33 @@ function App() {
         <Route path="/fail" element={<Fail />} />
 
         <Route element={<AdminRoutes />}>
-          <Route path="/adminUserList" element={<AdminUserList />} />
+          <Route path="/admin/userList" element={<AdminUserList />} />
           <Route
-            path="/adminUserDeletedList"
+            path="/admin/userDeletedList"
             element={<AdminUserDeletedList />}
           />
-          <Route path="/adminClassList" element={<AdminClassList />} />
-          <Route path="/adminClassDetail" element={<AdminClassDetail />} />
-          <Route path="/adminPlaceList" element={<PlaceList />} />
-          <Route path="/adminPlaceAdd" element={<PlaceAdd />} />
+          <Route path="/admin/classList" element={<AdminClassList />} />
+          <Route path="/admin/classDetail" element={<AdminClassDetail />} />
+          <Route path="/admin/placeList" element={<PlaceList />} />
+          <Route path="/admin/placeAdd" element={<PlaceAdd />} />
           <Route
-            path="/adminPlaceReservationList"
+            path="/admin/placeReservationList"
             element={<PlaceReservationList />}
           />
-          <Route path="/adminOtherPlaceList" element={<OtherPlaceList />} />
-          <Route path="/adminOtherPlaceAdd" element={<OtherPlaceAdd />} />
-          <Route path="/adminPointStats" element={<AdminPointStats />} />
-          <Route path="/adminReportList" element={<AdminReportList />} />
-          <Route path="/adminAlertList" element={<AdminAlertList />} />
-          <Route path="/adminAlertCreate" element={<AdminAlertCreate />} />
-          <Route path="/adminNotice" element={<AdminNotice />} />
-          <Route path="/adminEventReg" element={<AdminEventReg />} />
+          <Route path="/admin/otherPlaceList" element={<OtherPlaceList />} />
+          <Route path="/admin/otherPlaceAdd" element={<OtherPlaceAdd />} />
+          <Route path="/admin/pointStats" element={<AdminPointStats />} />
+          <Route path="/admin/reportList" element={<AdminReportList />} />
+          <Route path="/admin/alertList" element={<AdminAlertList />} />
+          <Route path="/admin/alertCreate" element={<AdminAlertCreate />} />
+          <Route path="/admin/notice" element={<AdminNotice />} />
+          <Route path="/admin/eventReg" element={<AdminEventReg />} />
           <Route
-            path="/adminEventJoinedList"
+            path="/admin/eventJoinedList"
             element={<AdminEventJoinedList />}
           />
-          <Route path="/adminInquiryList" element={<AdminInquiryList />} />
-          <Route path="/adminBannerList" element={<AdminBannerList />} />
+          <Route path="/admin/inquiryList" element={<AdminInquiryList />} />
+          <Route path="/admin/bannerList" element={<AdminBannerList />} />
         </Route>
 
         <Route element={<UserRoutes />}>
