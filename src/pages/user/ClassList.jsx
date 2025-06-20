@@ -45,7 +45,7 @@ const ClassList = () => {
       venue: '타 장소',
     },
     {
-      id: 1,
+      id: 3,
       title: '세계 문학 클래식 완독',
       tags: ['세계문학', '고전', '장편소설'],
       schedule: '시작일 2024.02.01 19:00',
@@ -57,7 +57,7 @@ const ClassList = () => {
       venue: '읽담',
     },
     {
-      id: 2,
+      id: 4,
       title: '철학 고전 깊이 읽기',
       tags: ['철학', '인문학', '토론'],
       schedule: '시작일 2024.02.05 20:00',
