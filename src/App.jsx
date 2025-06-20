@@ -60,13 +60,18 @@ import ClassCreate from '@pages/user/ClassCreate';
 import ClassDetail from '@pages/user/ClassDetail';
 import PlaceEdit from '@pages/admin/PlaceEdit';
 import OtherPlaceEdit from '@pages/admin/OtherPlaceEdit';
-import PrivateRoute from '@routes/PrivateRoute';
 import Success from '@pages/my/Success';
 import Fail from '@pages/my/Fail';
 import MyInquiryWrite from '@pages/my/MyInquiryWrite';
-
+import axiosInstance from '@api/axiosInstance';
+import { useEffect } from 'react';
 
 function App() {
+
+  useEffect(() => {
+
+  }, []);
+
   return (
     <>
       <Routes>
@@ -127,7 +132,6 @@ function App() {
           <Route path="/classDetail" element={<ClassDetail />} />
         </Route>
 
-        {/* <Route element={<PrivateRoute />}> */}
         <Route element={<MyRoutes />}>
           <Route path="/myProfile" element={<MyProfile />} />
           <Route path="/myLibrary" element={<MyLibrary />} />
