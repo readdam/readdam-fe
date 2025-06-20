@@ -63,6 +63,8 @@ import OtherPlaceEdit from '@pages/admin/OtherPlaceEdit';
 import PrivateRoute from '@routes/PrivateRoute';
 import Success from '@pages/my/Success';
 import Fail from '@pages/my/Fail';
+import MyInquiryWrite from '@pages/my/MyInquiryWrite';
+
 
 function App() {
   return (
@@ -146,6 +148,7 @@ function App() {
           <Route path="/myPointList" element={<MyPointList />} />
           <Route path="/myAlert" element={<MyAlert />} />
           <Route path="/myInquiry" element={<MyInquiry />} />
+          <Route path="/myInquiryWrite" element={<MyInquiryWrite />} />
         </Route>
       </Routes>
     </>
