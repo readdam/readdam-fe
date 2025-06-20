@@ -70,7 +70,7 @@ const MyLayout = ({ children }) => {
     useEffect(() => {
         if (!token?.access_token) return;
 
-        axios.post(`${url}/myProfile`, null, {
+        axios.post(`${url}/my/myProfile`, null, {
             headers: { Authorization: token.access_token },
             withCredentials: true,
         }).then(res => {

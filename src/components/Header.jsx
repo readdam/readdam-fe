@@ -7,6 +7,7 @@ const Header = () => {
   const [token, setToken] = useAtom(tokenAtom);
   const [user, setUser] = useAtom(userAtom);
   const navigate = useNavigate();
+  const isAdmin = user?.isAdmin === true;
 
   // ✅ 저장된 토큰/유저 복원
   useEffect(() => {
@@ -112,6 +113,16 @@ const Header = () => {
                 <Link to="/myLibrary" className="px-3 py-1.5 text-sm text-white bg-[#E88D67] rounded hover:opacity-90">
                   마이페이지
                 </Link>
+
+                    {/* ✅ 관리자 버튼 */}
+                {isAdmin && (
+                <Link
+                  to="admin/userList"
+                  className="px-3 py-1.5 text-sm border border-[#006989] text-[#006989] bg-white rounded hover:bg-gray-50"
+                >
+                  관리자
+                </Link>
+                )}
               </>
             ) : (
               <>
