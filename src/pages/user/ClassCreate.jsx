@@ -17,8 +17,8 @@ const ClassCreate = () => {
     title: '',
     shortDescription: '',
     tags: [],
-    minParticipants: null,
-    maxParticipants: null,
+    minParticipants: '',
+    maxParticipants: '',
     sessionCount: 3,
     venue: '읽담',
     venueName: '',
@@ -32,21 +32,21 @@ const ClassCreate = () => {
   })
 
   // 이미지(미리보기용 포함) 
-  const [mainImg, setMainImg] = useState(null);
-  const [mainImgPreview, setMainImgPreview] = useState(null);
+  const [mainImgF, setMainImgF] = useState('');
+  const [mainImgFPreview, setMainImgFPreview] = useState('');
 
-  const [leaderImg, setLeaderImg] = useState(null);
-  const [leaderImgPreview, setLeaderImgPreview] = useState(null);
+  const [leaderImgF, setLeaderImgF] = useState('');
+  const [leaderImgFPreview, setLeaderImgFPreview] = useState('');
 
   const [roundImgs, setRoundImgs] = useState({
-    round1Img: null,
-    round1Bookimg: null,
-    round2Img: null,
-    round2Bookimg: null,
-    round3Img: null,
-    round3Bookimg: null,
-    round4Img: null,
-    round4Bookimg: null,
+    round1ImgF: '',
+    round1BookimgF: '',
+    round2ImgF: '',
+    round2BookimgF: '',
+    round3ImgF: '',
+    round3BookimgF: '',
+    round4ImgF: '',
+    round4BookimgF: '',
   });
   const [roundImgPreviews, setRoundImgPreviews] = useState({});
 
@@ -67,16 +67,23 @@ const ClassCreate = () => {
   const handleMainImgChange = (e) => {
     const file = e.target.files[0];
     if(file) {
-      setMainImg(file);
-      setMainImgPreview(URL.createObjectURL(file));
-    }
+      setMainImgF(file);
+      setMainImgFPreview(URL.createObjectURL(file));
+    } 
+    console.log('mainImgF file:', file);
+  };
+
+  const removeMainImgF = (e) => {
+    e.preventDefault();
+    setMainImgF('');
+    setMainImgFPreview('');
   };
 
   const handleLeaderImgChange = (e) => {
     const file = e.target.files[0];
     if(file){
-      setLeaderImg(file);
-      setLeaderImgPreview(URL.createObjectURL(file));
+      setLeaderImgF(file);
+      setLeaderImgFPreview(URL.createObjectURL(file));
     }
   };
 
@@ -103,17 +110,22 @@ const ClassCreate = () => {
     submitData.append("tag2", tagArray[1] || "");
     submitData.append("tag3", tagArray[2] || "");
    
-    // 이미지 시작
+    // 이미지 append
     // 대표 이미지
-  if (mainImg) submitData.append("mainImg", mainImg);
-
+  if (mainImgF) {
+    submitData.append("mainImgF", mainImgF);
+    submitData.append("mainImg", mainImgF.name);
+  }
   // 리더 이미지
-  if (leaderImg) submitData.append("leaderImg", leaderImg);
-
+  if (leaderImgF) {
+    submitData.append("leaderImgF", leaderImgF);
+    submitData.append("leaderImg", leaderImgF.name);
+  }
   // 회차 이미지들
   Object.entries(roundImgs).forEach(([key, file]) => {
     if (file) {
       submitData.append(key, file);
+      submitData.append(key, file.name);
     }
   });
 
@@ -195,6 +207,8 @@ const ClassCreate = () => {
       dates: [],
     })
   }
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-[1200px]">
@@ -471,23 +485,25 @@ const ClassCreate = () => {
                       {index + 1}회차 진행 상세 내용
                     </h3>
                     <div className="flex gap-4 mb-4">
-                      <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                        <label htmlFor="roundImgsUpload" >
+                      <label htmlFor="roundImgsUpload" className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
                         {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
                         {!roundImgPreviews && (
                           <>
-                        <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                                <label className="text-sm text-gray-500">
-                          이미지 업로드
-                                </label>
+                          <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                            <label className="text-sm text-gray-500">
+                              이미지 업로드
+                            </label>
                           </>
                         )}
                         {roundImgPreviews && (
                           <img src={roundImgPreviews} alt="미리보기" className="w-32 h-32 object-cover mt-2" />
                         )}
-                        </label>
-                        <input id="roundImgsUpload" type="file" accept="image/*" onChange={handleRoundImageChange} className='hidden'/>
-                      </div>
+                        <input id="roundImgsUpload" 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleRoundImageChange} 
+                        className='hidden'/>
+                      </label>
                       <textarea
                         className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
                         placeholder={`${index + 1}회차 진행 내용을 입력해주세요`}
@@ -525,20 +541,29 @@ const ClassCreate = () => {
               </label>
               <label htmlFor="mainImgUpload" className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
                 {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
-                {!mainImgPreview && (
+                {!mainImgFPreview && (
                   <>
-                <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-500">
-                      모임의 대표 이미지를 업로드해주세요
-                </span>
-                  </>
+                    <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-500">
+                          모임의 대표 이미지를 업로드해주세요
+                    </span>
+                      </>
                 )}
                 {/* 이미지가 있을 때만 미리보기 표시 */}
-                {mainImgPreview && (
-                  <img src={mainImgPreview} alt="미리보기" className="w-40 h-40 object-cover mt-2" />
+                {mainImgFPreview && (
+                  <>
+                    <img src={mainImgFPreview} alt="미리보기" className="w-40 h-40 object-cover mt-2" />
+                    <button
+                      onClick={removeMainImgF}
+                      className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                  </>
                 )}
+                <input id="mainImgUpload" type="file" accept="image/*" onChange={handleMainImgChange} className='hidden'/>
                 </label>
-                <input id="mainImgUpload" type="file" accept="image/*" onChange={handleMainImgChange} className='hidden'/>                  
+                                  
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -561,25 +586,27 @@ const ClassCreate = () => {
                 모임 리더 소개
               </label>
               <div className="flex gap-4">
-                <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                  
-                <label htmlFor="leaderImgUpload" className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                <label htmlFor="leaderImgUpload" className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
                   {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
-                  {!leaderImgPreview && (
+                  {!leaderImgFPreview && (
                     <>
-                  <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                      <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
                         <label className="text-sm text-gray-500">
                           이미지 업로드
                         </label>
                     </>
                   )}
                   {/* 이미지가 있을 때만 미리보기 표시 */}
-                  {leaderImgPreview && (
-                    <img src={leaderImgPreview} alt="미리보기" className="w-32 h-32 object-cover mt-2" />
+                  {leaderImgFPreview && (
+                    <img src={leaderImgFPreview} alt="미리보기" className="w-32 h-32 object-cover mt-2" />
                   )}
-                  </label>
-                  <input id="leaderImgUpload" type="file" accept="image/*" onChange={handleLeaderImgChange} className='hidden'/>                  
-                </div>
+                  <input id="leaderImgUpload" 
+                  type="file" 
+                  name="leaderImgF"
+                  accept="image/*" 
+                  onChange={handleLeaderImgChange} 
+                  className='hidden'/>                  
+                </label>
                 <textarea
                   className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
                   placeholder="모임 리더님을 소개해주세요"
