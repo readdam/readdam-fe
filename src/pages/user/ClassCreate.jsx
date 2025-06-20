@@ -476,9 +476,9 @@ const ClassCreate = () => {
                         {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
                         {!roundImgPreviews && (
                           <>
-                            <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                        <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
                                 <label className="text-sm text-gray-500">
-                                  이미지 업로드
+                          이미지 업로드
                                 </label>
                           </>
                         )}
@@ -527,10 +527,10 @@ const ClassCreate = () => {
                 {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
                 {!mainImgPreview && (
                   <>
-                    <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500">
+                <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
+                <span className="text-sm text-gray-500">
                       모임의 대표 이미지를 업로드해주세요
-                    </span>
+                </span>
                   </>
                 )}
                 {/* 이미지가 있을 때만 미리보기 표시 */}
@@ -567,7 +567,7 @@ const ClassCreate = () => {
                   {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
                   {!leaderImgPreview && (
                     <>
-                      <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                  <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
                         <label className="text-sm text-gray-500">
                           이미지 업로드
                         </label>
