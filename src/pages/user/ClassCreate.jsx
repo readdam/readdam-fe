@@ -1,4 +1,8 @@
 import React, { useState } from 'react'
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from '../../atoms';
+import axios from 'axios';
+import { url } from '../../config/config';
 import {
   CalendarIcon,
   ImageIcon,
@@ -9,13 +13,12 @@ import {
 } from 'lucide-react'
 
 const ClassCreate = () => {
-  const [showTempSaveModal, setShowTempSaveModal] = useState(false)
   const [form, setForm] = useState({
     title: '',
     shortDescription: '',
     tags: [],
-    minParticipants: 2,
-    maxParticipants: 4,
+    minParticipants: '',
+    maxParticipants: '',
     sessionCount: 3,
     venue: '읽담',
     venueName: '',
@@ -27,16 +30,158 @@ const ClassCreate = () => {
     description: '',
     leaderDescription: '',
   })
-  const handleSubmit = (e) => {
+
+  // 이미지(미리보기용 포함) 
+  const [mainImgF, setMainImgF] = useState('');
+  const [mainImgFPreview, setMainImgFPreview] = useState('');
+
+  const [leaderImgF, setLeaderImgF] = useState('');
+  const [leaderImgFPreview, setLeaderImgFPreview] = useState('');
+
+  const [roundImgs, setRoundImgs] = useState({
+    round1ImgF: '',
+    round1BookimgF: '',
+    round2ImgF: '',
+    round2BookimgF: '',
+    round3ImgF: '',
+    round3BookimgF: '',
+    round4ImgF: '',
+    round4BookimgF: '',
+  });
+  const [roundImgPreviews, setRoundImgPreviews] = useState({});
+
+  const handleRoundImageChange = (e, field) => {
+    const file = e.target.files[0];
+    if(file){
+    setRoundImgs((prev) => ({
+      ...prev,
+      [field]: file, 
+    }));
+    setRoundImgPreviews((prev)=>({
+      ...prev,
+      [field]: URL.createObjectURL(file),
+    }));
+    }
+  };
+
+  const handleMainImgChange = (e) => {
+    const file = e.target.files[0];
+    if(file) {
+      setMainImgF(file);
+      setMainImgFPreview(URL.createObjectURL(file));
+    } 
+    console.log('mainImgF file:', file);
+  };
+
+  const removeMainImgF = (e) => {
+    e.preventDefault();
+    setMainImgF('');
+    setMainImgFPreview('');
+  };
+
+  const handleLeaderImgChange = (e) => {
+    const file = e.target.files[0];
+    if(file){
+      setLeaderImgF(file);
+      setLeaderImgFPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const [token] = useAtom(tokenAtom);
+  const [user] = useAtom(userAtom);
+  const [showTempSaveModal, setShowTempSaveModal] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     // Handle form submission
     console.log('Form submitted:', form)
+    const submitData = new FormData();
+    submitData.append("title", form.title);
+    submitData.append("shortIntro", form.shortDescription);
+    submitData.append("minPerson", String(form.minParticipants ?? ''));
+    submitData.append("maxPerson", String(form.maxParticipants ?? ''));
+    submitData.append("classIntro", form.description);
+    submitData.append("leaderIntro", form.leaderDescription);
+    submitData.append("leaderUsername", user.username);
+
+    //태그 파싱
+    const tagArray = form.tags.map(tag => tag.trim()).filter(tag => tag);  // 공백 제거 + 빈 문자열 제거
+    submitData.append("tag1", tagArray[0] || "");
+    submitData.append("tag2", tagArray[1] || "");
+    submitData.append("tag3", tagArray[2] || "");
+   
+    // 이미지 append
+    // 대표 이미지
+  if (mainImgF) {
+    submitData.append("mainImgF", mainImgF);
+    submitData.append("mainImg", mainImgF.name);
   }
+  // 리더 이미지
+  if (leaderImgF) {
+    submitData.append("leaderImgF", leaderImgF);
+    submitData.append("leaderImg", leaderImgF.name);
+  }
+  // 회차 이미지들
+  Object.entries(roundImgs).forEach(([key, file]) => {
+    if (file) {
+      submitData.append(key, file);
+      submitData.append(key, file.name);
+    }
+  });
+
+    // === 회차별 공통 필드 ===
+  const sessionCount = form.sessionCount;
+
+  for (let i = 0; i < sessionCount; i++) {
+    const round = i + 1; // 1-based
+    const date = form.dates[i] || '';  // YYYY-MM-DD
+    const datetime = date ? `${date}T10:00:00` : '';  // ISO 형식으로 변환
+
+    submitData.append(`round${round}Date`, datetime);
+    submitData.append(`round${round}PlaceName`, form.venueName || '');
+    submitData.append(`round${round}PlaceLoc`, form.venueAddress || '');
+    submitData.append(`round${round}Content`, form.sessionDetails[i]?.description || '');
+    submitData.append(`round${round}Bookname`, '');     // 책 제목 (추후 구현)
+    submitData.append(`round${round}Bookwriter`, '');   // 책 저자
+    submitData.append(`round${round}Lat`, '');          // 위도
+    submitData.append(`round${round}Log`, '');          // 경도
+}
+
+// submitData 전송 확인 로그
+    for(let [key,value] of submitData.entries()){ 
+    console.log(`${key}: ${value}`);
+  }
+
+// 데이터 전송(axios)
+    console.log(token);
+    console.log('axios 전송 시작');
+     axios.post(`${url}/my/createClass`,submitData, {
+        headers: {
+          Authorization: token.access_token,
+        }
+      })
+            .then((res)=>{
+                console.log(res);
+                navigate(`/classDetail/${res.data.classId}`)
+            })
+            .catch((err)=>{
+                console.log('axios에러 발생:', err);
+            });
+  };
+
+  const addDays = (dateString, days) => {
+    const date = new Date(dateString)
+    date.setDate(date.getDate() + days)
+    return date.toISOString().split("T")[0]
+    }
+
+    //임시저장
   const handleTempSave = () => {
     setShowTempSaveModal(true)
-    // Handle temporary save logic
+    // 임시저장 로직 추가 예정
     console.log('Temporary saved:', form)
   }
+
   const handleTagToggle = (tag) => {
     if (form.tags.includes(tag)) {
       setForm({
@@ -50,6 +195,8 @@ const ClassCreate = () => {
       })
     }
   }
+
+  // 모임회차 선택(3회, 4회)에 따라 회차별 진행 상세내용 입력
   const handleSessionCountChange = (count) => {
     setForm({
       ...form,
@@ -60,6 +207,8 @@ const ClassCreate = () => {
       dates: [],
     })
   }
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-[1200px]">
@@ -153,13 +302,19 @@ const ClassCreate = () => {
                   <select
                     className="px-4 py-2 border border-gray-300 rounded-lg"
                     value={form.minParticipants}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                       const newMin = parseInt(e.target.value)
+                       const adjustedmax = form.maxParticipants < newMin ? newMin : form.maxParticipants 
                       setForm({
                         ...form,
-                        minParticipants
+                        minParticipants: newMin,
+                        maxParticipants: adjustedmax,
                       })
-                    }
+                    }}
                   >
+                    <option value="" disabled>
+                        최소 인원 선택
+                    </option>
                     {[2, 3, 4, 5, 6, 7, 8].map((num) => (
                       <option key={num} value={num}>
                         {num}명
@@ -173,11 +328,17 @@ const ClassCreate = () => {
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        maxParticipants
+                        maxParticipants: parseInt(e.target.value),
                       })
                     }
+                    disabled={!form.minParticipants}    //비활성화 조건
                   >
-                    {[4, 5, 6, 7, 8, 9, 10].map((num) => (
+                      <option value="" disabled>
+                            최대 인원 선택
+                        </option>
+                    {[4, 5, 6, 7, 8, 9, 10]
+                        .filter((num) => num >= form.minParticipants)
+                        .map((num) => (
                       <option key={num} value={num}>
                         {num}명
                       </option>
@@ -282,15 +443,21 @@ const ClassCreate = () => {
               <div className="space-y-4">
                 {Array.from({
                   length: form.sessionCount,
-                }).map((_, index) => (
+                }).map((_, index) => {
+                   const prevDate = form.dates[index - 1]
+                    const minDate = prevDate ? addDays(prevDate, 1) : undefined 
+      
+                return (
                   <div key={index} className="flex items-center gap-4">
                     <span className="text-sm text-gray-600 w-20">
                       {index + 1}회차:
                     </span>
                     <input
                       type="date"
+                      disabled={index > 0 && !form.dates[index - 1]}
                       className="px-4 py-2 border border-gray-300 rounded-lg"
                       value={form.dates[index] || ''}
+                      min={minDate}
                       onChange={(e) => {
                         const newDates = [...form.dates]
                         newDates[index] = e.target.value
@@ -301,7 +468,8 @@ const ClassCreate = () => {
                       }}
                     />
                   </div>
-                ))}
+                )
+                })}
               </div>
             </div>
             <div>
@@ -317,12 +485,25 @@ const ClassCreate = () => {
                       {index + 1}회차 진행 상세 내용
                     </h3>
                     <div className="flex gap-4 mb-4">
-                      <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                        <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                        <span className="text-sm text-gray-500">
-                          이미지 업로드
-                        </span>
-                      </div>
+                      <label htmlFor="roundImgsUpload" className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                        {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
+                        {!roundImgPreviews && (
+                          <>
+                          <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                            <label className="text-sm text-gray-500">
+                              이미지 업로드
+                            </label>
+                          </>
+                        )}
+                        {roundImgPreviews && (
+                          <img src={roundImgPreviews} alt="미리보기" className="w-32 h-32 object-cover mt-2" />
+                        )}
+                        <input id="roundImgsUpload" 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleRoundImageChange} 
+                        className='hidden'/>
+                      </label>
                       <textarea
                         className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
                         placeholder={`${index + 1}회차 진행 내용을 입력해주세요`}
@@ -355,15 +536,34 @@ const ClassCreate = () => {
           <div className="bg-white p-8 rounded-lg shadow space-y-6">
             <h2 className="text-xl font-bold text-gray-800 mb-6">추가 정보</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                커버 이미지 <span className="text-red-500">*</span>
+              <label htmlFor="mainImgUpload" className="block text-sm font-medium text-gray-700 mb-1">
+                대표 이미지 <span className="text-red-500">*</span>
               </label>
-              <div className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-500">
-                  커버 이미지를 업로드해주세요
-                </span>
-              </div>
+              <label htmlFor="mainImgUpload" className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
+                {!mainImgFPreview && (
+                  <>
+                    <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-500">
+                          모임의 대표 이미지를 업로드해주세요
+                    </span>
+                      </>
+                )}
+                {/* 이미지가 있을 때만 미리보기 표시 */}
+                {mainImgFPreview && (
+                  <>
+                    <img src={mainImgFPreview} alt="미리보기" className="w-40 h-40 object-cover mt-2" />
+                    <button
+                      onClick={removeMainImgF}
+                      className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+                <input id="mainImgUpload" type="file" accept="image/*" onChange={handleMainImgChange} className='hidden'/>
+                </label>
+                                  
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -386,10 +586,27 @@ const ClassCreate = () => {
                 모임 리더 소개
               </label>
               <div className="flex gap-4">
-                <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                  <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-500">이미지 업로드</span>
-                </div>
+                <label htmlFor="leaderImgUpload" className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                  {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
+                  {!leaderImgFPreview && (
+                    <>
+                      <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                        <label className="text-sm text-gray-500">
+                          이미지 업로드
+                        </label>
+                    </>
+                  )}
+                  {/* 이미지가 있을 때만 미리보기 표시 */}
+                  {leaderImgFPreview && (
+                    <img src={leaderImgFPreview} alt="미리보기" className="w-32 h-32 object-cover mt-2" />
+                  )}
+                  <input id="leaderImgUpload" 
+                  type="file" 
+                  name="leaderImgF"
+                  accept="image/*" 
+                  onChange={handleLeaderImgChange} 
+                  className='hidden'/>                  
+                </label>
                 <textarea
                   className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
                   placeholder="모임 리더님을 소개해주세요"
