@@ -4,11 +4,12 @@ import { useAtomValue } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
 import axios from 'axios';
 import { url } from '../../config/config';
+import { useSetAtom } from 'jotai';
 
 const PointHistory = () => {
     const [points, setPoints] = useState([]);
     const [visibleCount, setVisibleCount] = useState(15);
-
+    const setUser = useSetAtom(userAtom);
     const [activeTab, setActiveTab] = useState('전체');
 
     const navigate = useNavigate();
@@ -20,16 +21,19 @@ const PointHistory = () => {
 
         const fetchPoints = async () => {
             try {
-                const res = await axios.post(`${url}/myPointList`,null, {
+                const res = await axios.post(`${url}/my/myPointList`, null, {
                     headers: {
                         Authorization: token.access_token,
                     },
                 });
-                setPoints(res.data);
+
+                setPoints(res.data.pointList);
+                setUser(prev => ({ ...prev, totalPoint: res.data.totalPoint })); 
             } catch (err) {
                 console.error('포인트 내역 조회 실패:', err);
             }
         };
+
 
         fetchPoints();
     }, [token]);

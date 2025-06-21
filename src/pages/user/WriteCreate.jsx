@@ -1,4 +1,9 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from '../../atoms';
+import axios from 'axios';
+import { url } from '../../config/config';
 import {
   BookIcon,
   ClockIcon,
@@ -19,50 +24,96 @@ const WriteCreate = () => {
     needReview: false,
     reviewDeadline: '',
     title: '',
-    summary: '',
     tags: '',
     content: '',
-    image: null 
-  })
+    image: null
+  });
   const [showGuideQuestions, setShowGuideQuestions] = useState(true)
   const [isSpellchecking, setIsSpellchecking] = useState(false)
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // 실제 제출 로직 구현
-  }
-  const handleTempSave = () => {
-    // 임시저장 로직 구현
+  const [token] = useAtom(tokenAtom);
+  const [user] = useAtom(userAtom);
+  const [write, setWrite]  = useState({num:'',title:'',content:''});
+  const [ifile, setIfile] = useState(null);
+  const navigate = useNavigate();
+  const submit = (e) => {
+    e.preventDefault();
+    //일반필드
+    const submitData = new FormData();
+    submitData.append("type", formData.type);
+    submitData.append("title", formData.title);
+    submitData.append("content", formData.content);
+    submitData.append("username", user.username); 
+    submitData.append("visibility", formData.visibility);
+    if (formData.needReview && formData.reviewDeadline) {
+      const formattedDeadline = formData.reviewDeadline.length === 16
+        ? formData.reviewDeadline + ':00'
+        : formData.reviewDeadline;
+      submitData.append("endDate", formattedDeadline);
+    }
+    //태그 파싱
+    const tagArray = formData.tags 
+    .split('#')
+    .map(tag => tag.trim())
+    .filter(tag => tag); // 공백 제거 + 빈 문자열 제거
+    submitData.append("tag1", tagArray[0] || "");
+    submitData.append("tag2", tagArray[1] || "");
+    submitData.append("tag3", tagArray[2] || "");
+    submitData.append("tag4", tagArray[3] || "");
+    submitData.append("tag5", tagArray[4] || "");
+    //이미지
+    if (ifile) submitData.append("ifile", ifile); 
+    console.log(token);
+      axios.post(`${url}/my/write`, submitData, {
+        headers: {
+          Authorization: token.access_token,
+        }
+      })
+      .then((res) => {
+        console.log(res);
+        navigate(`/writeDetail/${res.data.writeId}`); 
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  };
+  const TempSave = () => {
+    // 임시저장 로직 구현 필요
     alert('임시 저장되었습니다. 나의 글쓰기 목록에서 확인할 수 있어요.')
   }
-  const handleSpellCheck = () => {
+  const SpellCheck = () => {
     setIsSpellchecking(true)
-    // 맞춤법 검사 로직 구현
+    // 맞춤법 검사 로직 구현 필요
     setTimeout(() => {
       setIsSpellchecking(false)
       alert('맞춤법 검사가 완료되었습니다.')
     }, 1500)
   }
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
+    const readURL = (input) => {
+      const file = input.target.files[0]; 
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
         setFormData({
           ...formData,
-          image: reader.result,
-        })
-      }
-      reader.readAsDataURL(file)
+          image: e.target.result, 
+        });
+      };
+
+      reader.readAsDataURL(file);
+      setIfile(file); 
+    };
+    const edit = (e) => {
+        setWrite({...write, [e.target.name]:e.target.value});
     }
-  }
+
   const handleSearchCover = () => {
-    // 북커버 검색 로직 구현
+    // 북커버 검색 로직 구현 필요
     alert('북커버 검색 기능은 준비 중입니다.')
   }
   return (
     <div className="w-full bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={submit}>
           {/* 상단 제목 영역 */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-6">
@@ -89,10 +140,11 @@ const WriteCreate = () => {
                     required
                   >
                     <option value="">선택해주세요</option>
-                    <option value="review">독후감</option>
+                    <option value="bookreview">독후감</option>
                     <option value="essay">수필</option>
                     <option value="personal">자기소개서</option>
                     <option value="assignment">과제</option>
+                    <option value="other">기타</option>
                   </select>
                 </div>
                 {/* 공개 범위 선택 */}
@@ -107,6 +159,7 @@ const WriteCreate = () => {
                       setFormData({
                         ...formData,
                         visibility: e.target.value,
+                        needReview: e.target.value === 'private' ? false : formData.needReview // 비공개 선택 시 첨삭 해제
                       })
                     }
                     required
@@ -153,9 +206,10 @@ const WriteCreate = () => {
                         이미지 첨부
                         <input
                         type="file"
+                        name="ifile" 
                         accept="image/*"
                         className="hidden"
-                        onChange={handleImageUpload}
+                        onChange={readURL}
                         />
                     </label>
                     </div>
@@ -176,10 +230,15 @@ const WriteCreate = () => {
                       needReview: e.target.checked,
                     })
                   }
+                  disabled={formData.visibility === 'private'} //비공개 선택 시 체크박스 비활성
                 />
                 <label
                   htmlFor="needReview"
-                  className="text-sm font-medium text-gray-700"
+                    className={`text-sm font-medium ${
+                    formData.visibility === 'private'
+                      ? 'text-gray-400 cursor-not-allowed' //비공개 선택 시 텍스트 흐리게
+                      : 'text-gray-700'
+                  }`}
                 >
                   첨삭 받기를 원합니다
                 </label>
@@ -283,7 +342,7 @@ const WriteCreate = () => {
             <div className="flex items-center gap-4">
               <button
                 type="button"
-                onClick={handleSpellCheck}
+                onClick={SpellCheck}
                 className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-2"
               >
                 <CheckCircleIcon className="w-5 h-5" />
@@ -293,7 +352,7 @@ const WriteCreate = () => {
             <div className="flex items-center gap-4">
               <button
                 type="button"
-                onClick={handleTempSave}
+                onClick={TempSave}
                 className="px-6 py-2 text-[#006989] border border-[#006989] rounded-lg hover:bg-[#F3F7EC] transition-colors flex items-center gap-2"
               >
                 <SaveIcon className="w-5 h-5" />

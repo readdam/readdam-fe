@@ -8,9 +8,13 @@ import {
   ChevronDownIcon,
   FilterIcon,
 } from 'lucide-react';
+import { useNavigate } from 'react-router';
 const BookPage = () => {
   const [activeCategory, setActiveCategory] = useState('전체');
   const [period, setPeriod] = useState('주간');
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
   const categories = [
     '전체',
     '소설',
@@ -134,14 +138,27 @@ const BookPage = () => {
               </p>
             </div>
             <div className="mt-4 md:mt-0">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="도서, 작가, 출판사 검색하세요"
-                  className="w-full md:w-80 px-4 py-2 pl-10 bg-white/20 border border-white border-opacity-30 rounded-lg focus:outline-none text-white placeholder-white text-opacity-70"
-                />
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white" />
-              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  navigate(
+                    `/bookSearch?query=${encodeURIComponent(
+                      searchQuery
+                    )}&page=1`
+                  );
+                }}
+              >
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="도서, 작가, 출판사 검색하세요"
+                    className="w-full md:w-80 px-4 py-2 pl-10 bg-white/20 border border-white border-opacity-30 rounded-lg focus:outline-none text-white placeholder-white text-opacity-70"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white" />
+                </div>
+              </form>
             </div>
           </div>
         </div>

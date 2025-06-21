@@ -106,7 +106,7 @@ const AdminUserList = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {members.map((member) => (
-                  <tr key={member.id} className="hover:bg-gray-50">
+                  <tr key={member.username} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {member.username}
                     </td>

@@ -1,82 +1,131 @@
-import React, { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StarIcon, HeartIcon, LockIcon } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { searchBook } from '@api/kakaoApi';
+import { getReviews, getReviewStats, writeReview } from '@api/book';
+import { useAtomValue } from 'jotai';
+import { tokenAtom, userAtom } from '../../atoms'; // 로그인 사용자 정보
+import StarRatingSvg from '@components/book/StarRatingSvg';
 
 export default function BookDetail() {
-  const allReviews = [
-    {
-      id: 1,
-      name: '강강지',
-      date: '2025.05.24',
-      rating: 5,
-      content:
-        '아 정말 도움이 되는 내용이었고 앞으로의 삶에 잘 녹여낼 수 있을 것 같다. 아직 안읽었다면 빨리 읽어보기 바란다!',
-      avatar: 'https://i.ibb.co/X8xG7VG/dog1.png',
-    },
-    {
-      id: 2,
-      name: '독서광',
-      date: '2025.05.21',
-      rating: 4,
-      content:
-        '책이 정말 인상 깊었어요. 특히 인간관계에 대한 통찰이 놀라웠습니다.',
-      avatar: 'https://i.ibb.co/SBRM8hH/dog2.png',
-    },
-    {
-      id: 3,
-      name: '책사랑',
-      date: '2025.05.19',
-      rating: 5,
-      content: '시간 가는 줄 모르고 읽었습니다. 지인들에게 추천하고 싶네요.',
-      avatar: 'https://i.ibb.co/bNzNCKP/dog3.png',
-    },
-    {
-      id: 4,
-      name: '리더',
-      date: '2025.05.17',
-      rating: 3,
-      content: '좋은 책이긴 했지만, 기대보다는 평범했어요.',
-      avatar: 'https://i.ibb.co/X8xG7VG/dog1.png',
-    },
-    {
-      id: 5,
-      name: '생각가',
-      date: '2025.05.15',
-      rating: 5,
-      content: '철학적 관점에서 인생을 다시 바라보게 만든 책입니다.',
-      avatar: 'https://i.ibb.co/SBRM8hH/dog2.png',
-    },
-  ];
+  const token = useAtomValue(tokenAtom);
+  const param = useParams();
+
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['bookDetail', param.isbn],
+    queryFn: () =>
+      searchBook({
+        query: param.isbn.split(' ')[0],
+      }),
+    enabled: !!param.isbn,
+  });
+
+  const { data: stats, isError } = useQuery({
+    queryKey: ['reviewStats', param.isbn],
+    queryFn: async () => await getReviewStats(param.isbn),
+    enabled: !!param.isbn,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const isbnParam = decodeURIComponent(param.isbn); // 공백 포함된 ISBN 복원
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const reviewsPerPage = 3;
+
+  // 로그인 유저 정보 (예: username)
+  const user = useAtomValue(userAtom);
+  const username = user?.username; // 또는 토큰 decode해서 꺼내기
+
+  const { data: reviewPage, isLoading: isReviewLoading } = useQuery({
+    queryKey: ['bookReviews', isbnParam, username, currentPage],
+    queryFn: () =>
+      getReviews({
+        isbn: isbnParam,
+        username,
+        page: currentPage,
+        size: reviewsPerPage,
+      }),
+    enabled: !!isbnParam && !!username,
+  });
 
   const indexOfLast = currentPage * reviewsPerPage;
   const indexOfFirst = indexOfLast - reviewsPerPage;
-  const currentReviews = allReviews.slice(indexOfFirst, indexOfLast);
+  // const currentReviews = allReviews.slice(indexOfFirst, indexOfLast);
 
   const handlePageChange = (page) => setCurrentPage(page);
+  const [rating, setRating] = useState(0);
+
+  const [comment, setComment] = useState('');
+  const [isHide, setIsHide] = useState(false);
+  const [activeTab, setActiveTab] = useState('review');
+  const reviewRef = useRef(null);
+  const meetingRef = useRef(null);
+  const lifeBookRef = useRef(null);
+
+  const handleSubmitReview = async () => {
+    if (!comment.trim()) {
+      alert('리뷰 내용을 입력하세요!');
+      return;
+    }
+
+    try {
+      await writeReview({
+        comment,
+        rating,
+        isHide,
+        bookIsbn: isbnParam,
+        token,
+      });
+      alert('리뷰가 등록되었습니다!');
+      setComment('');
+      setRating(0);
+      setIsHide(false);
+      setCurrentPage(0); // 첫 페이지로 이동
+      queryClient.invalidateQueries(['bookReviews']); // 목록 다시 불러오기
+    } catch (err) {
+      console.error(err);
+      alert('리뷰 등록에 실패했습니다.');
+    }
+  };
+
+  if (isLoading || !data?.documents?.[0]) {
+    return (
+      <div className="text-center py-10 text-gray-500">로딩 중입니다...</div>
+    );
+  }
+
+  const book = data.documents.find((doc) => doc.isbn.includes(isbnParam));
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       {/* 책 정보 */}
       <div className="flex gap-8">
         <div className="w-80 h-80 flex justify-center items-center bg-[#F6F6F6]">
           <img
-            src="https://search1.kakaocdn.net/thumb/R120x174.q85/?fname=http%3A%2F%2Ft1.daumcdn.net%2Flbook%2Fimage%2F1467038"
-            alt="미움받을 용기"
+            src={`${book.thumbnail}`}
+            alt={`${book.thumbnail}`}
             className=" h-fit"
           />
         </div>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold mb-2">미움받을 용기</h1>
-          <p className="text-sm mb-1">저자 기시미 이치로, 고가 후미타케</p>
-          <p className="text-sm mb-1">출판 인플루엔셜</p>
-          <p className="text-sm mb-2">발행 2014.11.17</p>
+          <h1 className="text-2xl font-bold mb-2">{book.title}</h1>
+          <p className="text-sm mb-1">저자 {book.authors.join(', ')}</p>
+          <p className="text-sm mb-1">출판 {book.publisher}</p>
+          <p className="text-sm mb-2">
+            발행 {book.datetime.split('T')[0].split('-').join('.')}
+          </p>
 
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-sm">책 리뷰</span>
-              <span className="text-sm text-[#006989] font-bold">1,032</span>
+              <span className="text-sm text-[#006989] font-bold">
+                {stats.reviewCount.toLocaleString()}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex gap-1">
@@ -84,21 +133,20 @@ export default function BookDetail() {
                   <StarIcon
                     key={i}
                     className={`w-4 h-4 ${
-                      i < 4 ? 'fill-[#E88D67] text-[#E88D67]' : 'text-gray-300'
+                      i < Math.round(stats.averageRating)
+                        ? 'fill-[#E88D67] text-[#E88D67]'
+                        : 'text-gray-300'
                     }`}
                   />
                 ))}
               </div>
-              <span className="font-semibold text-sm">4.4</span>
+              <span className="font-semibold text-sm">
+                {stats.averageRating.toFixed(1)}
+              </span>
             </div>
           </div>
 
-          <p className="text-sm text-gray-700 mb-4">
-            2014 아마존 일본 ‘종합’ 베스트셀러 1위. &lt;미움받을 용기&gt;는
-            아들러 심리학을 바탕으로 하는 책이다. 아들러 심리학에 관한 일본의
-            제1인자인 철학자 기시미 이치로의 명 해석과 베스트셀러 작가인 고가
-            후미타케의 맛깔스러운 글이 잘 결합되어 새로운 형식을 선보인다.
-          </p>
+          <p className="text-sm text-gray-700 mb-4">{book.contents}...</p>
 
           <button
             className="bg-[#006989] text-white w-24 h-10 rounded-lg text-xs font-bold cursor-pointer"
@@ -110,28 +158,79 @@ export default function BookDetail() {
       </div>
 
       {/* 리뷰 작성 */}
-      <div className="mt-10">
-        <div className="border-b border-gray-300 mb-4 flex gap-6 text-sm">
-          <button className="font-semibold border-b-2 border-[#005C78] pb-1 cursor-pointer text-[#005C78]">
-            리뷰(1,032)
+      <div ref={reviewRef} id="reviewSection" className="mt-10">
+        <div className="sticky pt-4 top-0 bg-white z-10 border-b border-gray-300 mb-4 flex gap-6 text-sm">
+          <button
+            className={`pb-1 cursor-pointer ${
+              activeTab === 'review'
+                ? 'text-[#005C78] font-semibold border-b-2 border-[#005C78]'
+                : 'text-gray-500'
+            }`}
+            onClick={() => {
+              setActiveTab('review');
+              document
+                .getElementById('reviewSection')
+                ?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            리뷰({stats.reviewCount.toLocaleString()})
           </button>
-          <button className="text-gray-500">모임</button>
-          <button className="text-gray-500">인생책</button>
+
+          <button
+            className={`pb-1 cursor-pointer ${
+              activeTab === 'meeting'
+                ? 'text-[#005C78] font-semibold border-b-2 border-[#005C78]'
+                : 'text-gray-500'
+            }`}
+            onClick={() => {
+              setActiveTab('meeting');
+              document
+                .getElementById('meetingSection')
+                ?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            모임
+          </button>
+
+          <button
+            className={`pb-1 cursor-pointer ${
+              activeTab === 'lifeBook'
+                ? 'text-[#005C78] font-semibold border-b-2 border-[#005C78]'
+                : 'text-gray-500'
+            }`}
+            onClick={() => {
+              setActiveTab('lifeBook');
+              document
+                .getElementById('lifeBookSection')
+                ?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            인생책
+          </button>
         </div>
 
         <div className="mb-4">
-          <span className="text-sm">평점</span>
-          <div className="flex gap-1 mb-2">
-            {[...Array(5)].map((_, i) => (
-              <StarIcon key={i} className="w-5 h-5 text-[#E88D67]" />
-            ))}
-          </div>
+          <span className="text-sm">평점 </span>
+          <StarRatingSvg rating={rating} setRating={setRating} />
           <span className="text-sm">내용</span>
           <textarea
             className="w-full border rounded-md p-3 text-sm resize-none h-24"
             placeholder="리뷰를 입력해주세요"
-          />
-          <button className="mt-2 bg-[#006989] text-white px-4 py-2 rounded-md text-sm font-semibold">
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />{' '}
+          <label className="text-sm flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={isHide}
+              onChange={(e) => setIsHide(e.target.checked)}
+            />
+            비공개
+          </label>
+          <button
+            className="mt-2 bg-[#006989] text-white px-4 py-2 rounded-md text-sm font-semibold"
+            onClick={handleSubmitReview}
+          >
             리뷰 작성
           </button>
         </div>
@@ -139,67 +238,73 @@ export default function BookDetail() {
         {/* 리뷰 목록 */}
 
         <div className="space-y-6">
-          {currentReviews.map((review) => (
-            <div key={review.id} className="flex gap-4">
-              <img
-                src={review.avatar}
-                alt="avatar"
-                className="w-14 h-14 rounded-full object-cover"
-              />
-              <div>
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  {review.name}
-                  <span className="text-xs font-normal text-gray-500">
-                    | {review.date}
-                  </span>
+          {isReviewLoading ? (
+            <div className="text-center text-gray-400">리뷰 불러오는 중...</div>
+          ) : (
+            reviewPage?.content?.map((review) => (
+              <div key={review.bookReviewId} className="flex gap-4">
+                <img
+                  src={
+                    review.profileImg
+                      ? `http://localhost:8080/image?filename=${review.profileImg}`
+                      : 'https://i.ibb.co/X8xG7VG/dog1.png'
+                  } // 임시 아바타
+                  alt="avatar"
+                  className="w-14 h-14 rounded-full object-cover"
+                />
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    {review.nickname}
+                    <span className="text-xs font-normal text-gray-500">
+                      | {review.regTime.split('T')[0].replace(/-/g, '.')}
+                    </span>
+                  </div>
+                  <div className="flex gap-1 my-1">
+                    {[...Array(5)].map((_, i) => (
+                      <StarIcon
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < review.rating
+                            ? 'text-[#E88D67] fill-[#E88D67]'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">
+                    {review.comment}
+                  </p>
                 </div>
-                <div className="flex gap-1 my-1">
-                  {[...Array(5)].map((_, i) => (
-                    <StarIcon
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < review.rating
-                          ? 'text-[#E88D67] fill-[#E88D67]'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <p className="text-sm text-gray-700 whitespace-pre-line">
-                  {review.content}
-                </p>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
         {/* Pagination */}
         <div className="flex justify-center mt-6">
           <nav className="flex items-center gap-2">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              disabled={reviewPage?.first}
               className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
             >
               이전
             </button>
-            {[...Array(Math.ceil(allReviews.length / reviewsPerPage))].map(
-              (_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-3 py-1 text-sm rounded border ${
-                    currentPage === i + 1
-                      ? 'bg-[#006989] text-white'
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              )
-            )}
+            {[...Array(reviewPage?.totalPages || 0)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => handlePageChange(i)}
+                className={`px-3 py-1 text-sm rounded border ${
+                  currentPage === i
+                    ? 'bg-[#006989] text-white'
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
             <button
               onClick={() => handlePageChange(currentPage + 1)}
-              disabled={indexOfLast >= allReviews.length}
+              disabled={reviewPage?.last}
               className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
             >
               다음
@@ -209,7 +314,7 @@ export default function BookDetail() {
       </div>
 
       {/* 추천 도서 */}
-      <div className="mt-12">
+      <div ref={meetingRef} id="meetingSection" className="mt-12">
         <h2 className="text-lg font-bold mb-4">📚 이 책을 주제로 한 모임</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((id) => (
@@ -232,7 +337,7 @@ export default function BookDetail() {
       </div>
 
       {/* 이 책이 인생책인 회원 */}
-      <div className="mt-12">
+      <div ref={lifeBookRef} id="lifeBookSection" className="mt-12">
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
           <HeartIcon className="w-6 h-6  text-[#E88D67]" /> 이 책이 인생책인
           회원

@@ -1,6 +1,42 @@
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from "../atoms";
 import { SearchIcon, BookOpenIcon, MapPinIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate  } from 'react-router-dom';
+import React, { useEffect } from 'react';
 const Header = () => {
+  const [token, setToken] = useAtom(tokenAtom);
+  const [user, setUser] = useAtom(userAtom);
+  const navigate = useNavigate();
+  const isAdmin = user?.isAdmin === true;
+
+  // ✅ 저장된 토큰/유저 복원
+  useEffect(() => {
+    const savedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+    if (savedToken && savedUser) {
+      setToken(JSON.parse(savedToken)); // 중첩방지
+      setUser(JSON.parse(savedUser));
+      //setToken({ access_token: savedToken, refresh_token: '' });
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error('❌ 유저 정보 파싱 실패:', e);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+    }
+  }, []);
+  const logout = () => {
+    sessionStorage.clear();  // 모든 세션 제거
+    localStorage.removeItem("token"); //자동로그인 정보 제거
+    localStorage.removeItem("user"); //자동로그인 정보 제거
+    setToken(null);
+    setUser(null);
+    navigate('/');
+
+  };  
+  
   return (
     <header className="w-full py-4 bg-white shadow-sm">
       <div className="container mx-auto px-4">
@@ -58,17 +94,46 @@ const Header = () => {
               <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
           </div>
-          {/* 로그인/회원가입 버튼 */}
+
+          {/* 로그인 상태에 따른 버튼 */}
           <div className="flex items-center space-x-2">
             <button className="px-3 py-1.5 text-sm text-[#006989] hover:text-[#005C78] flex items-center">
               <MapPinIcon className="w-4 h-4 mr-1" />내 위치
             </button>
-            <Link to="/login" className="px-3 py-1.5 text-sm text-white bg-[#006989] rounded hover:bg-[#005C78]">
-              로그인
-            </Link>
-            <Link to="/join" className="px-3 py-1.5 text-sm text-white bg-[#E88D67] rounded hover:opacity-90">
-              회원가입
-            </Link>
+
+            {token && user && (user.nickname || user.username) ?  (
+              <>
+                <span className="text-sm text-[#006989] font-semibold">{user?.nickname ?? user?.username} 님</span>
+                <button
+                  onClick={logout}
+                  className="px-3 py-1.5 text-sm text-white bg-[#006989] rounded hover:bg-[#005C78]"
+                >
+                  로그아웃
+                </button>
+                <Link to="/myLibrary" className="px-3 py-1.5 text-sm text-white bg-[#E88D67] rounded hover:opacity-90">
+                  마이페이지
+                </Link>
+
+                    {/* ✅ 관리자 버튼 */}
+                {isAdmin && (
+                <Link
+                  to="admin/userList"
+                  className="px-3 py-1.5 text-sm border border-[#006989] text-[#006989] bg-white rounded hover:bg-gray-50"
+                >
+                  관리자
+                </Link>
+                )}
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="px-3 py-1.5 text-sm text-white bg-[#006989] rounded hover:bg-[#005C78]">
+                  로그인
+                </Link>
+                <Link to="/join" className="px-3 py-1.5 text-sm text-white bg-[#E88D67] rounded hover:opacity-90">
+                  회원가입
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
