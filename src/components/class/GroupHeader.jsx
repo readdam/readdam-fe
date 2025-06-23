@@ -4,7 +4,8 @@ import { HeartIcon, ShareIcon, MapPinIcon, CalendarIcon, ClockIcon, UsersIcon } 
 const GroupHeader = ({
   group
 }) => {
-  return <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
       <div className="flex flex-col md:flex-row gap-8">
         <div className="md:w-1/2">
           <img src={group.image} alt={group.title} className="w-full h-[400px] object-cover rounded-lg" />
@@ -12,14 +13,6 @@ const GroupHeader = ({
         <div className="md:w-1/2">
           <div className="flex justify-between items-start mb-4">
             <h1 className="text-2xl font-bold text-gray-800">{group.title}</h1>
-            <div className="flex gap-2">
-              <button className="p-2 hover:bg-gray-100 rounded-full">
-                <HeartIcon className="w-6 h-6 text-gray-600" />
-              </button>
-              <button className="p-2 hover:bg-gray-100 rounded-full">
-                <ShareIcon className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
           </div>
           <p className="text-gray-600 mb-6">{group.shortDescription}</p>
           <div className="flex flex-wrap gap-2 mb-6">
@@ -53,11 +46,20 @@ const GroupHeader = ({
               </div>
             </div>
           </div>
-          <button className="w-full px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors">
-            참여하기
-          </button>
+          <div className="flex gap-2">
+            <button className="flex justify-between px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors">
+              참여하기
+            </button>
+            <button className="p-2 hover:bg-gray-100 rounded-full">
+              <HeartIcon className="w-6 h-6 text-gray-600" />
+            </button>
+            <button className="p-2 hover:bg-gray-100 rounded-full">
+              <ShareIcon className="w-6 h-6 text-gray-600" />
+            </button>
+          </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 export default GroupHeader;
