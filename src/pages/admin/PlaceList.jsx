@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   PlusIcon,
   HeartIcon,
@@ -50,7 +50,9 @@ export default function PlaceList() {
   const token = useAtomValue(tokenAtom);
   const [filterField, setFilterField] = useState('name');
 
-  const { data, isLoading, error } = useQuery({
+  const isInitial = searchTerm.trim() === '';
+
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['placeList', page, searchTerm, filterField],
     queryFn: () =>
       fetchPlaceList(token, {
@@ -59,7 +61,12 @@ export default function PlaceList() {
         searchTerm,
         searchField: filterField,
       }),
+    enabled: false,
   });
+
+  useEffect(() => {
+    refetch();
+  }, []);
 
   const places = data?.content ?? [];
 
@@ -81,13 +88,10 @@ export default function PlaceList() {
     }
   };
 
-  const handleSearch = () => {
-    // fetchPlaceList(token, {
-    //     page,
-    //     size,
-    //     searchTerm,
-    //     searchField: filterField,
-    //   }),
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setPage(0); // 검색 시 페이지 초기화
+    refetch();
   };
 
   return (
@@ -102,7 +106,7 @@ export default function PlaceList() {
         </button>
       </div>
 
-      <div className="flex gap-4 mb-6">
+      <form className="flex gap-4 mb-6" onSubmit={handleSearch}>
         <select
           className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
           value={filterField}
@@ -123,10 +127,13 @@ export default function PlaceList() {
           />
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
         </div>
-        <button class="bg-[#E88D67] text-white w-16 h-10 rounded text-sm cursor-pointer">
+        <button
+          class="bg-[#E88D67] text-white w-16 h-10 rounded text-sm cursor-pointer"
+          onClick={handleSearch}
+        >
           검색
         </button>
-      </div>
+      </form>
 
       <div className="bg-white rounded-lg shadow min-w-[1000px]">
         <table className="w-full text-sm">
