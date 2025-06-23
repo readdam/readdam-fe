@@ -1,359 +1,246 @@
-import React, { useState } from "react";
+// src/components/admin/AdminPointStats.jsx
+import React, { useEffect, useState, useCallback } from 'react'
+import { useAtomValue } from 'jotai'
+import { tokenAtom } from '../../atoms'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import {
-  Search,
-  Calendar,
-  Wallet,
-  CreditCard,
-  RefreshCcw,
-  DollarSign,
-  CoinsIcon,
-  ChevronDown,
-} from "lucide-react";
-const AdminPointStats = () => {
-  const [dateRange, setDateRange] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [paymentStatus, setPaymentStatus] = useState("all");
-  const transactions = [
-    {
-      date: "2024-03-15",
-      member: {
-        name: "김철수",
-        email: "kim@example.com",
-      },
-      type: "충전",
-      points: 1000,
-      amount: 10000,
-      paymentMethod: "신용카드",
-      status: "완료",
-      refundReason: "-",
-    },
-    {
-      date: "2024-03-14",
-      member: {
-        name: "이영희",
-        email: "lee@example.com",
-      },
-      type: "환불",
-      points: -500,
-      amount: -5000,
-      paymentMethod: "계좌이체",
-      status: "처리중",
-      refundReason: "서비스 불만족",
-    },
-    {
-      date: "2024-03-13",
-      member: {
-        name: "박지민",
-        email: "park@example.com",
-      },
-      type: "충전",
-      points: 2000,
-      amount: 20000,
-      paymentMethod: "카카오페이",
-      status: "완료",
-      refundReason: "-",
-    },
-    {
-      date: "2024-03-12",
-      member: {
-        name: "최민수",
-        email: "choi@example.com",
-      },
-      type: "충전",
-      points: 3000,
-      amount: 30000,
-      paymentMethod: "신용카드",
-      status: "실패",
-      refundReason: "결제 오류",
-    },
-    {
-      date: "2024-03-11",
-      member: {
-        name: "정다운",
-        email: "jung@example.com",
-      },
-      type: "환불",
-      points: -1000,
-      amount: -10000,
-      paymentMethod: "계좌이체",
-      status: "완료",
-      refundReason: "중복 결제",
-    },
-    {
-      date: "2024-03-10",
-      member: {
-        name: "한소희",
-        email: "han@example.com",
-      },
-      type: "충전",
-      points: 5000,
-      amount: 50000,
-      paymentMethod: "네이버페이",
-      status: "완료",
-      refundReason: "-",
-    },
-    {
-      date: "2024-03-09",
-      member: {
-        name: "송민호",
-        email: "song@example.com",
-      },
-      type: "충전",
-      points: 10000,
-      amount: 100000,
-      paymentMethod: "카카오페이",
-      status: "완료",
-      refundReason: "-",
-    },
-    {
-      date: "2024-03-08",
-      member: {
-        name: "강하늘",
-        email: "kang@example.com",
-      },
-      type: "환불",
-      points: -2000,
-      amount: -20000,
-      paymentMethod: "계좌이체",
-      status: "처리중",
-      refundReason: "서비스 이용 불가",
-    },
-    {
-      date: "2024-03-07",
-      member: {
-        name: "윤세리",
-        email: "yoon@example.com",
-      },
-      type: "충전",
-      points: 3000,
-      amount: 30000,
-      paymentMethod: "신용카드",
-      status: "완료",
-      refundReason: "-",
-    },
-    {
-      date: "2024-03-06",
-      member: {
-        name: "배수지",
-        email: "bae@example.com",
-      },
-      type: "충전",
-      points: 5000,
-      amount: 50000,
-      paymentMethod: "카카오페이",
-      status: "완료",
-      refundReason: "-",
-    },
-  ];
+  ResponsiveContainer,
+  ComposedChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  Bar
+} from 'recharts'
+import { url } from '../../config/config'
+
+// 1) 요약 카드 초기값
+const initialSummary = {
+  todayAmount:  0, todayCount:  0,
+  weekAmount:   0, weekCount:   0,
+  monthAmount:  0, monthCount:  0,
+  yearAmount:   0, yearCount:   0,
+}
+
+// 2) 시작~종료 기간의 모든 레이블(날짜 혹은 월) 생성 및 rawData 매핑
+function buildFullData(start, end, period, rawData) {
+  const out = []
+  const map = rawData.reduce((m, row) => {
+    m[row.label] = row
+    return m
+  }, {})
+
+  const s = new Date(start)
+  const e = new Date(end)
+
+  if (period === 'day') {
+    for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+      const label = d.toISOString().slice(0,10)
+      const ex = map[label] || {}
+      out.push({
+        label,
+        totalAmount:  ex.totalAmount  || 0,
+        netAmount:    ex.netAmount    || 0,
+        refundAmount: ex.refundAmount || 0,
+        successCount: ex.successCount || 0,
+        refundCount:  ex.refundCount  || 0,
+      })
+    }
+  } else {
+    const curr = new Date(s.getFullYear(), s.getMonth(), 1)
+    const last = new Date(e.getFullYear(), e.getMonth(), 1)
+    while (curr <= last) {
+      const mm = (curr.getMonth()+1).toString().padStart(2,'0')
+      const label = `${curr.getFullYear()}-${mm}`
+      const ex = map[label] || {}
+      out.push({
+        label,
+        totalAmount:  ex.totalAmount  || 0,
+        netAmount:    ex.netAmount    || 0,
+        refundAmount: ex.refundAmount || 0,
+        successCount: ex.successCount || 0,
+        refundCount:  ex.refundCount  || 0,
+      })
+      curr.setMonth(curr.getMonth()+1)
+    }
+  }
+  return out
+}
+
+// 3) 툴팁에서만 모든 값을 보여주는 컴포넌트
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload || !payload.length) return null
+  const d = payload[0].payload
   return (
-    <div className="flex h-screen bg-gray-100">
-      
-        
-        {/* Main Content Area */}
-        <main
-          className="p-8 overflow-auto"
-          style={{
-            height: "calc(100vh - 64px)",
-          }}
-        >
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-gray-500">총 충전금액</span>
-                <Wallet className="w-5 h-5 text-[#006989]" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">
-                5,100,000원
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-gray-500">총 충전포인트</span>
-                <CoinsIcon className="w-5 h-5 text-[#006989]" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">510,000P</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-gray-500">환불금액</span>
-                <RefreshCcw className="w-5 h-5 text-[#006989]" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">600,000원</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-gray-500">실매출합계</span>
-                <DollarSign className="w-5 h-5 text-[#006989]" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">
-                4,500,000원
-              </div>
-            </div>
-          </div>
-          {/* Filters */}
-          <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Search */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="회원 닉네임, 이메일 검색"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-                />
-                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              </div>
-              {/* Date Range */}
-              <div className="relative">
-                <select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989] appearance-none"
-                >
-                  <option value="all">전체 기간</option>
-                  <option value="7">최근 7일</option>
-                  <option value="30">최근 1개월</option>
-                  <option value="90">최근 3개월</option>
-                </select>
-                <Calendar className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <ChevronDown className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2" />
-              </div>
-              {/* Payment Status */}
-              <div className="relative">
-                <select
-                  value={paymentStatus}
-                  onChange={(e) => setPaymentStatus(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989] appearance-none"
-                >
-                  <option value="all">전체 상태</option>
-                  <option value="success">성공</option>
-                  <option value="failed">실패</option>
-                  <option value="refund">환불요청</option>
-                  <option value="completed">완료</option>
-                </select>
-                <CreditCard className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <ChevronDown className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2" />
-              </div>
-            </div>
-          </div>
-          {/* Transactions Table */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    날짜
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    회원
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    구분
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
-                    포인트
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
-                    금액(원)
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    결제수단
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    상태
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    환불사유
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    처리
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {transactions.map((transaction, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {transaction.date}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm text-gray-900">
-                        {transaction.member.name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {transaction.member.email}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          transaction.type === "충전"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {transaction.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right">
-                      <span
-                        className={
-                          transaction.points >= 0
-                            ? "text-blue-600"
-                            : "text-red-600"
-                        }
-                      >
-                        {transaction.points >= 0 ? "+" : ""}
-                        {transaction.points.toLocaleString()}P
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right">
-                      <span
-                        className={
-                          transaction.amount >= 0
-                            ? "text-blue-600"
-                            : "text-red-600"
-                        }
-                      >
-                        {transaction.amount >= 0 ? "+" : ""}
-                        {transaction.amount.toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {transaction.paymentMethod}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          transaction.status === "완료"
-                            ? "bg-green-100 text-green-800"
-                            : transaction.status === "처리중"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {transaction.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {transaction.refundReason}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {transaction.status === "처리중" && (
-                        <button className="text-[#006989] hover:text-[#005C78] font-medium">
-                          처리하기
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </main>
+    <div className="bg-white p-4 border rounded shadow">
+      <div className="font-semibold mb-2">{label}</div>
+      <div>총 금액: {d.totalAmount.toLocaleString()}원</div>
+      <div>실 매출: {d.netAmount.toLocaleString()}원</div>
+      <div>환불 금액: {d.refundAmount.toLocaleString()}원</div>
+      <div>성공 결제 건수: {d.successCount}건</div>
+      <div>환불 처리 건수: {d.refundCount}건</div>
     </div>
-  );
-};
-export default AdminPointStats;
+  )
+}
+
+export default function AdminPointStats() {
+  const token    = useAtomValue(tokenAtom)
+  const navigate = useNavigate()
+
+  // 🔹 state
+  const [summary, setSummary] = useState(initialSummary)
+  const [data,    setData]    = useState([])
+  const [loading,setLoading]  = useState(true)
+
+  // 🔹 필터: 기본은 오늘 기준 7일 전 ~ 오늘
+  const today = new Date()
+  const fmt   = d => d.toISOString().slice(0,10)
+  const [startDate, setStartDate] = useState(fmt(new Date(today - 7*86400000)))
+  const [endDate,   setEndDate]   = useState(fmt(today))
+  const [period,    setPeriod]    = useState('day')  // 'day' or 'month'
+
+  // 🔹 API 호출 함수
+  const fetchStats = useCallback(() => {
+    if (!token?.access_token) {
+      navigate('/login', { replace: true })
+      return
+    }
+    setLoading(true)
+    axios.get(`${url}/admin/point-stats`, {
+      params:  { start: startDate, end: endDate, period },
+      headers: { Authorization: `Bearer ${token.access_token}` }
+    })
+    .then(res => {
+      const srv = res.data
+      setSummary(srv.summary  || initialSummary)
+      setData(buildFullData(startDate, endDate, period, srv.chart || []))
+    })
+    .catch(err => {
+      if ([401,403].includes(err.response?.status)) {
+        navigate('/login', { replace: true })
+      }
+      console.error('통계 조회 실패', err)
+    })
+    .finally(() => setLoading(false))
+  }, [token, startDate, endDate, period, navigate])
+
+  useEffect(fetchStats, [fetchStats])
+
+  // 🔹 빠른 기간 버튼 핸들러
+  const applyQuick = months => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - months)
+    setStartDate(fmt(d))
+    setEndDate(fmt(new Date()))
+  }
+
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500">로딩 중…</div>
+  }
+
+  return (
+    <div className="p-8 space-y-8">
+      {/* 1) 요약 카드 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          ['오늘',   summary.todayAmount,  summary.todayCount,  'text-gray-800'],
+          ['이번주', summary.weekAmount,   summary.weekCount,   'text-green-600'],
+          ['이번달', summary.monthAmount,  summary.monthCount,  'text-blue-600'],
+          ['올해',   summary.yearAmount,   summary.yearCount,   'text-purple-600'],
+        ].map(([label, amt, cnt, color], i) => (
+          <div key={i} className="bg-gray-50 p-6 rounded-xl shadow-sm flex flex-col">
+            <span className="text-sm text-gray-500">{label}</span>
+            <span className={`text-2xl font-extrabold ${color}`}>
+              {amt.toLocaleString()}원
+            </span>
+            <span className="text-sm text-gray-400 mt-auto">{cnt}건</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 2) 필터 UI */}
+      <div className="bg-gray-50 p-6 rounded-xl shadow-sm flex flex-wrap items-end gap-4">
+        {/* 빠른 기간 */}
+        <div className="flex space-x-2">
+          {[1,3,6,12].map(m => (
+            <button
+              key={m}
+              onClick={() => applyQuick(m)}
+              className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+            >
+              {m}개월
+            </button>
+          ))}
+        </div>
+        {/* 날짜 선택 */}
+        <div className="flex items-center space-x-2">
+          <input
+            type="date"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
+            className="border px-3 py-2 rounded"
+          />
+          <span>~</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+            className="border px-3 py-2 rounded"
+          />
+        </div>
+        {/* 일별/월별 */}
+        <select
+          value={period}
+          onChange={e => setPeriod(e.target.value)}
+          className="border px-3 py-2 rounded"
+        >
+          <option value="day">일별</option>
+          <option value="month">월별</option>
+        </select>
+        {/* 조회 버튼 */}
+        <button
+          onClick={fetchStats}
+          className="ml-auto bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600"
+        >
+          조회
+        </button>
+      </div>
+
+      {/* 3) 차트 */}
+      <div className="bg-gray-50 p-8 rounded-xl shadow-sm h-[500px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={data}
+            margin={{ top:20, right:50, left:0, bottom:5 }}
+            barCategoryGap="50%"
+            barGap={8}
+          >
+            <CartesianGrid strokeDasharray="4 2" stroke="#e5e7eb" />
+            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+            <YAxis
+              yAxisId="amt"
+              tickFormatter={v => v.toLocaleString()}
+              axisLine={false}
+              tickLine={false}
+              width={60}
+            />
+            <YAxis
+              yAxisId="cnt"
+              orientation="right"
+              axisLine={false}
+              tickLine={false}
+              width={30}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend verticalAlign="bottom" iconSize={8} wrapperStyle={{ paddingTop:16 }}/>
+            <Bar yAxisId="amt" dataKey="totalAmount"   name="총 금액"   fill="#4ade80" radius={[4,4,0,0]} barSize={16}/>
+            <Bar yAxisId="amt" dataKey="netAmount"     name="실 매출"   fill="#60a5fa" radius={[4,4,0,0]} barSize={16}/>
+            <Bar yAxisId="amt" dataKey="refundAmount"  name="환불 금액" fill="#f87171"radius={[4,4,0,0]} barSize={16}/>
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
