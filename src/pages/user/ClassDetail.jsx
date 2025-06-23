@@ -15,9 +15,9 @@ const ClassDetail = () => {
 
   useEffect(()=>{
     const fetchClassData = async () => {
-      try{
-        const res = await axios.get(`/api/class/${classId}`);
-      }
+      // try{
+      //   const res = await axios.get(`/api/class/${classId}`);
+      // }
     }
   })
   }
