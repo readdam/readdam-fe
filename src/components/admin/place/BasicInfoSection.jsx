@@ -80,9 +80,6 @@ export default function BasicInfoSection({
               container.kakaoMap = map;
             }
 
-            // 🧭 지도 중심 이동 (부드럽게!)
-            map.panTo(newCoords);
-
             if (container.marker) {
               container.marker.setMap(null);
             }
@@ -91,11 +88,7 @@ export default function BasicInfoSection({
               position: newCoords,
               map,
             });
-
             container.marker = marker;
-
-            container.style.display = 'block';
-            setTimeout(() => map.relayout(), 100);
           }
         });
       },
@@ -165,7 +158,8 @@ export default function BasicInfoSection({
           style={{
             width: '100%',
             height: '300px',
-            display: coords ? 'block' : 'none',
+            // display: coords ? 'block' : 'none',
+            display: 'block',
           }}
         ></div>
       </div>

@@ -60,6 +60,39 @@ export default function PlaceAdd() {
   }
 
   const handleAddRoom = () => {
+    const { name, description, size, minCapacity, maxCapacity, images } =
+      currentRoom;
+
+    if (!name.trim()) {
+      alert('방 이름을 입력하세요.');
+      return;
+    }
+
+    if (!description.trim()) {
+      alert('방 소개를 입력하세요.');
+      return;
+    }
+
+    if (!size.trim()) {
+      alert('방 크기를 입력하세요.');
+      return;
+    }
+
+    if (!minCapacity || !maxCapacity || minCapacity <= 0 || maxCapacity <= 0) {
+      alert('최소/최대 인원을 올바르게 입력하세요.');
+      return;
+    }
+
+    if (minCapacity > maxCapacity) {
+      alert('최대 인원은 최소 인원보다 같거나 커야 합니다.');
+      return;
+    }
+
+    if (images.length === 0) {
+      alert('방 사진을 1장 이상 등록하세요.');
+      return;
+    }
+
     if (editingRoom) {
       setRooms(rooms.map((r) => (r.id === editingRoom.id ? currentRoom : r)));
       setEditingRoom(null);
@@ -91,6 +124,73 @@ export default function PlaceAdd() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!placeName.trim()) {
+      alert('장소명을 입력해주세요.');
+      return;
+    }
+    if (!placeAddress.trim()) {
+      alert('주소를 입력해주세요.');
+      return;
+    }
+    if (!detailAddress.trim()) {
+      alert('상세 주소를 입력해주세요.');
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      alert('전화번호를 입력해주세요.');
+      return;
+    }
+    if (!introduceText.trim()) {
+      alert('소개글을 입력해주세요.');
+      return;
+    }
+    if (lat == null || lng == null) {
+      alert('지도에서 위치를 선택해주세요.');
+      return;
+    }
+
+    // ✅ 키워드 1개 이상 필수 (선택적으로 조정 가능)
+    if (keywords.length === 0 || keywords.some((k) => !k.trim())) {
+      alert('태그(키워드)를 최소 1개 이상 입력해주세요.');
+      return;
+    }
+
+    // ✅ 장소 사진 1장 이상 필수
+    if (imagePreviews.length === 0) {
+      alert('장소 사진을 1장 이상 등록해주세요.');
+      return;
+    }
+
+    // ✅ 방 1개 이상 필수
+    if (rooms.length === 0) {
+      alert('방을 최소 1개 이상 등록해주세요.');
+      return;
+    }
+
+    // ✅ 각 방 필수값 검사
+    for (const room of rooms) {
+      if (!room.name.trim()) {
+        alert('방 이름을 입력해주세요.');
+        return;
+      }
+      if (!room.size.trim()) {
+        alert('방 크기를 입력해주세요.');
+        return;
+      }
+      if (!room.minCapacity || !room.maxCapacity) {
+        alert('방 최소/최대 인원을 입력해주세요.');
+        return;
+      }
+      if (room.minCapacity > room.maxCapacity) {
+        alert('방 최대 인원은 최소 인원보다 같거나 커야 합니다.');
+        return;
+      }
+      if (!room.images || room.images.length === 0) {
+        alert(`"${room.name}" 방에 사진을 1장 이상 등록해주세요.`);
+        return;
+      }
+    }
 
     const formData = new FormData();
 

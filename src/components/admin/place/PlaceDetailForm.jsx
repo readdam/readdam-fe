@@ -40,7 +40,7 @@ export default function PlaceDetailForm({
         </div>
         {/* 키워드 */}
         <div>
-          <label className="block text-sm font-medium mb-2">키워드</label>
+          <label className="block text-sm font-medium mb-2">태그</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {keywords.map((keyword, index) => (
               <span
@@ -64,7 +64,7 @@ export default function PlaceDetailForm({
             onChange={(e) => setNewKeyword(e.target.value)}
             onKeyPress={handleAddKeyword}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-            placeholder="키워드를 입력하고 Enter를 눌러주세요"
+            placeholder="태그를 입력하고 Enter를 눌러주세요"
           />
         </div>
         {/* 사진 업로드 */}
