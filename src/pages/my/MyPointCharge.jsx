@@ -112,7 +112,7 @@ export default function MyPointCharge() {
         orderId:    orderUuid,
         orderName:  `${opt.point}P 충전`,
         amount:     selectedAmount,
-        //point:      opt.point,
+        point:      opt.point,
         successUrl: `${originUrl}/success?point=${opt.point}`,
         failUrl:    `${originUrl}/fail?point=${opt.point}`,
       });

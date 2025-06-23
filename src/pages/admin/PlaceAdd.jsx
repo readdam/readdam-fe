@@ -26,10 +26,13 @@ export default function PlaceAdd() {
   // 장소 정보
   const [placeName, setPlaceName] = useState('');
   const [placeAddress, setPlaceAddress] = useState('');
+  const [detailAddress, setDetailAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [introduceText, setIntroduceText] = useState('');
   const [keywords, setKeywords] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
 
   // 시간대
   const [selectedWeekdaySlots, setSelectedWeekdaySlots] = useState([]);
@@ -94,7 +97,7 @@ export default function PlaceAdd() {
     // ✅ placeDto
     const placeDto = {
       name: placeName,
-      location: placeAddress,
+      location: `${placeAddress} ${detailAddress}`,
       phone: phoneNumber,
       introduce: introduceText,
       tag1: keywords[0] || null,
@@ -107,6 +110,8 @@ export default function PlaceAdd() {
       tag8: keywords[7] || null,
       tag9: keywords[8] || null,
       tag10: keywords[9] || null,
+      lat: lat,
+      log: lng,
     };
     formData.append(
       'placeDto',
@@ -180,7 +185,7 @@ export default function PlaceAdd() {
         },
       });
       alert('장소 등록 완료!');
-      navigate('/adminPlaceList'); //  일단 목록으로 보냄
+      navigate('/admin/placeList'); //  일단 목록으로 보냄
     } catch (err) {
       console.error(err);
       alert('등록 실패!');
@@ -233,7 +238,7 @@ export default function PlaceAdd() {
         <button className="p-2 hover:bg-gray-100 rounded-lg">
           <ArrowLeft
             className="w-6 h-6"
-            onClick={() => navigate('/otherPlaceList')}
+            onClick={() => navigate('/adminPlaceList')}
           />
         </button>
         <h1 className="text-2xl font-bold">새 장소 추가</h1>
@@ -245,6 +250,10 @@ export default function PlaceAdd() {
         setPlaceAddress={setPlaceAddress}
         phoneNumber={phoneNumber}
         setPhoneNumber={setPhoneNumber}
+        setLat={setLat}
+        setLng={setLng}
+        detailAddress={detailAddress}
+        setDetailAddress={setDetailAddress}
       />
 
       <AvailableTimeSection
