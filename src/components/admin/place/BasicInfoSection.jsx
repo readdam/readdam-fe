@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+
 export default function BasicInfoSection({
   placeName,
   setPlaceName,
@@ -5,7 +7,101 @@ export default function BasicInfoSection({
   setPlaceAddress,
   phoneNumber,
   setPhoneNumber,
+  setLat,
+  setLng,
+  detailAddress,
+  setDetailAddress,
 }) {
+  const mapRef = useRef(null);
+  // const [detailAddress, setDetailAddress] = useState('');
+  const [coords, setCoords] = useState(null);
+  const [sdkReady, setSdkReady] = useState(false);
+
+  useEffect(() => {
+    const loadScript = (src) => {
+      return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = resolve;
+        document.body.appendChild(script);
+      });
+    };
+
+    const loadScripts = async () => {
+      await loadScript(
+        '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+      );
+      await loadScript(
+        `//dapi.kakao.com/v2/maps/sdk.js?appkey=${
+          import.meta.env.VITE_KAKAO_API_KEY
+        }&libraries=services&autoload=false`
+      );
+      window.kakao.maps.load(() => {
+        setSdkReady(true);
+        console.log('🟢 Kakao Maps SDK fully loaded');
+      });
+    };
+
+    loadScripts();
+  }, []);
+
+  const handleSearchAddress = () => {
+    if (!sdkReady) {
+      alert('지도 로딩 중입니다.');
+      return;
+    }
+
+    new window.daum.Postcode({
+      oncomplete: (data) => {
+        const full = data.address;
+        setPlaceAddress(full);
+
+        const geocoder = new window.kakao.maps.services.Geocoder();
+        geocoder.addressSearch(full, (results, status) => {
+          if (status === window.kakao.maps.services.Status.OK) {
+            const { x, y } = results[0];
+            const lat = parseFloat(y);
+            const lng = parseFloat(x);
+            const newCoords = new window.kakao.maps.LatLng(lat, lng);
+
+            setLat(lat);
+            setLng(lng);
+            setCoords(newCoords);
+
+            const container = mapRef.current;
+            let map = container.kakaoMap;
+
+            if (!map) {
+              map = new window.kakao.maps.Map(container, {
+                center: newCoords,
+                level: 5,
+              });
+              container.kakaoMap = map;
+            }
+
+            // 🧭 지도 중심 이동 (부드럽게!)
+            map.panTo(newCoords);
+
+            if (container.marker) {
+              container.marker.setMap(null);
+            }
+
+            const marker = new window.kakao.maps.Marker({
+              position: newCoords,
+              map,
+            });
+
+            container.marker = marker;
+
+            container.style.display = 'block';
+            setTimeout(() => map.relayout(), 100);
+          }
+        });
+      },
+    }).open();
+  };
+
   return (
     <section className="bg-white p-6 rounded-lg shadow">
       <h2 className="text-lg font-semibold mb-6">기본 정보</h2>
@@ -20,16 +116,38 @@ export default function BasicInfoSection({
             placeholder="장소명을 입력하세요"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium mb-2">주소</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={placeAddress}
+              onChange={(e) => setPlaceAddress(e.target.value)}
+              className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
+              placeholder="주소를 검색하세요"
+            />
+            <button
+              type="button"
+              onClick={handleSearchAddress}
+              className="px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005c78]"
+            >
+              주소 검색
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">상세 주소</label>
           <input
             type="text"
-            value={placeAddress}
-            onChange={(e) => setPlaceAddress(e.target.value)}
+            value={detailAddress}
+            onChange={(e) => setDetailAddress(e.target.value)}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-            placeholder="주소를 입력하세요"
+            placeholder="상세 주소를 입력하세요"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium mb-2">전화번호</label>
           <input
@@ -40,6 +158,16 @@ export default function BasicInfoSection({
             placeholder="전화번호를 입력하세요"
           />
         </div>
+
+        <div
+          ref={mapRef}
+          id="map"
+          style={{
+            width: '100%',
+            height: '300px',
+            display: coords ? 'block' : 'none',
+          }}
+        ></div>
       </div>
     </section>
   );

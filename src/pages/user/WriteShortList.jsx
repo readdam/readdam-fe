@@ -183,36 +183,41 @@ const WriteShortList = () => {
         </div>
 
         {/* Post-it Preview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {previewAnswers.map((answer) => (
-            <div
-              key={answer.id}
-              className={`${getPostItColor(answer.color)} aspect-square p-6 rounded-sm shadow-md hover:shadow-lg transition-shadow relative transform hover:-rotate-1 hover:translate-y-[-2px]`}
-              style={{
-                boxShadow: '2px 2px 5px rgba(0,0,0,0.1)',
-                backgroundImage:
-                  'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
-              }}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <span className="font-medium text-gray-800">
-                  {answer.author}
-                </span>
-                <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {previewAnswers.map((answer) => (
+          <div
+            key={answer.id}
+            className={`${getPostItColor(answer.color)} p-4 rounded-sm shadow-md hover:shadow-lg transition-shadow relative transform hover:-rotate-1 hover:translate-y-[-2px]`}
+            style={{
+              aspectRatio: '1 / 1',
+              boxShadow: '2px 2px 5px rgba(0,0,0,0.1)',
+              backgroundImage:
+                'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
+            }}
+          >
+          {/* 상단: 작성자 & 좋아요 */}
+          <div className="flex justify-between items-start mb-2">
+            <span className="font-semibold text-sm text-[#006989]">
+              {answer.author}
+            </span>
+             <div className="flex items-center gap-2">
                   <button className="flex items-center gap-1 text-gray-600">
                     <HeartIcon className="w-4 h-4" />
                     <span>{answer.likes}</span>
                   </button>
                 </div>
-              </div>
-              <p className="text-gray-700 text-sm line-clamp-5">
+          </div>
+            {/* 가운데 정렬된 답변 */}
+            <div className="flex items-center justify-center h-[70%]">
+              <p className="text-center text-lg font-bold text-gray-500 leading-snug" style={{fontFamily:'NanumGaram'}}>
                 {answer.content}
               </p>
-              <button
-                onClick={() => handleReport(answer.id)}
-                className="absolute bottom-4 right-4 text-gray-400 hover:text-gray-600"
-              >
-                <img src={singoIcon} alt="신고" className="w-4 h-4" />
+            </div>
+            <button
+              onClick={() => handleReport(answer.id)}
+              className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600"
+            >
+                <img src={singoIcon} alt="신고" className="w-5 h-5" />
               </button>              
             </div>
           ))}
