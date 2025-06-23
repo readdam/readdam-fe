@@ -7,46 +7,88 @@ import {
   MapPinIcon,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
+import { fetchPlaceList } from '@api/place';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../../atoms';
+import { url } from '../../config/config';
+
+function formatTimeRanges(times) {
+  if (!times || times.length === 0) return '';
+
+  // 문자열을 Date 객체로 정렬
+  const sorted = [...new Set(times)].sort();
+
+  const ranges = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const curr = sorted[i];
+    const prevHour = parseInt(prev.split(':')[0], 10);
+    const currHour = parseInt(curr.split(':')[0], 10);
+
+    // 연속 시간인지 체크
+    if (currHour !== prevHour + 1) {
+      ranges.push(`${start}-${prev}`);
+      start = curr;
+    }
+    prev = curr;
+  }
+
+  // 마지막 구간 추가
+  ranges.push(`${start}-${prev}`);
+
+  return ranges.join(', ');
+}
 
 export default function PlaceList() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(0); // ← 현재 페이지 (0-based)
+  const size = 10;
   const navigate = useNavigate();
+  const token = useAtomValue(tokenAtom);
+  const [filterField, setFilterField] = useState('name');
 
-  const places = [
-    {
-      id: 1,
-      name: '북카페 리드미',
-      address: '서울 마포구 연남동 123-45',
-      phone: '02-1234-5678',
-      createdAt: '2023-11-01',
-      status: '운영중단',
-      schedule: {
-        weekday: '10:00 - 22:00',
-        weekend: '11:00 - 20:00',
-      },
-      image: 'https://images.unsplash.com/photo-1600431521340-491eca880813',
-      description:
-        '조용하고 아늑한 분위기의 북카페입니다. 다양한 커피와 디저트를 제공합니다.',
-      likes: 245,
-      keywords: ['조용한', '아늑한', '커피', '디저트'],
-    },
-    {
-      id: 2,
-      name: '책방 오후',
-      address: '서울 서초구 방배동 789-10',
-      phone: '02-9876-5432',
-      createdAt: '2023-10-28',
-      status: '운영중단',
-      schedule: {
-        weekday: '11:00 - 20:00',
-        weekend: '12:00 - 18:00',
-      },
-      image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952',
-      description: '독립출판물과 커피를 함께 즐길 수 있는 감성적인 공간입니다.',
-      likes: 189,
-      keywords: ['독립출판', '커피', '아늑한'],
-    },
-  ];
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['placeList', page, searchTerm, filterField],
+    queryFn: () =>
+      fetchPlaceList(token, {
+        page,
+        size,
+        searchTerm,
+        searchField: filterField,
+      }),
+  });
+
+  const places = data?.content ?? [];
+
+  if (isLoading) return <div className="p-6">로딩 중...</div>;
+  if (error) {
+    console.log(error);
+    return (
+      <div className="p-6 text-red-500">
+        데이터를 불러오는 중 오류가 발생했습니다.
+      </div>
+    );
+  }
+
+  const totalPages = data?.totalPages || 1;
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleSearch = () => {
+    // fetchPlaceList(token, {
+    //     page,
+    //     size,
+    //     searchTerm,
+    //     searchField: filterField,
+    //   }),
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto overflow-x-auto">
@@ -61,6 +103,16 @@ export default function PlaceList() {
       </div>
 
       <div className="flex gap-4 mb-6">
+        <select
+          className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+          value={filterField}
+          onChange={(e) => setFilterField(e.target.value)}
+        >
+          <option value="name" selected>
+            장소명
+          </option>
+          <option value="location">주소</option>
+        </select>
         <div className="flex-1 relative">
           <input
             type="text"
@@ -71,9 +123,8 @@ export default function PlaceList() {
           />
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-          <FilterIcon className="w-4 h-4" />
-          필터
+        <button class="bg-[#E88D67] text-white w-16 h-10 rounded text-sm cursor-pointer">
+          검색
         </button>
       </div>
 
@@ -91,112 +142,111 @@ export default function PlaceList() {
                 운영시간
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                키워드
+                태그
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                방 개수
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 좋아요
               </th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                등록일
-              </th> */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                상태
-              </th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 관리
-              </th> */}
+              </th>
               <th className="px-6 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {places.map((place) => (
-              <tr key={place.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="flex items-start gap-4">
-                    <img
-                      src={place.image}
-                      alt={place.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {place.name}
-                      </div>
-                      <div className="text-gray-500 text-sm">
-                        {place.address}
-                      </div>
-                      <div className="text-gray-500 text-sm">
-                        {place.description}
+            {places &&
+              places?.map((place) => (
+                <tr key={place.placeId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="flex items-start gap-4">
+                      <img
+                        src={`${url}/upload/${place.thumbnailImage}`}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {place.name}
+                        </div>
+                        <div className="text-gray-500 text-sm">
+                          {place.location}
+                        </div>
+                        <div className="text-gray-500 text-sm">
+                          {place.introduce}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-gray-500">{place.phone}</td>
-                <td className="px-6 py-4 text-gray-500">
-                  <div>평일: {place.schedule.weekday}</div>
-                  <div>주말: {place.schedule.weekend}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    {place.keywords.map((k, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 bg-[#F3F7EC] text-[#006989] text-xs rounded-full"
-                      >
-                        {k}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-1 text-pink-500">
-                    <HeartIcon className="w-4 h-4" />
-                    <span>{place.likes}</span>
-                  </div>
-                </td>
-                {/* <td className="px-6 py-4 text-gray-500">{place.createdAt}</td> */}
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold text-nowrap ${
-                      place.status === '운영중단'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {place.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    <button className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
-                      수정
-                    </button>
-                    <button className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-600 hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
-                      삭제
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+
+                  <td className="px-6 py-4 text-gray-500">{place.phone}</td>
+                  <td className="px-6 py-4 text-gray-500">
+                    평일: {formatTimeRanges(place.weekdayTime)}
+                    <br />
+                    주말: {formatTimeRanges(place.weekendTime)}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500">
+                    <div className="flex flex-wrap gap-2">
+                      {place.tags.map((tag, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-1 bg-[#F3F7EC] text-[#006989] text-xs rounded-full max-w-[100px] truncate"
+                          title={tag}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 text-gray-500">{place.roomCount}</td>
+                  <td className="px-6 py-4 text-gray-500">{place.likeCount}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2">
+                      <button className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
+                        수정
+                      </button>
+                      <button className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-600 hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
+                        삭제
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
 
       <div className="flex justify-center mt-6">
         <nav className="flex items-center gap-2">
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
+          <button
+            onClick={() => handlePageChange(page - 1)}
+            className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            disabled={page === 0}
+          >
             이전
           </button>
-          <button className="px-3 py-1 text-sm bg-[#006989] text-white rounded">
-            1
-          </button>
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
-            2
-          </button>
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
-            3
-          </button>
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
+
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => handlePageChange(i)}
+              className={`px-3 py-1 text-sm rounded ${
+                page === i
+                  ? 'bg-[#006989] text-white'
+                  : 'border hover:bg-gray-50'
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            onClick={() => handlePageChange(page + 1)}
+            className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            disabled={page + 1 >= totalPages}
+          >
             다음
           </button>
         </nav>
