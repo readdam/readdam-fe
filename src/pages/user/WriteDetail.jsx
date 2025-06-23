@@ -9,8 +9,8 @@ import { url } from '../../config/config';
 
 
 // 모달 컴포넌트들을 별도로 분리
-import ReportModal from './ReportModal';
-import ReportConfirmModal from './ReportConfirmModal';
+import ReportModal from '@components/ReportModal';
+import ReportConfirmModal from '@components/ReportConfirmModal';
 
 const WriteDetail = () => {
   const [post, setPost] = useState(null);

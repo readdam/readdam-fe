@@ -1,4 +1,3 @@
-// src/pages/user/ReportModal.jsx
 import React from 'react';
 import { XIcon } from 'lucide-react';
 

@@ -118,7 +118,6 @@ function App() {
           <Route path="/writeDetail/:id" element={<WriteDetail />} />
           <Route path="/search" element={<SearchResult />} />
           <Route path="/writeList" element={<WriteList />} />
-          <Route path="/writeShortList" element={<WriteShortList />} />
           <Route path="/place" element={<Place />} />
           <Route path="/book" element={<BookPage />} />
           <Route path="/bookSearch" element={<BookSearch />} />
@@ -130,6 +129,7 @@ function App() {
           <Route path="/classList" element={<ClassList />} />
           <Route path="/classCreate" element={<ClassCreate />} />
           <Route path="/classDetail" element={<ClassDetail />} />
+          <Route path="/writeShortList" element={<WriteShortList />} />
         </Route>
 
         <Route element={<MyRoutes />}>

@@ -1,61 +1,28 @@
-import React, { useState } from 'react'
-import { HeartIcon, ClockIcon, XIcon, PenIcon } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { HeartIcon, ClockIcon, PenIcon } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import axios from 'axios'
+import { useAtom } from 'jotai'
+import { tokenAtom, userAtom } from '../../atoms'
+import { url } from '../../config/config';
 import singoIcon from '@assets/singo.png';
+import PostcardModal from '@components/write/PostcardModal'
+
 const WriteShortList = () => {
   const navigate = useNavigate()
-  const [showAnswerPopup, setShowAnswerPopup] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [answerText, setAnswerText] = useState('')
   const [selectedColor, setSelectedColor] = useState('mint')
-  const colorOptions = [
-    {
-      id: 'mint',
-      bg: 'bg-[#E8F3F1]',
-    },
-    {
-      id: 'yellow',
-      bg: 'bg-[#FFF8E7]',
-    },
-    {
-      id: 'pink',
-      bg: 'bg-[#FFE8F3]',
-    },
-  ]
-  const question = {
-    text: '오늘 읽은 책에서 가장 인상 깊었던 구절은 무엇인가요?',
-    timestamp: '2일 18시간 32분',
-  }
-  const [previewAnswers, setPreviewAnswers] = useState([
-    {
-      id: 1,
-      author: '책벌레123',
-      content:
-        '삶이 그대를 속일지라도 슬퍼하거나 노하지 말라. 슬픈 날을 참고 견디면 기쁜 날이 오리니',
-      likes: 12,
-      color: 'mint',
-    },
-    {
-      id: 2,
-      author: '독서광89',
-      content: '우리는 우리가 꿈꾸는 세상을 만들어 갈 수 있다',
-      likes: 8,
-      color: 'yellow',
-    },
-    {
-      id: 3,
-      author: '문학소녀',
-      content: '지나간 시간은 다시 돌아오지 않는다. 현재에 최선을 다하라',
-      likes: 15,
-      color: 'mint',
-    },
-    {
-      id: 4,
-      author: '책읽는밤',
-      content: '별을 따려면 하늘 높이 올라가야 한다',
-      likes: 10,
-      color: 'pink',
-    },
-  ])
+  const [token] = useAtom(tokenAtom)
+  const [user] = useAtom(userAtom)
+  const [answers, setAnswers] = useState([])
+  const [pageInfo, setPageInfo] = useState(null)
+  const [page, setPage] = useState(1)
+  const [hasWritten, setHasWritten] = useState(null)  // 로그인한 사용자가 글 썼는지
+  const [event, setEvent] = useState(null)
+
+
+  // 색상 매핑
   const getPostItColor = (color) => {
     switch (color) {
       case 'mint':
@@ -69,87 +36,69 @@ const WriteShortList = () => {
     }
   }
 
-  const handleReport = (id) => {
+  const handleReport = (writeshortId) => {
     alert('신고가 접수되었습니다.')
   }
 
+       // 최초 로딩 시: 이벤트 정보 및 답변 목록 불러오기
+      useEffect(() => {
+        if (!user || !user.username) return // 아직 로딩 안 됨
 
-  const handleSubmitAnswer = () => {
-    if (answerText.trim()) {
-      const newAnswer = {
-        id: previewAnswers.length + 1,
-        author: '사용자',
-        content: answerText,
-        likes: 0,
-        color: selectedColor,
+        fetchEvent()
+        fetchAnswers(1)
+      }, [user])
+      // 이벤트 정보 불러오기
+      const fetchEvent = async () => {
+        try {
+          const res = await axios.get(`${url}/event`)
+          setEvent(res.data)
+        } catch (err) {
+          console.error('이벤트 데이터 불러오기 실패', err)
+        }
       }
-      setPreviewAnswers([newAnswer, ...previewAnswers])
+    // 답변 목록 불러오기
+    const fetchAnswers = async (pageNum) => {
+      try {
+        const res = await axios.get(`${url}/writeShortList?page=${pageNum}&size=10`);
+        const { list: writeShortList, pageInfo } = res.data;
+
+        setAnswers(prev => pageNum === 1 ? writeShortList : [...prev, ...writeShortList]);
+        setPageInfo(pageInfo);
+
+        const alreadyWrote = writeShortList.some(a => a.username === user.username);
+        setHasWritten(alreadyWrote);
+
+      } catch (err) {
+        console.error('글 목록 불러오기 실패', err);
+      }
+    }
+
+  // 추가된 데이터 반영 + 버튼 비활성
+  const handleSubmitAnswer = async () => {
+    if (!answerText.trim()) return
+
+    try {
+      const res = await axios.post(`${url}/my/writeShort`, {
+        content: answerText,
+        color: selectedColor,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token.access_token}`,
+        },
+      })
+
+      setAnswers([res.data, ...answers])
+      setHasWritten(true)
       setAnswerText('')
-      setShowAnswerPopup(false)
+      setShowModal(false)
+    } catch (err) {
+      console.error('답변 작성 실패', err)
+      alert('작성 실패')
     }
   }
-  // Answer Writing Popup
-  const AnswerPopup = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold">답변 작성하기</h3>
-          <button
-            onClick={() => setShowAnswerPopup(false)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <XIcon className="w-5 h-5" /></button>
-        </div>
-        {/* Color Selection */}
-        <div className="flex gap-3 mb-4">
-          {colorOptions.map((color) => (
-            <button
-              key={color.id}
-              onClick={() => setSelectedColor(color.id)}
-              className={`w-8 h-8 rounded-full ${color.bg} ${selectedColor === color.id ? 'ring-2 ring-offset-2 ring-[#006989]' : ''}`}
-            />
-          ))}
-        </div>
-        {/* Answer Preview */}
-        <div
-          className={`${getPostItColor(selectedColor)} p-6 rounded-sm mb-4`}
-          style={{
-            minHeight: '200px',
-            boxShadow: '2px 2px 5px rgba(0,0,0,0.1)',
-            backgroundImage:
-              'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
-          }}
-        >
-          <textarea
-            value={answerText}
-            onChange={(e) => setAnswerText(e.target.value)}
-            placeholder="생각을 자유롭게 표현해 보세요"
-            className="w-full h-full bg-transparent border-none resize-none focus:ring-0 focus:outline-none"
-            maxLength={200}
-          />
-        </div>
-        {/* Buttons */}
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => setShowAnswerPopup(false)}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-          >
-            취소
-          </button>
-          <button
-            onClick={handleSubmitAnswer}
-            className="px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78]"
-          >
-            작성완료
-          </button>
-        </div>
-      </div>
-    </div>
-  )
 
-  
   return (
-    <section className="w-full py-16 bg-white">
+    <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
       <div className="container mx-auto px-4">
         {/* 탭 메뉴 */}
         <div className="flex justify-between items-center mb-8">
@@ -164,29 +113,43 @@ const WriteShortList = () => {
               읽담한줄
             </button>
           </div>
-          <button onClick={() => setShowAnswerPopup(true)} 
-          className= "px-6 py-2.5 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors">
-            <PenIcon className="w-5 h-5 mr-2" />답변작성
-          </button>
+            {hasWritten !== null && (
+              <button
+                onClick={() => setShowModal(true)}
+                disabled={hasWritten}
+                className={`flex items-center px-6 py-2.5 rounded-lg transition-colors 
+                  ${hasWritten ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#006989] text-white hover:bg-[#005C78]'}`}
+              >
+                <PenIcon className="w-5 h-5 mr-2" />
+                {hasWritten ? '이미 작성함' : '답변작성'}
+              </button>
+            )}
             </div>
-        {/* Question Area */}
-        <div className="bg-white rounded-lg p-6 mb-8 shadow-sm border-2 border-[#E88D67]">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-2xl font-bold text-[#006989]">
-              {question.text}
-            </h2>
-            <div className="flex items-center text-sm text-gray-500">
-              <ClockIcon className="w-4 h-4 mr-2" />
-              <span>{question.timestamp}</span>
+        {/* 질문 영역 */}
+          <div className="bg-white rounded-lg p-6 mb-8 shadow-sm border-2 border-[#E88D67]">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-2xl font-bold text-[#006989]">
+                {event?.title || '이달의 담소 업데이트 중...'}
+              </h2>
+              <div className="flex items-center text-sm text-gray-500">
+                <ClockIcon className="w-4 h-4 mr-2" />
+                <span>
+                  {event?.startTime
+                    ? new Date(event.startTime).toLocaleString('ko-KR', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })
+                    : ''}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Post-it Preview */}
+        {/* Post-it 답변카드들 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {previewAnswers.map((answer) => (
+        {answers.map((answer) => (
           <div
-            key={answer.id}
+            key={answer.writeshortId}
             className={`${getPostItColor(answer.color)} p-4 rounded-sm shadow-md hover:shadow-lg transition-shadow relative transform hover:-rotate-1 hover:translate-y-[-2px]`}
             style={{
               aspectRatio: '1 / 1',
@@ -198,7 +161,7 @@ const WriteShortList = () => {
           {/* 상단: 작성자 & 좋아요 */}
           <div className="flex justify-between items-start mb-2">
             <span className="font-semibold text-sm text-[#006989]">
-              {answer.author}
+              {answer.nickname}
             </span>
              <div className="flex items-center gap-2">
                   <button className="flex items-center gap-1 text-gray-600">
@@ -208,13 +171,15 @@ const WriteShortList = () => {
                 </div>
           </div>
             {/* 가운데 정렬된 답변 */}
-            <div className="flex items-center justify-center h-[70%]">
-              <p className="text-center text-lg font-bold text-gray-500 leading-snug" style={{fontFamily:'NanumGaram'}}>
+            <div className="flex items-center justify-center h-[70%] pt-16">
+              <p className="text-center text-lg font-bold text-gray-500 leading-snug break-words overflow-hidden" 
+              style={{fontFamily:'NanumGaram'}}>
                 {answer.content}
               </p>
             </div>
+            {/* 신고 버튼 */}
             <button
-              onClick={() => handleReport(answer.id)}
+              onClick={() => handleReport(answer.writeshortId)}
               className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600"
             >
                 <img src={singoIcon} alt="신고" className="w-5 h-5" />
@@ -222,14 +187,33 @@ const WriteShortList = () => {
             </div>
           ))}
         </div>
-        {/* More Button */}
-        <div className="flex justify-center mt-8">
-          <button className="px-4 py-2 border border-gray-200 rounded text-sm hover:bg-gray-50">
-            더보기
-          </button>
-        </div>
-        {/* Answer Writing Popup */}
-        {showAnswerPopup && <AnswerPopup />}
+        {/* 더보기 버튼 */}
+        {pageInfo && page < pageInfo.totalPage && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => {
+                const nextPage = page + 1
+                fetchAnswers(nextPage)
+                setPage(nextPage)
+              }}
+              className="px-4 py-2 border border-gray-200 rounded text-sm hover:bg-gray-50"
+            >
+              더보기
+            </button>
+          </div>
+        )}
+
+        {/* 모달 컴포넌트 */}
+        {showModal && (
+          <PostcardModal
+            answerText={answerText}
+            setAnswerText={setAnswerText}
+            selectedColor={selectedColor}
+            setSelectedColor={setSelectedColor}
+            onSubmit={handleSubmitAnswer}
+            onClose={() => setShowModal(false)}
+          />
+        )}
       </div>
     </section>
   )
