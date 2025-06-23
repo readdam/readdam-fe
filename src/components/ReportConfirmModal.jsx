@@ -1,4 +1,3 @@
-// src/pages/user/ReportConfirmModal.jsx
 import React from 'react';
 
 const ReportConfirmModal = ({ setShowReportConfirm }) => {
