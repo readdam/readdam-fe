@@ -67,10 +67,7 @@ import axiosInstance from '@api/axiosInstance';
 import { useEffect } from 'react';
 
 function App() {
-
-  useEffect(() => {
-
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <>
@@ -89,6 +86,7 @@ function App() {
           <Route path="/admin/classDetail" element={<AdminClassDetail />} />
           <Route path="/admin/placeList" element={<PlaceList />} />
           <Route path="/admin/placeAdd" element={<PlaceAdd />} />
+          <Route path="/admin/placeEdit/:placeId" element={<PlaceEdit />} />
           <Route
             path="/admin/placeReservationList"
             element={<PlaceReservationList />}
