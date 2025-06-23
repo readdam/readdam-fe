@@ -87,6 +87,12 @@ const ClassCreate = () => {
     }
   };
 
+  const removeLeaderImgF = (e) => {
+    e.preventDefault();
+    setLeaderImgF("");
+    setLeaderImgFPreview("");
+  };
+
   const [token] = useAtom(tokenAtom);
   const [user] = useAtom(userAtom);
   const [showTempSaveModal, setShowTempSaveModal] = useState(false);
@@ -600,19 +606,20 @@ const ClassCreate = () => {
                 )}
                 {/* 이미지가 있을 때만 미리보기 표시 */}
                 {mainImgFPreview && (
-                  <>
+                  <div className="relative w-40 h-40 mt-2">
                     <img
                       src={mainImgFPreview}
                       alt="미리보기"
-                      className="w-40 h-40 object-cover mt-2"
+                      className="w-40 h-40 object-cover rounded-md"
                     />
                     <button
                       onClick={removeMainImgF}
                       className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
+                      type="button"
                     >
                       <XIcon className="w-4 h-4" />
                     </button>
-                  </>
+                  </div>
                 )}
                 <input
                   id="mainImgUpload"
@@ -652,23 +659,31 @@ const ClassCreate = () => {
                   {!leaderImgFPreview && (
                     <>
                       <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                      <label className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500">
                         이미지 업로드
-                      </label>
+                      </span>
                     </>
                   )}
                   {/* 이미지가 있을 때만 미리보기 표시 */}
                   {leaderImgFPreview && (
-                    <img
-                      src={leaderImgFPreview}
-                      alt="미리보기"
-                      className="w-32 h-32 object-cover mt-2"
-                    />
+                    <div className="relative w-40 h-40">
+                      <img
+                        src={leaderImgFPreview}
+                        alt="미리보기"
+                        className="w-32 h-32 object-cover rounded-md"
+                      />
+                      <button
+                        onClick={removeLeaderImgF}
+                        className="absolute top-1 right-1 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
+                        type="button"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                   <input
                     id="leaderImgUpload"
                     type="file"
-                    name="leaderImgF"
                     accept="image/*"
                     onChange={handleLeaderImgChange}
                     className="hidden"
