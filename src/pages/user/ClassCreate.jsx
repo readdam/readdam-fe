@@ -3,6 +3,7 @@ import { useAtom } from "jotai";
 import { tokenAtom, userAtom } from "../../atoms";
 import axios from "axios";
 import { url } from "../../config/config";
+import AddrSearchModal from "@components/class/AddrSearchModal";
 import {
   CalendarIcon,
   ImageIcon,
@@ -30,6 +31,15 @@ const ClassCreate = () => {
     description: "",
     leaderDescription: "",
   });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handlePlaceSelect = (place) => {
+    setForm(prev => ({
+      ...prev,
+      venueAddress: place.address_name,
+    }));
+  };
 
   // 이미지(미리보기용 포함)
   const [mainImgF, setMainImgF] = useState("");
@@ -64,6 +74,12 @@ const ClassCreate = () => {
     }
   };
 
+  const removeRoundImgF = (e) => {
+    e.preventDefault();
+    setRoundImgs("");
+    setRoundImgPreviews("");
+  };
+
   const handleMainImgChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -72,6 +88,7 @@ const ClassCreate = () => {
     }
     console.log("mainImgF file:", file);
   };
+  
 
   const removeMainImgF = (e) => {
     e.preventDefault();
@@ -450,21 +467,22 @@ const ClassCreate = () => {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="주소 검색"
+                    placeholder="검색 버튼을 눌러 주소 선택"
                     className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg ${
                       form.venue === "읽담" ? "bg-gray-100" : ""
                     }`}
                     disabled={form.venue === "읽담"}
                     value={form.venueAddress}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        venueAddress: e.target.value,
-                      })
-                    }
+                    readOnly
+                    // onChange={(e) =>
+                    //   setForm({
+                    //     ...form,
+                    //     venueAddress: e.target.value,
+                    //   })
+                    // }
                   />
                   <button
-                    type="button"
+                    onClick={()=> setIsModalOpen(true)}
                     disabled={form.venue === "읽담"}
                     className={`px-4 py-2 bg-primary text-white rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -472,6 +490,13 @@ const ClassCreate = () => {
                   </button>
                 </div>
               </div>
+
+              {isModalOpen && (
+                <AddrSearchModal
+                  onSelect={handlePlaceSelect}
+                  onClose={() => setIsModalOpen(false)}
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-4">
@@ -535,11 +560,20 @@ const ClassCreate = () => {
                             </>
                           )}
                           {roundImgPreviews[roundField] && (
-                            <img
-                              src={roundImgPreviews[roundField]}
-                              alt="미리보기"
-                              className="w-32 h-32 object-cover mt-2"
-                            />
+                            <div className="relative w-40 h-40 mt-2">
+                              <img
+                                src={roundImgPreviews[roundField]}
+                                alt="미리보기"
+                                className="w-32 h-32 object-cover mt-2"
+                              />
+                              <button
+                                onClick={removeRoundImgF}
+                                className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
+                                type="button"
+                              >
+                                <XIcon className="w-4 h-4" />
+                              </button>
+                            </div>
                           )}
                           <input
                             type="file"
