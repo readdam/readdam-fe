@@ -55,8 +55,8 @@ const MyWrite = () => {
         ))}
       </div>
 
-      {/* 카드 리스트 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {/* 카드 리스트 (한 줄에 3개) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {posts.map((post) => (
           <Link
             key={post.writeId}

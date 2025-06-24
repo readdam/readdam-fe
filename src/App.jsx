@@ -65,6 +65,7 @@ import Fail from '@pages/my/Fail';
 import MyInquiryWrite from '@pages/my/MyInquiryWrite';
 import axiosInstance from '@api/axiosInstance';
 import { useEffect } from 'react';
+import MyWriteShort from '@pages/my/MyWriteShort';
 
 function App() {
 
@@ -144,7 +145,7 @@ function App() {
           {/* <Route path="/myClassIMade" element={<MyClassIMade />} /> */}
           <Route path="/myWrite" element={<MyWrite />} />
           <Route path="/myWriteComment" element={<MyWriteComment />} />
-          {/* <Route path="/myWriteShort" element={<MyWriteShort />} /> */}
+          <Route path="/myWriteShort" element={<MyWriteShort />} />
           <Route path="/myReviewBook" element={<MyReviewBook />} />
           <Route path="/myReviewClass" element={<MyReviewClass />} />
           <Route path="/myReservation" element={<MyReservation />} />
