@@ -20,6 +20,7 @@ const WriteShortList = () => {
   const [page, setPage] = useState(1)
   const [hasWritten, setHasWritten] = useState(null)  // 로그인한 사용자가 글 썼는지
   const [event, setEvent] = useState(null)
+  const [remainingTime, setRemainingTime] = useState(''); // 남은 시간 상태값 추가
 
 
   // 색상 매핑
@@ -39,14 +40,35 @@ const WriteShortList = () => {
   const handleReport = (writeshortId) => {
     alert('신고가 접수되었습니다.')
   }
-
-       // 최초 로딩 시: 이벤트 정보 및 답변 목록 불러오기
+     // 최초 진입 시 (user와 무관)
       useEffect(() => {
-        if (!user || !user.username) return // 아직 로딩 안 됨
-
         fetchEvent()
+        fetchAnswers(1) // 여기도 로그인 관계없이
+      }, [])
+
+      useEffect(() => {
+        if (!user?.username || !token?.access_token) return; // session 복구되면 실행
         fetchAnswers(1)
-      }, [user])
+      }, [user, token])
+
+      // 남은 시간 1분마다 갱신
+      useEffect(() => {
+        calculateRemainingTime()
+        const interval = setInterval(calculateRemainingTime, 60000)
+        return () => clearInterval(interval)
+      }, [event?.endTime])
+
+      // 로그인 여부 또는 답변 변경 시 작성 여부 확인
+      useEffect(() => {
+        if (user === undefined) return
+        if (user === null) {
+          setHasWritten(false)
+        } else {
+          const alreadyWrote = answers.some((a) => a.username === user.username)
+          setHasWritten(alreadyWrote)
+        }
+      }, [user, answers])
+
       // 이벤트 정보 불러오기
       const fetchEvent = async () => {
         try {
@@ -59,14 +81,24 @@ const WriteShortList = () => {
     // 답변 목록 불러오기
     const fetchAnswers = async (pageNum) => {
       try {
-        const res = await axios.get(`${url}/writeShortList?page=${pageNum}&size=10`);
+            const res = await axios.get(`${url}/writeShortList?page=${pageNum}&size=10`, {
+              headers: token?.access_token
+                ? { Authorization: `Bearer ${token.access_token}` }
+                : {},
+            });
+
         const { list: writeShortList, pageInfo } = res.data;
 
         setAnswers(prev => pageNum === 1 ? writeShortList : [...prev, ...writeShortList]);
         setPageInfo(pageInfo);
 
-        const alreadyWrote = writeShortList.some(a => a.username === user.username);
-        setHasWritten(alreadyWrote);
+        // 로그인 사용자만 hasWritten 계산
+          if (user?.username) {
+            const alreadyWrote = writeShortList.some(a => a.username === user.username);
+            setHasWritten(alreadyWrote);
+          } else {
+            setHasWritten(false); // 비로그인 사용자도 버튼이 안 보이도록 처리
+          }
 
       } catch (err) {
         console.error('글 목록 불러오기 실패', err);
@@ -75,6 +107,12 @@ const WriteShortList = () => {
 
   // 추가된 데이터 반영 + 버튼 비활성
   const handleSubmitAnswer = async () => {
+      if (!token?.access_token || !user) {
+        alert('로그인이 필요한 서비스입니다');
+        navigate('/login');
+        return;
+      }
+
     if (!answerText.trim()) return
 
     try {
@@ -97,6 +135,64 @@ const WriteShortList = () => {
     }
   }
 
+    const calculateRemainingTime = () => {
+      if (!event?.endTime) return;
+
+      const now = new Date();
+      const end = new Date(event.endTime);
+      const diffMs = end - now;
+
+      if (diffMs <= 0) {
+        setRemainingTime('종료됨');
+        return;
+      }
+
+      const minutes = Math.floor(diffMs / (1000 * 60)) % 60;
+      const hours = Math.floor(diffMs / (1000 * 60 * 60)) % 24;
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      setRemainingTime(`${days}일 ${hours}시간 ${minutes}분`);
+    };
+
+    const handleToggleLike = async (writeShortId) => {
+    if (!token?.access_token) {
+      alert('로그인이 필요한 서비스입니다');
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const res = await axios.post(`${url}/my/writeShort-like`, 
+        { writeshortId: writeShortId  },
+        {
+          headers: {
+            Authorization: `Bearer ${token.access_token}`,
+          },
+        }
+      );
+
+      const isLiked = res.data;
+
+      // 상태 반영: answers 배열 내 해당 항목 업데이트
+        setAnswers(prevAnswers =>
+          prevAnswers.map((answer) =>
+            answer.writeshortId === writeShortId
+              ? {
+                  ...answer,
+                  isLiked: isLiked,
+                  likes: answer.likes + (isLiked ? 1 : -1),
+                }
+              : answer
+          )
+        );
+      } catch (err) {
+        console.error('좋아요 토글 실패', err);
+      }
+    };
+
+    useEffect(() => {
+    }, [answers]);
+
   return (
     <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
       <div className="container mx-auto px-4">
@@ -113,17 +209,24 @@ const WriteShortList = () => {
               읽담한줄
             </button>
           </div>
-            {hasWritten !== null && (
-              <button
-                onClick={() => setShowModal(true)}
-                disabled={hasWritten}
-                className={`flex items-center px-6 py-2.5 rounded-lg transition-colors 
-                  ${hasWritten ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#006989] text-white hover:bg-[#005C78]'}`}
-              >
-                <PenIcon className="w-5 h-5 mr-2" />
-                {hasWritten ? '이미 작성함' : '답변작성'}
-              </button>
-            )}
+              {hasWritten !== null && (
+                <button
+                  onClick={() => {
+                    if (!token?.access_token || !user) {
+                      alert('로그인이 필요한 서비스입니다');
+                      navigate('/login');
+                      return;
+                    }
+                    setShowModal(true);
+                  }}
+                  disabled={hasWritten}
+                  className={`flex items-center px-6 py-2.5 rounded-lg transition-colors 
+                    ${hasWritten ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#006989] text-white hover:bg-[#005C78]'}`}
+                >
+                  <PenIcon className="w-5 h-5 mr-2" />
+                  {hasWritten ? '이미 작성함' : '답변작성'}
+                </button>
+              )}
             </div>
         {/* 질문 영역 */}
           <div className="bg-white rounded-lg p-6 mb-8 shadow-sm border-2 border-[#E88D67]">
@@ -134,12 +237,9 @@ const WriteShortList = () => {
               <div className="flex items-center text-sm text-gray-500">
                 <ClockIcon className="w-4 h-4 mr-2" />
                 <span>
-                  {event?.startTime
-                    ? new Date(event.startTime).toLocaleString('ko-KR', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      })
-                    : ''}
+                  <span>
+                    {remainingTime}
+                  </span>
                 </span>
               </div>
             </div>
@@ -164,8 +264,12 @@ const WriteShortList = () => {
               {answer.nickname}
             </span>
              <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-1 text-gray-600">
-                    <HeartIcon className="w-4 h-4" />
+                  <button
+                  onClick={() => handleToggleLike(answer.writeshortId)}
+                  className="flex items-center gap-1 text-gray-600">
+                    <HeartIcon
+                      className={`w-4 h-4 ${answer.isLiked ? 'fill-[#E88D67] text-[#E88D67]' : 'text-gray-400'}`}
+                    />
                     <span>{answer.likes}</span>
                   </button>
                 </div>
@@ -188,7 +292,7 @@ const WriteShortList = () => {
           ))}
         </div>
         {/* 더보기 버튼 */}
-        {pageInfo && page < pageInfo.totalPage && (
+        {pageInfo && page < pageInfo.totalPages && (
           <div className="flex justify-center mt-8">
             <button
               onClick={() => {
