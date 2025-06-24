@@ -1,3 +1,4 @@
+// src/pages/my/MyWrite.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -18,20 +19,13 @@ const MyWrite = () => {
 
   useEffect(() => {
     if (!token?.access_token) return;
-
     axios
       .get(`${url}/my/myWrite`, {
-        headers: {
-          Authorization: `Bearer ${token.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${token.access_token}` },
         withCredentials: true,
       })
-      .then((res) => {
-        setPosts(res.data);
-      })
-      .catch((err) => {
-        console.error('글 불러오기 실패:', err);
-      });
+      .then(res => setPosts(res.data))
+      .catch(err => console.error('글 불러오기 실패:', err));
   }, [token]);
 
   return (
@@ -40,7 +34,7 @@ const MyWrite = () => {
 
       {/* 탭 메뉴 */}
       <div className="flex space-x-6 border-b mb-8">
-        {tabs.map((tab) => (
+        {tabs.map(tab => (
           <Link
             key={tab.label}
             to={tab.path}
@@ -56,8 +50,8 @@ const MyWrite = () => {
       </div>
 
       {/* 카드 리스트 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {posts.map((post) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {posts.map(post => (
           <Link
             key={post.writeId}
             to={`/writeDetail/${post.writeId}`}
@@ -89,13 +83,12 @@ const MyWrite = () => {
               {/* 제목 */}
               <h3 className="text-sm font-semibold line-clamp-1">{post.title}</h3>
 
-              {/* 작성자 */}
+              {/* 작성일 */}
               <div className="text-sm text-gray-600">
-                <span className="text-blue-500 font-medium">{post.nickname}</span> ·{' '}
-                {post.regDate?.substring(0, 10)}
+                {post.regDate?.slice(0, 10) || ''}
               </div>
 
-              {/* 하단 정보 */}
+              {/* 하단 통계 */}
               <div className="flex justify-between items-end text-xs text-gray-500 mt-2">
                 <div className="flex space-x-4">
                   <span>❤️ {post.likeCnt || 0}</span>

@@ -13,32 +13,25 @@ const tabs = [
 
 const MyWriteComment = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const token = useAtomValue(tokenAtom);
+
   const [comments, setComments] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!token?.access_token) return;
-
     axios
       .get(`${url}/my/myWriteComment`, {
         headers: { Authorization: `Bearer ${token.access_token}` },
         withCredentials: true,
       })
-      .then((res) => {
-        setComments(res.data);
-      })
-      .catch((err) => {
-        console.error('작성한 첨삭 불러오기 실패:', err);
-      });
+      .then((res) => setComments(res.data))
+      .catch((err) => console.error('작성한 첨삭 불러오기 실패:', err));
   }, [token]);
 
-  // 줄 수 계산 (5줄 이상이면 true)
-  const isLongText = (text) => {
-    const lines = text.split('\n');
-    return lines.length > 5;
-  };
+  // 줄 수가 5줄 초과면 true
+  const isLongText = (text) => text.split('\n').length > 5;
 
   return (
     <div className="px-4 py-6 max-w-screen-xl mx-auto">
@@ -48,7 +41,7 @@ const MyWriteComment = () => {
       <div className="flex space-x-6 border-b mb-8">
         {tabs.map((tab) => (
           <Link
-            key={tab.label}
+            key={tab.path}
             to={tab.path}
             className={`pb-2 transition-all ${
               location.pathname === tab.path
@@ -61,16 +54,16 @@ const MyWriteComment = () => {
         ))}
       </div>
 
-      {/* 첨삭 목록 */}
+      {/* 첨삭 목록 (배경 제거) */}
       <div className="space-y-4">
         {comments.map((item) => {
           const isExpanded = expandedId === item.writeCommentId;
-          const showMoreButton = isLongText(item.content) && !isExpanded;
+          const needMore = isLongText(item.content) && !isExpanded;
 
           return (
             <div
               key={item.writeCommentId}
-              className="bg-white border rounded-lg p-4 shadow-sm cursor-pointer hover:bg-gray-50"
+              className="py-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50"
               onClick={() => navigate(`/writeDetail/${item.writeId}`)}
             >
               <div className="flex items-center space-x-2 mb-2">
@@ -87,12 +80,12 @@ const MyWriteComment = () => {
                 className={`text-sm text-gray-700 leading-relaxed whitespace-pre-line ${
                   isExpanded ? '' : 'line-clamp-5'
                 }`}
-                onClick={(e) => e.stopPropagation()} // 카드 클릭 방지
+                onClick={(e) => e.stopPropagation()}
               >
                 {item.content}
               </p>
 
-              {showMoreButton && (
+              {needMore && (
                 <button
                   className="mt-2 text-blue-500 text-sm font-medium"
                   onClick={(e) => {
