@@ -9,6 +9,8 @@ export default function BasicInfoSection({
   setPhoneNumber,
   setLat,
   setLng,
+  lat,
+  lng,
   detailAddress,
   setDetailAddress,
 }) {
@@ -45,6 +47,29 @@ export default function BasicInfoSection({
 
     loadScripts();
   }, []);
+
+  useEffect(() => {
+    if (sdkReady && lat != null && lng != null && mapRef.current) {
+      const mapContainer = mapRef.current;
+      const newCoords = new window.kakao.maps.LatLng(lat, lng);
+
+      const mapOption = {
+        center: newCoords,
+        level: 5,
+      };
+
+      const map = new window.kakao.maps.Map(mapContainer, mapOption);
+      mapContainer.kakaoMap = map;
+
+      const marker = new window.kakao.maps.Marker({
+        position: newCoords,
+        map,
+      });
+      mapContainer.marker = marker;
+
+      setCoords(newCoords); // 내부 상태 동기화
+    }
+  }, [sdkReady, lat, lng]);
 
   const handleSearchAddress = () => {
     if (!sdkReady) {

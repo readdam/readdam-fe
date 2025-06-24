@@ -16,7 +16,7 @@ const facilityOptions = {
   whiteboard: { label: '화이트보드', emoji: '📋' },
   wifi: { label: '와이파이', emoji: '📶' },
   projector: { label: '프로젝터', emoji: '📽️' },
-  socket: { label: '콘센트', emoji: '🔌' },
+  powerOutlet: { label: '콘센트', emoji: '🔌' },
   window: { label: '창문', emoji: '🪟' },
 };
 
@@ -229,7 +229,7 @@ export default function PlaceAdd() {
       hasHeater: room.facilities.heater,
       hasWifi: room.facilities.wifi,
       hasWindow: room.facilities.window,
-      hasPowerOutlet: room.facilities.socket,
+      hasPowerOutlet: room.facilities.powerOutlet,
       hasTv: room.facilities.tv,
       hasProjector: room.facilities.projector,
       hasWhiteboard: room.facilities.whiteboard,

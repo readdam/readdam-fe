@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import BasicInfoSection from '@components/admin/place/BasicInfoSection';
 import { AvailableTimeSection } from '@components/admin/place/AvailableTimeSection';
 import PlaceDetailForm from '@components/admin/place/PlaceDetailForm';
@@ -8,6 +8,9 @@ import RoomForm from '@components/admin/place/RoomForm';
 import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { url } from '../../config/config';
+import { getPlace } from '@api/place';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../../atoms';
 
 const facilityOptions = {
   airConditioner: { label: '에어컨', emoji: '❄️' },
@@ -16,12 +19,61 @@ const facilityOptions = {
   whiteboard: { label: '화이트보드', emoji: '📋' },
   wifi: { label: '와이파이', emoji: '📶' },
   projector: { label: '프로젝터', emoji: '📽️' },
-  socket: { label: '콘센트', emoji: '🔌' },
+  powerOutlet: { label: '콘센트', emoji: '🔌' },
   window: { label: '창문', emoji: '🪟' },
 };
 
 export default function PlaceEdit() {
   const navigate = useNavigate();
+  const { placeId } = useParams();
+  const [place, setPlace] = useState(null);
+
+  const token = useAtomValue(tokenAtom); // localStorage 등에서 가져오는 방식에 맞게 구현 필요
+  useEffect(() => {
+    getPlace(token, placeId)
+      .then((data) => {
+        setPlace(data);
+
+        setPlaceName(data.name);
+        setPlaceAddress(data.location);
+        setPhoneNumber(data.phone);
+        setIntroduceText(data.introduce);
+        setLat(data.lat);
+        setLng(data.log);
+
+        setKeywords(data.tags || []);
+        setImagePreviews(data.images || []);
+        setSelectedWeekdaySlots(data.weekdayTimes || []);
+        setSelectedWeekendSlots(data.weekendTimes || []);
+
+        if (data.rooms && Array.isArray(data.rooms)) {
+          const parsedRooms = data.rooms.map((room) => ({
+            id: room.roomId,
+            name: room.name,
+            description: room.description,
+            size: room.size,
+            minCapacity: room.minPerson,
+            maxCapacity: room.maxPerson,
+            images: room.images || [],
+            facilities: {
+              airConditioner: room.facilities?.airConditioner ?? false,
+              heater: room.facilities?.heater ?? false,
+              wifi: room.facilities?.wifi ?? false,
+              window: room.facilities?.window ?? false,
+              powerOutlet: room.facilities?.powerOutlet ?? false, // ✅ 여기 주의
+              whiteboard: room.facilities?.whiteboard ?? false,
+              tv: room.facilities?.tv ?? false,
+              projector: room.facilities?.projector ?? false,
+            },
+          }));
+
+          setRooms(parsedRooms);
+        }
+      })
+      .catch((err) => {
+        console.error('장소 상세 조회 실패:', err);
+      });
+  }, [placeId]);
 
   // 장소 정보
   const [placeName, setPlaceName] = useState('');
@@ -103,9 +155,25 @@ export default function PlaceEdit() {
     setImages([]);
   };
 
+  // const handleEditRoom = (room) => {
+  //   setCurrentRoom(room);
+  //   setEditingRoom(room);
+  // };
+
   const handleEditRoom = (room) => {
-    setCurrentRoom(room);
+    const filledFacilities = Object.fromEntries(
+      Object.keys(facilityOptions).map((key) => [
+        key,
+        room.facilities?.[key] ?? false,
+      ])
+    );
+
+    setCurrentRoom({
+      ...room,
+      facilities: filledFacilities,
+    });
     setEditingRoom(room);
+    setImages(room.images || []);
   };
 
   const handleDeleteRoom = (roomId) => {
@@ -352,6 +420,8 @@ export default function PlaceEdit() {
         setPhoneNumber={setPhoneNumber}
         setLat={setLat}
         setLng={setLng}
+        lat={lat}
+        lng={lng}
         detailAddress={detailAddress}
         setDetailAddress={setDetailAddress}
       />
