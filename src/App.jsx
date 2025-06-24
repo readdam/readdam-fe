@@ -125,7 +125,7 @@ function App() {
           <Route path="/writeModify" element={<WriteModify />} />
           <Route path="/classList" element={<ClassList />} />
           <Route path="/classCreate" element={<ClassCreate />} />
-          <Route path="/classDetail" element={<ClassDetail />} />
+          <Route path="/classDetail/:classId" element={<ClassDetail />} />
           <Route path="/writeShortList" element={<WriteShortList />} />
         </Route>
 

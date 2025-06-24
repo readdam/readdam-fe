@@ -12,6 +12,7 @@ import {
   UploadIcon,
   XIcon,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ClassCreate = () => {
   const [form, setForm] = useState({
@@ -31,7 +32,8 @@ const ClassCreate = () => {
     description: "",
     leaderDescription: "",
   });
-
+  
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handlePlaceSelect = (place) => {
@@ -58,6 +60,7 @@ const ClassCreate = () => {
     round4ImgF: "",
     round4BookimgF: "",
   });
+
   const [roundImgPreviews, setRoundImgPreviews] = useState({});
 
   const handleRoundImageChange = (e, field) => {
@@ -86,7 +89,6 @@ const ClassCreate = () => {
       setMainImgF(file);
       setMainImgFPreview(URL.createObjectURL(file));
     }
-    console.log("mainImgF file:", file);
   };
   
 
@@ -159,9 +161,9 @@ const ClassCreate = () => {
     for (let i = 0; i < sessionCount; i++) {
       const round = i + 1; // 1-based
       const date = form.dates[i] || ""; // YYYY-MM-DD
-      const datetime = date ? `${date}T10:00:00` : ""; // ISO 형식으로 변환
+      const dateOnly = date || "";
 
-      submitData.append(`round${round}Date`, datetime);
+      if (dateOnly) submitData.append(`round${round}Date`, dateOnly);
       submitData.append(`round${round}PlaceName`, form.venueName || "");
       submitData.append(`round${round}PlaceLoc`, form.venueAddress || "");
       submitData.append(
@@ -170,8 +172,8 @@ const ClassCreate = () => {
       );
       submitData.append(`round${round}Bookname`, ""); // 책 제목 (추후 구현)
       submitData.append(`round${round}Bookwriter`, ""); // 책 저자
-      submitData.append(`round${round}Lat`, ""); // 위도
-      submitData.append(`round${round}Log`, ""); // 경도
+      submitData.append(`round${round}Lat`, form.lat ?? "0"); // 위도
+      submitData.append(`round${round}Log`, form.log ?? "0"); // 경도
     }
 
     // submitData 전송 확인 로그
