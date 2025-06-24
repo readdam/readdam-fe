@@ -338,7 +338,7 @@ export default function PlaceAdd() {
         <button className="p-2 hover:bg-gray-100 rounded-lg">
           <ArrowLeft
             className="w-6 h-6"
-            onClick={() => navigate('/adminPlaceList')}
+            onClick={() => navigate('/admin/placeList')}
           />
         </button>
         <h1 className="text-2xl font-bold">새 장소 추가</h1>
