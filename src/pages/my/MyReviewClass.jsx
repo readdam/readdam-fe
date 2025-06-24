@@ -1,97 +1,112 @@
-import React from 'react';
+// src/pages/my/MyReviewClass.jsx
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useAtomValue } from 'jotai';
+import { Link } from 'react-router-dom';
+import { tokenAtom } from '../../atoms';
+import { url } from '../../config/config';
 
-const reviews = [
-    {
-        id: 1,
-        title: '심리학 탐구 독서 모임',
-        date: '2023.11.20',
-        location: '서울 마포구',
-        image: '/images/class1.jpg',
-        content: '정말 유익한 시간이었습니다. 다양한 관점에서 심리학에 대해 토론할 수 있어서 좋았어요.',
-        tags: ['독서모임', '심리'],
-        rating: 5,
-    },
-    {
-        id: 2,
-        title: '철학 고전 읽기 모임',
-        date: '2023.11.15',
-        location: '경기 남양주시',
-        image: '/images/class2.jpg',
-        content: '낯설도 좋고 사람들과 진지하게 즐거운 모임이었습니다. 다음에도 참여하고 싶어요.',
-        tags: ['철학', '고전', '인문학'],
-        rating: 4,
-    },
-    {
-        id: 3,
-        title: '영어 원서 독파 스터디',
-        date: '2023.11.10',
-        location: '서울 강남구',
-        image: '/images/class3.jpg',
-        content: '직접 번역하는 스터디라 정말 재미있었어요. 리딩보다 자신감 얻을 수 있을 것 같아요.',
-        tags: ['영어', '원서', '스터디'],
-        rating: 3,
-    },
-    {
-        id: 4,
-        title: '도쿄 <특> 시리즈 완독',
-        date: '2023.11.05',
-        location: '서울 마포구',
-        image: '/images/class4.jpg',
-        content: '재밌는 시리즈라 일주일간 몰입해서 보기 좋았어요. 대화식이라 흥미로웠어요.',
-        tags: ['SF/고전', '추리', '역사/사회'],
-        rating: 4,
-    },
-];
+export default function MyReviewClass() {
+  const token = useAtomValue(tokenAtom);
+  const [reviews, setReviews] = useState([]);
 
-const renderStars = (count) => {
-    return Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={i < count ? 'text-yellow-400' : 'text-gray-300'}>
-            ★
-        </span>
+  useEffect(() => {
+    if (!token?.access_token) return;
+    axios
+      .get(`${url}/my/reviewClass`, {
+        headers: { Authorization: `Bearer ${token.access_token}` },
+        withCredentials: true,
+      })
+      .then(res => setReviews(res.data))
+      .catch(err => console.error('내 모임 후기 조회 실패:', err));
+  }, [token]);
+
+  const renderStars = (count) =>
+    Array.from({ length: 5 }, (_, i) => (
+      <span
+        key={i}
+        className={i < count ? 'text-yellow-400' : 'text-gray-300'}
+      >
+        ★
+      </span>
     ));
-};
 
-const MyReviewClass = () => {
+  if (reviews.length === 0) {
     return (
-        <div className="max-w-screen-xl mx-auto px-4 py-8">
-            <h2 className="text-xl font-bold mb-6">나의 모임 리뷰</h2>
-
-            <div className="flex justify-between items-center mb-4">
-                <p className="text-sm text-gray-600">총 {reviews.length}개의 리뷰</p>
-                <button className="text-sm text-gray-500 hover:text-gray-800">최신순으로 정렬</button>
-            </div>
-
-            <div className="space-y-4">
-                {reviews.map((r) => (
-                    <div key={r.id} className="bg-white border rounded-lg p-4 flex items-start shadow-sm hover:shadow-md transition-shadow">
-                        <img
-                            src={r.image}
-                            alt={r.title}
-                            className="w-24 h-24 object-cover rounded-md border mr-4"
-                        />
-                        <div className="flex-1 space-y-1">
-                            <div className="flex items-center space-x-2">
-                                <h3 className="text-sm font-semibold text-gray-800">{r.title}</h3>
-                                <div className="flex flex-wrap gap-1">
-                                    {r.tags.map((tag, idx) => (
-                                        <span
-                                            key={idx}
-                                            className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full"
-                                        >
-                                            {tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                            <p className="text-xs text-gray-500">{r.date} · {r.location}</p>
-                            <p className="text-sm text-gray-700">{r.content}</p>
-                            <div className="mt-1 text-sm">{renderStars(r.rating)}</div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+      <div className="flex flex-col items-center justify-center py-20">
+        <p className="text-gray-500 mb-4">작성한 모임 후기가 없습니다</p>
+        <button
+          onClick={() => (window.location.href = '/class')}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md"
+        >
+          모임 보러가기
+        </button>
+      </div>
     );
-};
+  }
 
-export default MyReviewClass;
+  return (
+    <div className="max-w-screen-xl mx-auto px-4 py-6 space-y-4">
+      <h2 className="text-xl font-bold">나의 모임 후기</h2>
+
+      {reviews.map((r) => {
+        const tags = [r.tag1, r.tag2, r.tag3].filter(Boolean);
+        return (
+          <Link
+            to={`/classDetail/${r.classId}`}
+            key={r.classReviewId}
+            className="flex bg-white border rounded-lg p-6 hover:shadow-md transition-shadow relative"
+          >
+            {/* 썸네일 */}
+            <img
+              src={
+                r.mainImg
+                  ? `${url}/image?filename=${r.mainImg}`
+                  : '/images/default-class.png'
+              }
+              alt={r.title}
+              className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+            />
+
+            {/* 내용 */}
+            <div className="ml-6 flex-1">
+              <div className="flex justify-between items-start">
+                {/* 제목 + 태그 */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {r.title}
+                  </h3>
+                  <div className="flex items-center text-sm text-gray-500 mt-1 space-x-4">
+                    <span className="flex items-center">
+                      📅 {new Date(r.round1Date).toLocaleDateString()}
+                    </span>
+                    <span className="flex items-center">
+                      📍 {r.round1PlaceLoc}
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag, i) => (
+                        <span
+                          key={i}
+                          className="text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* 별점 */}
+                <div className="text-xl">{renderStars(r.rating)}</div>
+              </div>
+
+              {/* 리뷰 본문 */}
+              <p className="mt-4 text-gray-700 leading-relaxed">
+                {r.content}
+              </p>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}

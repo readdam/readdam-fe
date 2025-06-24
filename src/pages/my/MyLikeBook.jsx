@@ -53,20 +53,6 @@ export default function MyLikeBook() {
     }
   };
 
-  if (!books.length) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <p className="text-gray-500 mb-4">좋아요한 책이 없습니다</p>
-        <button
-          onClick={() => navigate('/book')}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md"
-        >
-          책 보러가기
-        </button>
-      </div>
-    );
-  }
-
   const displayBooks = showAll ? books : books.slice(0, ITEMS_PER_PAGE);
 
   return (
@@ -90,66 +76,80 @@ export default function MyLikeBook() {
         ))}
       </div>
 
-      {/* Book Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-        {displayBooks.map(book => (
-          <div
-            key={book.bookIsbn}
-            className="relative bg-white border rounded-md shadow-sm overflow-hidden"
-          >
-            {/* 좋아요 버튼 (우측 상단) */}
-            <button
-              onClick={() => handleToggleLike(book.bookIsbn)}
-              className="absolute top-2 right-2 bg-white p-1 rounded-full shadow"
-            >
-              <svg
-                className={`w-5 h-5 fill-current ${
-                  likedMap[book.bookIsbn] ? 'text-red-400' : 'text-gray-400'
-                }`}
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 
-                  6.5 3.5 5 5.5 5c1.54 0 3.04.99 
-                  3.57 2.36h1.87C13.46 5.99 14.96 
-                  5 16.5 5 18.5 5 20 6.5 20 
-                  8.5c0 3.78-3.4 6.86-8.55 
-                  11.54L12 21.35z" />
-              </svg>
-            </button>
-
-            <Link to={`/bookDetail/${book.bookIsbn}`} className="block">
-              {book.bookImg ? (
-                <img
-                  src={book.bookImg}
-                  alt={book.title}
-                  className="w-full h-44 object-cover"
-                />
-              ) : (
-                <div className="w-full h-44 bg-gray-100 flex items-center justify-center">
-                  <div className="w-10 h-14 border-2 rounded-md" />
-                </div>
-              )}
-              <div className="p-3">
-                <div className="text-sm font-semibold truncate">{book.title}</div>
-                <div className="text-xs text-gray-500 truncate">
-                  {book.writer} · {book.publisher}
-                </div>
-              </div>
-            </Link>
-          </div>
-        ))}
-      </div>
-
-      {/* 더보기 버튼 */}
-      {!showAll && books.length > ITEMS_PER_PAGE && (
-        <div className="text-center mt-10">
+      {/* Book Grid or Empty State */}
+      {books.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <p className="text-gray-500 mb-4">좋아요한 책이 없습니다</p>
           <button
-            onClick={() => setShowAll(true)}
-            className="px-6 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+            onClick={() => navigate('/book')}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md"
           >
-            더보기
+            책 보러가기
           </button>
         </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {displayBooks.map(book => (
+              <div
+                key={book.bookIsbn}
+                className="relative bg-white border rounded-md shadow-sm overflow-hidden"
+              >
+                {/* 좋아요 버튼 */}
+                <button
+                  onClick={() => handleToggleLike(book.bookIsbn)}
+                  className="absolute top-2 right-2 bg-white p-1 rounded-full shadow"
+                >
+                  <svg
+                    className={`w-5 h-5 fill-current ${
+                      likedMap[book.bookIsbn] ? 'text-red-400' : 'text-gray-400'
+                    }`}
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 
+                      6.5 3.5 5 5.5 5c1.54 0 3.04.99 
+                      3.57 2.36h1.87C13.46 5.99 14.96 
+                      5 16.5 5 18.5 5 20 6.5 20 
+                      8.5c0 3.78-3.4 6.86-8.55 
+                      11.54L12 21.35z" />
+                  </svg>
+                </button>
+
+                <Link to={`/bookDetail/${book.bookIsbn}`} className="block">
+                  {book.bookImg ? (
+                    <img
+                      src={book.bookImg}
+                      alt={book.title}
+                      className="w-full h-44 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-44 bg-gray-100 flex items-center justify-center">
+                      <div className="w-10 h-14 border-2 rounded-md" />
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <div className="text-sm font-semibold truncate">{book.title}</div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {book.writer} · {book.publisher}
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {/* 더보기 버튼 */}
+          {!showAll && books.length > ITEMS_PER_PAGE && (
+            <div className="text-center mt-10">
+              <button
+                onClick={() => setShowAll(true)}
+                className="px-6 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+              >
+                더보기
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

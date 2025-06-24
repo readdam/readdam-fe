@@ -65,6 +65,74 @@ import Fail from "@pages/my/Fail";
 import MyInquiryWrite from "@pages/my/MyInquiryWrite";
 import axiosInstance from "@api/axiosInstance";
 import { useEffect } from "react";
+import './index.css';
+import { Routes, Route } from 'react-router-dom';
+import PlaceList from '@pages/admin/PlaceList';
+import AdminRoutes from '@routes/AdminRoutes';
+import PlaceAdd from '@pages/admin/PlaceAdd';
+import UserRoutes from '@routes/UserRoutes';
+import PlaceDetail from '@pages/user/PlaceDetail';
+import MyPointCharge from '@pages/my/MyPointCharge';
+import MyRoutes from '@routes/MyRoutes';
+import MyProfile from '@pages/my/MyProfile';
+import MyLikeClass from '@pages/my/MyLikeClass';
+import MyLikePlace from '@pages/my/MyLikePlace';
+import MyLikeWrite from '@pages/my/MyLikeWrite';
+import MyLikeBook from '@pages/my/MyLikeBook';
+import MyAlert from '@pages/my/MyAlert';
+import MyInquiry from '@pages/my/MyInquiry';
+import MyPointList from '@pages/my/MyPointList';
+import Join from '@pages/user/Join';
+import AdminUserList from '@pages/admin/AdminUserList';
+import AdminUserDeletedList from '@pages/admin/AdminUserDeletedList';
+import AdminClassList from '@pages/admin/AdminClassList';
+import AdminClassDetail from '@pages/admin/AdminClassDetail';
+import Login from '@pages/user/Login';
+import OAuthRedirect from '@pages/user/OAuthRedirect';
+import Home from '@pages/user/Home';
+import SearchResult from '@pages/user/SearchResult';
+import WriteList from '@pages/user/WriteList';
+import WriteShortList from '@pages/user/WriteShortList';
+import Place from '@pages/user/Place';
+import BookPage from '@pages/user/BookPage';
+import BookSearch from '@pages/user/BookSearch';
+import BookDetail from '@pages/user/BookDetail';
+import Notice from '@pages/user/Notice';
+import WriteDetail from '@pages/user/WriteDetail';
+import WriteCreate from '@pages/user/WriteCreate';
+import WriteModify from '@pages/user/WriteModify';
+import MyLibrary from '@pages/my/MyLibrary';
+import MyClassContinue from '@pages/my/MyClassContinue';
+import MyClassEnd from '@pages/my/MyClassEnd';
+import MyWrite from '@pages/my/MyWrite';
+import MyWriteComment from '@pages/my/MyWriteComment';
+import MyReviewBook from '@pages/my/MyReviewBook';
+import MyReviewClass from '@pages/my/MyReviewClass';
+import MyReservation from '@pages/my/MyReservation';
+import Token from '@pages/user/Token';
+import PlaceReservationList from '@pages/admin/PlaceReservationList';
+import OtherPlaceList from '@pages/admin/OtherPlaceList';
+import OtherPlaceAdd from '@pages/admin/OtherPlaceAdd';
+import AdminPointStats from '@pages/admin/AdminPointStats';
+import AdminReportList from '@pages/admin/AdminReportList';
+import AdminAlertList from '@pages/admin/AdminAlertList';
+import AdminAlertCreate from '@pages/admin/AdminAlertCreate';
+import AdminNotice from '@pages/admin/AdminNotice';
+import AdminEventReg from '@pages/admin/AdminEventReg';
+import AdminEventJoinedList from '@pages/admin/AdminEventJoinedList';
+import AdminInquiryList from '@pages/admin/AdminInquiryList';
+import AdminBannerList from '@pages/admin/AdminBannerList';
+import ClassList from '@pages/user/ClassList';
+import ClassCreate from '@pages/user/ClassCreate';
+import ClassDetail from '@pages/user/ClassDetail';
+import PlaceEdit from '@pages/admin/PlaceEdit';
+import OtherPlaceEdit from '@pages/admin/OtherPlaceEdit';
+import Success from '@pages/my/Success';
+import Fail from '@pages/my/Fail';
+import MyInquiryWrite from '@pages/my/MyInquiryWrite';
+import axiosInstance from '@api/axiosInstance';
+import { useEffect } from 'react';
+import MyWriteShort from '@pages/my/MyWriteShort';
 
 function App() {
   useEffect(() => {}, []);
@@ -141,7 +209,7 @@ function App() {
           {/* <Route path="/myClassIMade" element={<MyClassIMade />} /> */}
           <Route path="/myWrite" element={<MyWrite />} />
           <Route path="/myWriteComment" element={<MyWriteComment />} />
-          {/* <Route path="/myWriteShort" element={<MyWriteShort />} /> */}
+          <Route path="/myWriteShort" element={<MyWriteShort />} />
           <Route path="/myReviewBook" element={<MyReviewBook />} />
           <Route path="/myReviewClass" element={<MyReviewClass />} />
           <Route path="/myReservation" element={<MyReservation />} />
