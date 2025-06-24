@@ -50,10 +50,10 @@ export default function PlaceEdit() {
           const parsedRooms = data.rooms.map((room) => ({
             id: room.roomId,
             name: room.name,
-            description: room.description,
+            introduce: room.introduce,
             size: room.size,
-            minCapacity: room.minPerson,
-            maxCapacity: room.maxPerson,
+            minPerson: room.minPerson,
+            maxPerson: room.maxPerson,
             images: room.images || [],
             facilities: {
               airConditioner: room.facilities?.airConditioner ?? false,
@@ -82,7 +82,6 @@ export default function PlaceEdit() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [introduceText, setIntroduceText] = useState('');
   const [keywords, setKeywords] = useState([]);
-  const [imagePreview, setImagePreview] = useState(null);
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
 
@@ -100,10 +99,10 @@ export default function PlaceEdit() {
     return {
       id: Date.now(),
       name: '',
-      description: '',
+      introduce: '',
       size: '',
-      minCapacity: 3,
-      maxCapacity: 5,
+      minPerson: 3,
+      maxPerson: 5,
       images: [],
       facilities: Object.fromEntries(
         Object.keys(facilityOptions).map((key) => [key, false])
@@ -111,54 +110,46 @@ export default function PlaceEdit() {
     };
   }
 
-  const handleAddRoom = () => {
-    const { name, description, size, minCapacity, maxCapacity, images } =
-      currentRoom;
+  const handleAddRoom = async () => {
+    const { name, introduce, size, minPerson, maxPerson } = currentRoom;
 
-    if (!name.trim()) {
-      alert('방 이름을 입력하세요.');
-      return;
-    }
+    if (!name || !name.trim()) return alert('방 이름을 입력하세요.');
+    if (!introduce || !introduce.trim()) return alert('방 소개를 입력하세요.');
+    if (!size || !size.trim()) return alert('방 크기를 입력하세요.');
+    if (!minPerson || !maxPerson || minPerson <= 0 || maxPerson <= 0)
+      return alert('최소/최대 인원을 올바르게 입력하세요.');
+    if (minPerson > maxPerson)
+      return alert('최대 인원은 최소 인원보다 같거나 커야 합니다.');
+    if (images.length === 0) return alert('방 사진을 1장 이상 등록하세요.');
 
-    if (!description.trim()) {
-      alert('방 소개를 입력하세요.');
-      return;
-    }
+    // 이미지 분리
+    const newImageFiles = images.filter(
+      (img) => typeof img !== 'string' || img.startsWith('blob:')
+    );
+    const existingImageNames = images.filter(
+      (img) =>
+        typeof img === 'string' &&
+        !img.startsWith('blob:') &&
+        !img.startsWith('data:')
+    );
 
-    if (!size.trim()) {
-      alert('방 크기를 입력하세요.');
-      return;
-    }
+    const roomData = {
+      ...currentRoom,
+      images: undefined, // images 필드 제거
+      existingImages: existingImageNames,
+    };
 
-    if (!minCapacity || !maxCapacity || minCapacity <= 0 || maxCapacity <= 0) {
-      alert('최소/최대 인원을 올바르게 입력하세요.');
-      return;
-    }
-
-    if (minCapacity > maxCapacity) {
-      alert('최대 인원은 최소 인원보다 같거나 커야 합니다.');
-      return;
-    }
-
-    if (images.length === 0) {
-      alert('방 사진을 1장 이상 등록하세요.');
-      return;
-    }
-
-    if (editingRoom) {
-      setRooms(rooms.map((r) => (r.id === editingRoom.id ? currentRoom : r)));
-      setEditingRoom(null);
-    } else {
-      setRooms([...rooms, currentRoom]);
-    }
-    setCurrentRoom(createInitialRoom());
-    setImages([]);
+    const formData = new FormData();
+    formData.append(
+      'room',
+      new Blob([JSON.stringify(roomData)], {
+        type: 'application/json',
+      })
+    );
+    newImageFiles.forEach((file) => {
+      formData.append('files', file instanceof File ? file : null);
+    });
   };
-
-  // const handleEditRoom = (room) => {
-  //   setCurrentRoom(room);
-  //   setEditingRoom(room);
-  // };
 
   const handleEditRoom = (room) => {
     const filledFacilities = Object.fromEntries(
@@ -169,7 +160,13 @@ export default function PlaceEdit() {
     );
 
     setCurrentRoom({
-      ...room,
+      id: room.roomId ?? Date.now(),
+      name: room.name ?? '',
+      introduce: room.introduce ?? '',
+      size: room.size ?? '',
+      minPerson: room.minPerson ?? 3,
+      maxPerson: room.maxPerson ?? 5,
+      images: room.images ?? [],
       facilities: filledFacilities,
     });
     setEditingRoom(room);
@@ -246,11 +243,11 @@ export default function PlaceEdit() {
         alert('방 크기를 입력해주세요.');
         return;
       }
-      if (!room.minCapacity || !room.maxCapacity) {
+      if (!room.minPerson || !room.maxPerson) {
         alert('방 최소/최대 인원을 입력해주세요.');
         return;
       }
-      if (room.minCapacity > room.maxCapacity) {
+      if (room.minPerson > room.maxPerson) {
         alert('방 최대 인원은 최소 인원보다 같거나 커야 합니다.');
         return;
       }
@@ -289,15 +286,15 @@ export default function PlaceEdit() {
     // ✅ roomDtoList
     const roomDtoList = rooms.map((room) => ({
       name: room.name,
-      description: room.description,
+      introduce: room.introduce,
       size: room.size,
-      minPerson: room.minCapacity,
-      maxPerson: room.maxCapacity,
+      minPerson: room.minPerson,
+      maxPerson: room.maxPerson,
       hasAirConditioner: room.facilities.airConditioner,
       hasHeater: room.facilities.heater,
       hasWifi: room.facilities.wifi,
       hasWindow: room.facilities.window,
-      hasPowerOutlet: room.facilities.socket,
+      hasPowerOutlet: room.facilities.hasPowerOutlet,
       hasTv: room.facilities.tv,
       hasProjector: room.facilities.projector,
       hasWhiteboard: room.facilities.whiteboard,

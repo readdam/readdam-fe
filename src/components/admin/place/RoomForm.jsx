@@ -1,4 +1,5 @@
 import { Plus, Upload, X } from 'lucide-react';
+import { url } from '../../../config/config';
 
 export default function RoomForm({
   currentRoom,
@@ -11,6 +12,12 @@ export default function RoomForm({
   handleRemoveImage,
   facilityOptions,
 }) {
+  const isRawImage = (img) =>
+    typeof img === 'string' &&
+    (img.startsWith('data:image') ||
+      img.startsWith('blob:') ||
+      img.startsWith('http'));
+  // console.log(currentRoom);
   return (
     <div className="space-y-6">
       <h3 className="font-medium text-gray-700">
@@ -24,7 +31,15 @@ export default function RoomForm({
             {images.map((image, index) => (
               <div key={index} className="relative">
                 <img
-                  src={image}
+                  src={
+                    isRawImage(image) ? image : `${url}/image?filename=${image}`
+                  }
+                  // src={
+                  //   window.location.pathname.includes('/admin/placeAdd')
+                  //     ? image
+                  //     : `${url}/image?filename=${image}`
+                  // }
+                  // src={`${url}/image?filename=${image}`}
                   alt={`공간 사진 ${index + 1}`}
                   className="w-full h-32 object-cover rounded-lg"
                 />
@@ -75,11 +90,11 @@ export default function RoomForm({
         <div>
           <label className="block text-sm font-medium mb-2">방 설명</label>
           <textarea
-            value={currentRoom.description}
+            value={currentRoom.introduce}
             onChange={(e) =>
               setCurrentRoom({
                 ...currentRoom,
-                description: e.target.value,
+                introduce: e.target.value,
               })
             }
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
@@ -113,11 +128,11 @@ export default function RoomForm({
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">최소</span>
               <select
-                value={currentRoom.minCapacity}
+                value={currentRoom.minPerson}
                 onChange={(e) =>
                   setCurrentRoom({
                     ...currentRoom,
-                    minCapacity: Number(e.target.value),
+                    minPerson: Number(e.target.value),
                   })
                 }
                 className="px-3 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
@@ -134,11 +149,11 @@ export default function RoomForm({
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">최대</span>
               <select
-                value={currentRoom.maxCapacity}
+                value={currentRoom.maxPerson}
                 onChange={(e) =>
                   setCurrentRoom({
                     ...currentRoom,
-                    maxCapacity: Number(e.target.value),
+                    maxPerson: Number(e.target.value),
                   })
                 }
                 className="px-3 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"

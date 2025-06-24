@@ -1,4 +1,5 @@
 import { X, Upload } from 'lucide-react';
+import { url } from '../../../config/config';
 
 // PlaceDetailForm.jsx
 export default function PlaceDetailForm({
@@ -22,6 +23,12 @@ export default function PlaceDetailForm({
   const handleRemoveKeyword = (indexToRemove) => {
     setKeywords(keywords.filter((_, index) => index !== indexToRemove));
   };
+
+  const isRawImage = (img) =>
+    typeof img === 'string' &&
+    (img.startsWith('data:image') ||
+      img.startsWith('blob:') ||
+      img.startsWith('http'));
 
   return (
     <section className="bg-white p-6 rounded-lg shadow">
@@ -77,9 +84,13 @@ export default function PlaceDetailForm({
             {imagePreviews.map((img, index) => (
               <div key={index} className="relative">
                 <img
-                  src={img}
-                  alt={`preview-${index}`}
-                  className="w-32 h-32 object-cover rounded-lg"
+                  src={
+                    isRawImage(img)
+                      ? img // 작성 중인 새 이미지
+                      : `${url}/image?filename=${img}` // 서버에 저장된 이미지
+                  }
+                  alt="방 사진"
+                  className="w-full h-32 object-cover rounded-lg"
                 />
                 <button
                   type="button"
