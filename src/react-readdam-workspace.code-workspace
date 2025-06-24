@@ -1,12 +1,7 @@
 {
-	"folders": [
-		{
-			"path": "../../.."
-		},
-		{
-			"name": "readdam-fe",
-			"path": ".."
-		}
-	],
-	"settings": {}
+    "folders": [
+        {
+            "path": "../.."
+        }
+    ]
 }

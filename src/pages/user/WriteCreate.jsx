@@ -70,6 +70,8 @@ const WriteCreate = () => {
       })
       .then((res) => {
         console.log(res);
+
+
         navigate(`/writeDetail/${res.data.writeId}`); 
       })
       .catch((err) => {

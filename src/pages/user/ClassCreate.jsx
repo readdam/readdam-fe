@@ -1,4 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState } from "react";
+import { useAtom } from "jotai";
+import { tokenAtom, userAtom } from "../../atoms";
+import axios from "axios";
+import { url } from "../../config/config";
+import AddrSearchModal from "@components/class/AddrSearchModal";
 import {
   CalendarIcon,
   ImageIcon,
@@ -6,60 +11,233 @@ import {
   SearchIcon,
   UploadIcon,
   XIcon,
-} from 'lucide-react'
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ClassCreate = () => {
-  const [showTempSaveModal, setShowTempSaveModal] = useState(false)
   const [form, setForm] = useState({
-    title: '',
-    shortDescription: '',
+    title: "",
+    shortDescription: "",
     tags: [],
-    minParticipants: 2,
-    maxParticipants: 4,
+    minParticipants: "",
+    maxParticipants: "",
     sessionCount: 3,
-    venue: '읽담',
-    venueName: '',
-    venueAddress: '',
+    venue: "읽담",
+    venueName: "",
+    venueAddress: "",
     dates: [],
     sessionDetails: Array(3).fill({
-      description: '',
+      description: "",
     }),
-    description: '',
-    leaderDescription: '',
-  })
-  const handleSubmit = (e) => {
-    e.preventDefault()
+    description: "",
+    leaderDescription: "",
+  });
+  
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handlePlaceSelect = (place) => {
+    setForm(prev => ({
+      ...prev,
+      venueAddress: place.address_name,
+    }));
+  };
+
+  // 이미지(미리보기용 포함)
+  const [mainImgF, setMainImgF] = useState("");
+  const [mainImgFPreview, setMainImgFPreview] = useState("");
+
+  const [leaderImgF, setLeaderImgF] = useState("");
+  const [leaderImgFPreview, setLeaderImgFPreview] = useState("");
+
+  const [roundImgs, setRoundImgs] = useState({
+    round1ImgF: "",
+    round1BookimgF: "",
+    round2ImgF: "",
+    round2BookimgF: "",
+    round3ImgF: "",
+    round3BookimgF: "",
+    round4ImgF: "",
+    round4BookimgF: "",
+  });
+
+  const [roundImgPreviews, setRoundImgPreviews] = useState({});
+
+  const handleRoundImageChange = (e, field) => {
+    const file = e.target.files[0];
+    if (file) {
+      setRoundImgs((prev) => ({
+        ...prev,
+        [field]: file,
+      }));
+      setRoundImgPreviews((prev) => ({
+        ...prev,
+        [field]: URL.createObjectURL(file),
+      }));
+    }
+  };
+
+  const removeRoundImgF = (e) => {
+    e.preventDefault();
+    setRoundImgs("");
+    setRoundImgPreviews("");
+  };
+
+  const handleMainImgChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMainImgF(file);
+      setMainImgFPreview(URL.createObjectURL(file));
+    }
+  };
+  
+
+  const removeMainImgF = (e) => {
+    e.preventDefault();
+    setMainImgF("");
+    setMainImgFPreview("");
+  };
+
+  const handleLeaderImgChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLeaderImgF(file);
+      setLeaderImgFPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeLeaderImgF = (e) => {
+    e.preventDefault();
+    setLeaderImgF("");
+    setLeaderImgFPreview("");
+  };
+
+  const [token] = useAtom(tokenAtom);
+  const [user] = useAtom(userAtom);
+  const [showTempSaveModal, setShowTempSaveModal] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     // Handle form submission
-    console.log('Form submitted:', form)
-  }
+    console.log("Form submitted:", form);
+    const submitData = new FormData();
+    submitData.append("title", form.title);
+    submitData.append("shortIntro", form.shortDescription);
+    submitData.append("minPerson", String(form.minParticipants ?? ""));
+    submitData.append("maxPerson", String(form.maxParticipants ?? ""));
+    submitData.append("classIntro", form.description);
+    submitData.append("leaderIntro", form.leaderDescription);
+    submitData.append("leaderUsername", user.username);
+
+    //태그 파싱
+    const tagArray = form.tags.map((tag) => tag.trim()).filter((tag) => tag); // 공백 제거 + 빈 문자열 제거
+    submitData.append("tag1", tagArray[0] || "");
+    submitData.append("tag2", tagArray[1] || "");
+    submitData.append("tag3", tagArray[2] || "");
+
+    // 이미지 append
+    // 대표 이미지
+    if (mainImgF) {
+      submitData.append("mainImgF", mainImgF);
+      submitData.append("mainImg", mainImgF.name);
+    }
+    // 리더 이미지
+    if (leaderImgF) {
+      submitData.append("leaderImgF", leaderImgF);
+      submitData.append("leaderImg", leaderImgF.name);
+    }
+    // 회차 이미지들
+    Object.entries(roundImgs).forEach(([key, file]) => {
+      if (file) {
+        submitData.append(key, file);
+        const nameKey = key.replace("ImgF", "Img");
+        submitData.append(nameKey, file.name);
+      }
+    });
+
+    // === 회차별 공통 필드 ===
+    const sessionCount = form.sessionCount;
+
+    for (let i = 0; i < sessionCount; i++) {
+      const round = i + 1; // 1-based
+      const date = form.dates[i] || ""; // YYYY-MM-DD
+      const dateOnly = date || "";
+
+      if (dateOnly) submitData.append(`round${round}Date`, dateOnly);
+      submitData.append(`round${round}PlaceName`, form.venueName || "");
+      submitData.append(`round${round}PlaceLoc`, form.venueAddress || "");
+      submitData.append(
+        `round${round}Content`,
+        form.sessionDetails[i]?.description || ""
+      );
+      submitData.append(`round${round}Bookname`, ""); // 책 제목 (추후 구현)
+      submitData.append(`round${round}Bookwriter`, ""); // 책 저자
+      submitData.append(`round${round}Lat`, form.lat ?? "0"); // 위도
+      submitData.append(`round${round}Log`, form.log ?? "0"); // 경도
+    }
+
+    // submitData 전송 확인 로그
+    for (let [key, value] of submitData.entries()) {
+      console.log(`${key}: ${value}`);
+    }
+
+    // 데이터 전송(axios)
+    console.log(token);
+    console.log("axios 전송 시작");
+    axios
+      .post(`${url}/my/createClass`, submitData, {
+        headers: {
+          Authorization: token.access_token,
+        },
+      })
+      .then((res) => {
+        console.log(res);
+        navigate(`/classDetail/${res.data.classId}`);
+      })
+      .catch((err) => {
+        console.log("axios에러 발생:", err);
+      });
+  };
+
+  const addDays = (dateString, days) => {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split("T")[0];
+  };
+
+  //임시저장
   const handleTempSave = () => {
-    setShowTempSaveModal(true)
-    // Handle temporary save logic
-    console.log('Temporary saved:', form)
-  }
+    setShowTempSaveModal(true);
+    // 임시저장 로직 추가 예정
+    console.log("Temporary saved:", form);
+  };
+
   const handleTagToggle = (tag) => {
     if (form.tags.includes(tag)) {
       setForm({
         ...form,
         tags: form.tags.filter((t) => t !== tag),
-      })
+      });
     } else if (form.tags.length < 3) {
       setForm({
         ...form,
         tags: [...form.tags, tag],
-      })
+      });
     }
-  }
+  };
+
+  // 모임회차 선택(3회, 4회)에 따라 회차별 진행 상세내용 입력
   const handleSessionCountChange = (count) => {
     setForm({
       ...form,
       sessionCount: count,
       sessionDetails: Array(count).fill({
-        description: '',
+        description: "",
       }),
       dates: [],
-    })
-  }
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-[1200px]">
@@ -116,21 +294,25 @@ const ClassCreate = () => {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    '모임 초보 환영',
-                    '독서 습관 형성',
-                    '독서 취향 공유',
-                    '무거운 책 가볍게 얘기하기',
-                    '가벼운 책 깊게 다루기',
-                    '책 고수 환영',
-                    '한 주제 X 여러 책',
-                    '한 작품 X 여러 주제',
-                    '발제 있어요',
+                    "모임 초보 환영",
+                    "독서 습관 형성",
+                    "독서 취향 공유",
+                    "무거운 책 가볍게 얘기하기",
+                    "가벼운 책 깊게 다루기",
+                    "책 고수 환영",
+                    "한 주제 X 여러 책",
+                    "한 작품 X 여러 주제",
+                    "발제 있어요",
                   ].map((tag) => (
                     <button
                       key={tag}
                       type="button"
                       onClick={() => handleTagToggle(tag)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${form.tags.includes(tag) ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        form.tags.includes(tag)
+                          ? "bg-primary text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
                     >
                       {tag}
                     </button>
@@ -153,13 +335,22 @@ const ClassCreate = () => {
                   <select
                     className="px-4 py-2 border border-gray-300 rounded-lg"
                     value={form.minParticipants}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const newMin = parseInt(e.target.value);
+                      const adjustedmax =
+                        form.maxParticipants < newMin
+                          ? newMin
+                          : form.maxParticipants;
                       setForm({
                         ...form,
-                        minParticipants
-                      })
-                    }
+                        minParticipants: newMin,
+                        maxParticipants: adjustedmax,
+                      });
+                    }}
                   >
+                    <option value="" disabled>
+                      최소 인원 선택
+                    </option>
                     {[2, 3, 4, 5, 6, 7, 8].map((num) => (
                       <option key={num} value={num}>
                         {num}명
@@ -173,15 +364,21 @@ const ClassCreate = () => {
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        maxParticipants
+                        maxParticipants: parseInt(e.target.value),
                       })
                     }
+                    disabled={!form.minParticipants} //비활성화 조건
                   >
-                    {[4, 5, 6, 7, 8, 9, 10].map((num) => (
-                      <option key={num} value={num}>
-                        {num}명
-                      </option>
-                    ))}
+                    <option value="" disabled>
+                      최대 인원 선택
+                    </option>
+                    {[4, 5, 6, 7, 8, 9, 10]
+                      .filter((num) => num >= form.minParticipants)
+                      .map((num) => (
+                        <option key={num} value={num}>
+                          {num}명
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>
@@ -193,14 +390,22 @@ const ClassCreate = () => {
                   <button
                     type="button"
                     onClick={() => handleSessionCountChange(3)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${form.sessionCount === 3 ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      form.sessionCount === 3
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
                   >
                     3회차
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSessionCountChange(4)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${form.sessionCount === 4 ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      form.sessionCount === 4
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
                   >
                     4회차
                   </button>
@@ -217,10 +422,14 @@ const ClassCreate = () => {
                   onClick={() =>
                     setForm({
                       ...form,
-                      venue: '읽담',
+                      venue: "읽담",
                     })
                   }
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${form.venue === '읽담' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    form.venue === "읽담"
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
                 >
                   읽담
                 </button>
@@ -229,10 +438,14 @@ const ClassCreate = () => {
                   onClick={() =>
                     setForm({
                       ...form,
-                      venue: '외부',
+                      venue: "외부",
                     })
                   }
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${form.venue === '외부' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    form.venue === "외부"
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
                 >
                   외부
                 </button>
@@ -241,8 +454,10 @@ const ClassCreate = () => {
                 <input
                   type="text"
                   placeholder="장소 이름"
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg ${form.venue === '읽담' ? 'bg-gray-100' : ''}`}
-                  disabled={form.venue === '읽담'}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg ${
+                    form.venue === "읽담" ? "bg-gray-100" : ""
+                  }`}
+                  disabled={form.venue === "읽담"}
                   value={form.venueName}
                   onChange={(e) =>
                     setForm({
@@ -254,26 +469,36 @@ const ClassCreate = () => {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="주소 검색"
-                    className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg ${form.venue === '읽담' ? 'bg-gray-100' : ''}`}
-                    disabled={form.venue === '읽담'}
+                    placeholder="검색 버튼을 눌러 주소 선택"
+                    className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg ${
+                      form.venue === "읽담" ? "bg-gray-100" : ""
+                    }`}
+                    disabled={form.venue === "읽담"}
                     value={form.venueAddress}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        venueAddress: e.target.value,
-                      })
-                    }
+                    readOnly
+                    // onChange={(e) =>
+                    //   setForm({
+                    //     ...form,
+                    //     venueAddress: e.target.value,
+                    //   })
+                    // }
                   />
                   <button
-                    type="button"
-                    disabled={form.venue === '읽담'}
+                    onClick={()=> setIsModalOpen(true)}
+                    disabled={form.venue === "읽담"}
                     className={`px-4 py-2 bg-primary text-white rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <SearchIcon className="w-5 h-5" />
                   </button>
                 </div>
               </div>
+
+              {isModalOpen && (
+                <AddrSearchModal
+                  onSelect={handlePlaceSelect}
+                  onClose={() => setIsModalOpen(false)}
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-4">
@@ -282,26 +507,33 @@ const ClassCreate = () => {
               <div className="space-y-4">
                 {Array.from({
                   length: form.sessionCount,
-                }).map((_, index) => (
-                  <div key={index} className="flex items-center gap-4">
-                    <span className="text-sm text-gray-600 w-20">
-                      {index + 1}회차:
-                    </span>
-                    <input
-                      type="date"
-                      className="px-4 py-2 border border-gray-300 rounded-lg"
-                      value={form.dates[index] || ''}
-                      onChange={(e) => {
-                        const newDates = [...form.dates]
-                        newDates[index] = e.target.value
-                        setForm({
-                          ...form,
-                          dates: newDates,
-                        })
-                      }}
-                    />
-                  </div>
-                ))}
+                }).map((_, index) => {
+                  const prevDate = form.dates[index - 1];
+                  const minDate = prevDate ? addDays(prevDate, 1) : undefined;
+
+                  return (
+                    <div key={index} className="flex items-center gap-4">
+                      <span className="text-sm text-gray-600 w-20">
+                        {index + 1}회차:
+                      </span>
+                      <input
+                        type="date"
+                        disabled={index > 0 && !form.dates[index - 1]}
+                        className="px-4 py-2 border border-gray-300 rounded-lg"
+                        value={form.dates[index] || ""}
+                        min={minDate}
+                        onChange={(e) => {
+                          const newDates = [...form.dates];
+                          newDates[index] = e.target.value;
+                          setForm({
+                            ...form,
+                            dates: newDates,
+                          });
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div>
@@ -311,43 +543,77 @@ const ClassCreate = () => {
               <div className="space-y-6">
                 {Array.from({
                   length: form.sessionCount,
-                }).map((_, index) => (
-                  <div key={index} className="p-6 bg-gray-50 rounded-lg">
-                    <h3 className="text-lg font-medium mb-4">
-                      {index + 1}회차 진행 상세 내용
-                    </h3>
-                    <div className="flex gap-4 mb-4">
-                      <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                        <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                        <span className="text-sm text-gray-500">
-                          이미지 업로드
-                        </span>
+                }).map((_, index) => {
+                  const roundField = `round${index + 1}ImgF`; // 고유 key
+                  return (
+                    <div key={index} className="p-6 bg-gray-50 rounded-lg">
+                      <h3 className="text-lg font-medium mb-4">
+                        {index + 1}회차 진행 상세 내용
+                      </h3>
+                      <div className="flex gap-4 mb-4">
+                        <label className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                          {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
+                          {!roundImgPreviews[roundField] && (
+                            <>
+                              <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                              <label className="text-sm text-gray-500">
+                                이미지 업로드
+                              </label>
+                            </>
+                          )}
+                          {roundImgPreviews[roundField] && (
+                            <div className="relative w-40 h-40 mt-2">
+                              <img
+                                src={roundImgPreviews[roundField]}
+                                alt="미리보기"
+                                className="w-32 h-32 object-cover mt-2"
+                              />
+                              <button
+                                onClick={removeRoundImgF}
+                                className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
+                                type="button"
+                              >
+                                <XIcon className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) =>
+                              handleRoundImageChange(e, roundField)
+                            }
+                            className="hidden"
+                          />
+                        </label>
+                        <textarea
+                          className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
+                          placeholder={`${
+                            index + 1
+                          }회차 진행 내용을 입력해주세요`}
+                          value={form.sessionDetails[index]?.description || ""}
+                          onChange={(e) => {
+                            const newDetails = [...form.sessionDetails];
+                            newDetails[index] = {
+                              ...newDetails[index],
+                              description: e.target.value,
+                            };
+                            setForm({
+                              ...form,
+                              sessionDetails: newDetails,
+                            });
+                          }}
+                        />
                       </div>
-                      <textarea
-                        className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
-                        placeholder={`${index + 1}회차 진행 내용을 입력해주세요`}
-                        value={form.sessionDetails[index]?.description || ''}
-                        onChange={(e) => {
-                          const newDetails = [...form.sessionDetails]
-                          newDetails[index] = {
-                            ...newDetails[index],
-                            description: e.target.value,
-                          }
-                          setForm({
-                            ...form,
-                            sessionDetails: newDetails,
-                          })
-                        }}
-                      />
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
+                      >
+                        북커버 이미지 검색
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="px-4 py-2 bg-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
-                    >
-                      북커버 이미지 검색
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -355,15 +621,50 @@ const ClassCreate = () => {
           <div className="bg-white p-8 rounded-lg shadow space-y-6">
             <h2 className="text-xl font-bold text-gray-800 mb-6">추가 정보</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                커버 이미지 <span className="text-red-500">*</span>
+              <label
+                htmlFor="mainImgUpload"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                대표 이미지 <span className="text-red-500">*</span>
               </label>
-              <div className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-500">
-                  커버 이미지를 업로드해주세요
-                </span>
-              </div>
+              <label
+                htmlFor="mainImgUpload"
+                className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors"
+              >
+                {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
+                {!mainImgFPreview && (
+                  <>
+                    <UploadIcon className="w-8 h-8 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-500">
+                      모임의 대표 이미지를 업로드해주세요
+                    </span>
+                  </>
+                )}
+                {/* 이미지가 있을 때만 미리보기 표시 */}
+                {mainImgFPreview && (
+                  <div className="relative w-40 h-40 mt-2">
+                    <img
+                      src={mainImgFPreview}
+                      alt="미리보기"
+                      className="w-40 h-40 object-cover rounded-md"
+                    />
+                    <button
+                      onClick={removeMainImgF}
+                      className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
+                      type="button"
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                <input
+                  id="mainImgUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleMainImgChange}
+                  className="hidden"
+                />
+              </label>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -386,10 +687,44 @@ const ClassCreate = () => {
                 모임 리더 소개
               </label>
               <div className="flex gap-4">
-                <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                  <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-500">이미지 업로드</span>
-                </div>
+                <label
+                  htmlFor="leaderImgUpload"
+                  className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors"
+                >
+                  {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
+                  {!leaderImgFPreview && (
+                    <>
+                      <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500">
+                        이미지 업로드
+                      </span>
+                    </>
+                  )}
+                  {/* 이미지가 있을 때만 미리보기 표시 */}
+                  {leaderImgFPreview && (
+                    <div className="relative w-40 h-40">
+                      <img
+                        src={leaderImgFPreview}
+                        alt="미리보기"
+                        className="w-32 h-32 object-cover rounded-md"
+                      />
+                      <button
+                        onClick={removeLeaderImgF}
+                        className="absolute top-1 right-1 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
+                        type="button"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    id="leaderImgUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLeaderImgChange}
+                    className="hidden"
+                  />
+                </label>
                 <textarea
                   className="flex-1 p-4 border border-gray-300 rounded-lg resize-none h-32"
                   placeholder="모임 리더님을 소개해주세요"
@@ -436,6 +771,6 @@ const ClassCreate = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 export default ClassCreate;

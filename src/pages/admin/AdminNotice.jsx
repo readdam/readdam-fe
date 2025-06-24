@@ -191,7 +191,7 @@ const AdminNotice = () => {
       </div>
     </div>
   );
-  
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="flex max-w-[1440px] mx-auto">
