@@ -83,10 +83,10 @@ export default function MyLikeWrite() {
         <div className="flex flex-col items-center justify-center py-20">
           <p className="text-gray-500 mb-4">좋아요한 글이 없습니다</p>
           <button
-            onClick={() => navigate('/write')}
+            onClick={() => navigate('/writeList')}
             className="px-4 py-2 bg-blue-500 text-white rounded-md"
           >
-            글 쓰러 가기
+            글 보러 가기
           </button>
         </div>
       ) : (
