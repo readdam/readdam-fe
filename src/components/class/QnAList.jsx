@@ -1,23 +1,113 @@
 import React, { useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
-import { userAtom } from '../../atoms';
+import { tokenAtom, userAtom } from '../../atoms';
+import { LockIcon, ImageIcon, StarIcon, SendIcon, MessageCircleIcon } from 'lucide-react';
+import axios from 'axios';
+import { url } from '../../config/config';
 
 const QnAList = ({classDetail}) => {
     const [user] = useAtom(userAtom);   //로그인한 사용자 정보
+    const [token] = useAtom(tokenAtom);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isLeader, setIsLeader] = useState(false);
-
+    const [showPrivate, setShowPrivate] = useState(false);
+    const [answerInput, setAnswerInput] = useState({});
+    const [qnaList, setQnaList] = useState([]);
+            
     useEffect(() => {
         setIsLoggedIn(!!user?.username);
-
         if(classDetail?.leaderUsername && user?.username) {
             setIsLeader(classDetail.leaderUsername === user.username);
         }
     }, [user, classDetail]);
+
+    const handleAnswerChange = (classQnaId, value) => {
+        setAnswerInput((prev) => ({ ...prev, [classQnaId]: value}));
+    };
+
+    const submitAnswer = async (classQnaId) => {
+        const answer = answerInput[classQnaId];
+        if(!answer || answer.trim() === "") {
+            alert("답변 내용을 입력해주세요.");
+            return;
+        }
+        try{
+            const res = await axios.post(`${url}/classQnaAnswer`, {
+                classQnaId,
+                answer,
+            }, {
+                headers: {
+                    Authorization: token.access_token,
+                }
+            });
+            console.log("답변 등록 성공: ",res.data);
+            // 답변 성공 시 목록 새로고침 or 해당 항목만 업데이트
+            fetchQnaList(); // 또는 setQnaList(...)로 업데이트
+            setAnswerInput(prev => ({ ...prev, [classQnaId]: ""}));
+        }catch(err) {
+            console.error("답변 등록 실패: ", err);
+            alert("답변 등록 중 오류가 발생했습니다.");
+        }
+    };
     
     return(
-        <div>
+        <div className="p-4">
+            <h3 className="text-lg font-semibold mb-4">모임 Q&A</h3>
 
+            {/* 로그인 한 사용자만 질문 가능 */}
+            {isLoggedIn ? (
+                <div className="mb-6">
+                <textarea className="w-full p-4 border border-gray-300 rounded-lg resize-none mb-2" rows={3} placeholder="모임에 대해 궁금한 점을 물어보세요" />
+                <div className="flex items-center justify-between">
+                <label className="flex items-center text-sm text-gray-600">
+                    <input type="checkbox" checked={showPrivate} onChange={e => setShowPrivate(e.target.checked)} className="mr-2" />
+                    모임장에게만 보이기
+                    <LockIcon className="w-4 h-4 ml-1" />
+                </label>
+                <button className="px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors">
+                    등록
+                </button>
+                </div>
+            </div>
+            ) : (
+            <p className="text-gray-500">질문을 작성하려면 로그인이 필요해요.</p>
+        )}
+            {/* 예시 Q&A 목록 (아코디언 스타일로) */}
+            <div className="space-y-4">
+                {/* 이 부분은 실제 질문 리스트 데이터로 반복 렌더링 */}
+                {[{ id: 1, content: '모임은 몇 시에 시작하나요?', secret: false, writer: 'user1' }].map(
+                (item) => (
+                    <details key={item.id} className="bg-gray-50 p-4 rounded">
+                    <summary className="cursor-pointer font-medium text-gray-800">
+                        {item.secret && !isLeader && item.writer !== user.username
+                        ? '비밀글입니다.'
+                        : item.content}
+                    </summary>
+
+                    {/* 답변 작성은 모임장만 가능 */}
+                    {isLeader && (
+                        (!item.secret || item.writer === user.username || isLeader) && (
+                        <div className="mt-4">
+                        <textarea
+                            className="w-full border rounded p-2"
+                            placeholder="답변을 입력하세요"
+                            value={answerInput[item.classQnaId] || ""}
+                            onChange={(e) =>
+                                setAnswerInput({...answerInput, [item.classQnaId]: e.target.value})
+                            }
+                        />
+                        <button 
+                            className="mt-2 px-4 py-2 bg-[#E88D67] text-white rounded"
+                            onClick={() => submitAnswer(item.classQnaId)}>
+                            답변 등록
+                        </button>
+                        </div>
+                        )
+                    )}
+                    </details>
+                )
+                )}
+            </div>
         </div>
     )
 }

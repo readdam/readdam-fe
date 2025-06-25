@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
+import QnAList from './QnAList';
 import { LockIcon, ImageIcon, StarIcon, SendIcon, MessageCircleIcon } from 'lucide-react';
 
-const GroupQnAReviews = () => { // classId, userDto, classUserDto 정보 필요
+const GroupQnAReviews = ({classId,classDetail}) => { 
   const [activeTab, setActiveTab] = useState('qna');
-  const [showPrivate, setShowPrivate] = useState(false);
-  const [rating, setRating] = useState(0);
   
   return (
     <div className="bg-white rounded-lg shadow-sm p-8">
@@ -17,9 +16,9 @@ const GroupQnAReviews = () => { // classId, userDto, classUserDto 정보 필요
         </button>
       </div>
       {activeTab === 'qna' ? (
-        <QnAList classId={classId} userInfo={userInfo} />
+        <QnAList classDetail={classDetail}/>
       ) : (
-        <ReviewList classId={classId} userInfo={userInfo} />
+        <ReviewList classDetail={classDetail} />
         )}
     </div>
   );

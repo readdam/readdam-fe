@@ -36,8 +36,8 @@ const ClassDetail = () => {
         <GroupHeader group={classData} />
         <GroupDescription group={classData} />
         <GroupLeader leader={classData} />
-        {/* <GroupMembers members={groupData.members} /> 
-        <GroupQnAReviews classId={classId}/> */}
+        {/* <GroupMembers members={groupData.members} />  */}
+        <GroupQnAReviews classId={classId} classDetail={classData}/>
       </main>
     </div>
   );
