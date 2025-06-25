@@ -169,7 +169,7 @@ const ReservationSystem = ({
                     <div className="text-sm text-gray-600">
                       <p>크기: {room.size}</p>
                       <p>
-                        수용 인원: {room.minCapacity}~{room.maxCapacity}명
+                        수용 인원: {room.minPerson}~{room.maxPerson}명
                       </p>
                     </div>
                   </div>

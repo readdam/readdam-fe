@@ -9,6 +9,8 @@ export default function BasicInfoSection({
   setPhoneNumber,
   setLat,
   setLng,
+  lat,
+  lng,
   detailAddress,
   setDetailAddress,
 }) {
@@ -46,6 +48,29 @@ export default function BasicInfoSection({
     loadScripts();
   }, []);
 
+  useEffect(() => {
+    if (sdkReady && lat != null && lng != null && mapRef.current) {
+      const mapContainer = mapRef.current;
+      const newCoords = new window.kakao.maps.LatLng(lat, lng);
+
+      const mapOption = {
+        center: newCoords,
+        level: 5,
+      };
+
+      const map = new window.kakao.maps.Map(mapContainer, mapOption);
+      mapContainer.kakaoMap = map;
+
+      const marker = new window.kakao.maps.Marker({
+        position: newCoords,
+        map,
+      });
+      mapContainer.marker = marker;
+
+      setCoords(newCoords); // 내부 상태 동기화
+    }
+  }, [sdkReady, lat, lng]);
+
   const handleSearchAddress = () => {
     if (!sdkReady) {
       alert('지도 로딩 중입니다.');
@@ -80,9 +105,6 @@ export default function BasicInfoSection({
               container.kakaoMap = map;
             }
 
-            // 🧭 지도 중심 이동 (부드럽게!)
-            map.panTo(newCoords);
-
             if (container.marker) {
               container.marker.setMap(null);
             }
@@ -91,11 +113,7 @@ export default function BasicInfoSection({
               position: newCoords,
               map,
             });
-
             container.marker = marker;
-
-            container.style.display = 'block';
-            setTimeout(() => map.relayout(), 100);
           }
         });
       },
@@ -165,7 +183,8 @@ export default function BasicInfoSection({
           style={{
             width: '100%',
             height: '300px',
-            display: coords ? 'block' : 'none',
+            // display: coords ? 'block' : 'none',
+            display: 'block',
           }}
         ></div>
       </div>

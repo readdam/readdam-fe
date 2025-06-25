@@ -16,7 +16,7 @@ const facilityOptions = {
   whiteboard: { label: '화이트보드', emoji: '📋' },
   wifi: { label: '와이파이', emoji: '📶' },
   projector: { label: '프로젝터', emoji: '📽️' },
-  socket: { label: '콘센트', emoji: '🔌' },
+  powerOutlet: { label: '콘센트', emoji: '🔌' },
   window: { label: '창문', emoji: '🪟' },
 };
 
@@ -30,7 +30,6 @@ export default function PlaceAdd() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [introduceText, setIntroduceText] = useState('');
   const [keywords, setKeywords] = useState([]);
-  const [imagePreview, setImagePreview] = useState(null);
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
 
@@ -48,10 +47,10 @@ export default function PlaceAdd() {
     return {
       id: Date.now(),
       name: '',
-      description: '',
+      introduce: '',
       size: '',
-      minCapacity: 3,
-      maxCapacity: 5,
+      minPerson: 3,
+      maxPerson: 5,
       images: [],
       facilities: Object.fromEntries(
         Object.keys(facilityOptions).map((key) => [key, false])
@@ -60,6 +59,17 @@ export default function PlaceAdd() {
   }
 
   const handleAddRoom = () => {
+    const { name, introduce, size, minPerson, maxPerson, images } = currentRoom;
+
+    if (!name || !name.trim()) return alert('방 이름을 입력하세요.');
+    if (!introduce || !introduce.trim()) return alert('방 소개를 입력하세요.');
+    if (!size || !size.trim()) return alert('방 크기를 입력하세요.');
+    if (!minPerson || !maxPerson || minPerson <= 0 || maxPerson <= 0)
+      return alert('최소/최대 인원을 올바르게 입력하세요.');
+    if (minPerson > maxPerson)
+      return alert('최대 인원은 최소 인원보다 같거나 커야 합니다.');
+    if (images.length === 0) return alert('방 사진을 1장 이상 등록하세요.');
+
     if (editingRoom) {
       setRooms(rooms.map((r) => (r.id === editingRoom.id ? currentRoom : r)));
       setEditingRoom(null);
@@ -71,8 +81,26 @@ export default function PlaceAdd() {
   };
 
   const handleEditRoom = (room) => {
-    setCurrentRoom(room);
+    const filledFacilities = Object.fromEntries(
+      Object.keys(facilityOptions).map((key) => [
+        key,
+        room.facilities?.[key] ?? false,
+      ])
+    );
+
+    setCurrentRoom({
+      id: room.id ?? Date.now(),
+      name: room.name ?? '',
+      introduce: room.introduce ?? '',
+      size: room.size ?? '',
+      minPerson: room.minPerson ?? 3,
+      maxPerson: room.maxPerson ?? 5,
+      images: room.images ?? [],
+      facilities: filledFacilities,
+    });
+
     setEditingRoom(room);
+    setImages(room.images ?? []);
   };
 
   const handleDeleteRoom = (roomId) => {
@@ -91,6 +119,73 @@ export default function PlaceAdd() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!placeName.trim()) {
+      alert('장소명을 입력해주세요.');
+      return;
+    }
+    if (!placeAddress.trim()) {
+      alert('주소를 입력해주세요.');
+      return;
+    }
+    if (!detailAddress.trim()) {
+      alert('상세 주소를 입력해주세요.');
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      alert('전화번호를 입력해주세요.');
+      return;
+    }
+    if (!introduceText.trim()) {
+      alert('소개글을 입력해주세요.');
+      return;
+    }
+    if (lat == null || lng == null) {
+      alert('지도에서 위치를 선택해주세요.');
+      return;
+    }
+
+    // ✅ 키워드 1개 이상 필수 (선택적으로 조정 가능)
+    if (keywords.length === 0 || keywords.some((k) => !k.trim())) {
+      alert('태그(키워드)를 최소 1개 이상 입력해주세요.');
+      return;
+    }
+
+    // ✅ 장소 사진 1장 이상 필수
+    if (imagePreviews.length === 0) {
+      alert('장소 사진을 1장 이상 등록해주세요.');
+      return;
+    }
+
+    // ✅ 방 1개 이상 필수
+    if (rooms.length === 0) {
+      alert('방을 최소 1개 이상 등록해주세요.');
+      return;
+    }
+
+    // ✅ 각 방 필수값 검사
+    for (const room of rooms) {
+      if (!room.name.trim()) {
+        alert('방 이름을 입력해주세요.');
+        return;
+      }
+      if (!room.size.trim()) {
+        alert('방 크기를 입력해주세요.');
+        return;
+      }
+      if (!room.minPerson || !room.maxPerson) {
+        alert('방 최소/최대 인원을 입력해주세요.');
+        return;
+      }
+      if (room.minPerson > room.maxPerson) {
+        alert('방 최대 인원은 최소 인원보다 같거나 커야 합니다.');
+        return;
+      }
+      if (!room.images || room.images.length === 0) {
+        alert(`"${room.name}" 방에 사진을 1장 이상 등록해주세요.`);
+        return;
+      }
+    }
 
     const formData = new FormData();
 
@@ -121,15 +216,15 @@ export default function PlaceAdd() {
     // ✅ roomDtoList
     const roomDtoList = rooms.map((room) => ({
       name: room.name,
-      description: room.description,
+      introduce: room.introduce,
       size: room.size,
-      minPerson: room.minCapacity,
-      maxPerson: room.maxCapacity,
+      minPerson: room.minPerson,
+      maxPerson: room.maxPerson,
       hasAirConditioner: room.facilities.airConditioner,
       hasHeater: room.facilities.heater,
       hasWifi: room.facilities.wifi,
       hasWindow: room.facilities.window,
-      hasPowerOutlet: room.facilities.socket,
+      hasPowerOutlet: room.facilities.powerOutlet,
       hasTv: room.facilities.tv,
       hasProjector: room.facilities.projector,
       hasWhiteboard: room.facilities.whiteboard,
@@ -238,7 +333,7 @@ export default function PlaceAdd() {
         <button className="p-2 hover:bg-gray-100 rounded-lg">
           <ArrowLeft
             className="w-6 h-6"
-            onClick={() => navigate('/adminPlaceList')}
+            onClick={() => navigate('/admin/placeList')}
           />
         </button>
         <h1 className="text-2xl font-bold">새 장소 추가</h1>

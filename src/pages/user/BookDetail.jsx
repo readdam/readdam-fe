@@ -124,7 +124,7 @@ export default function BookDetail() {
             <div className="flex items-center gap-2">
               <span className="text-sm">책 리뷰</span>
               <span className="text-sm text-[#006989] font-bold">
-                {stats.reviewCount.toLocaleString()}
+                {stats?.reviewCount?.toLocaleString()}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ export default function BookDetail() {
                   <StarIcon
                     key={i}
                     className={`w-4 h-4 ${
-                      i < Math.round(stats.averageRating)
+                      i < Math.round(stats?.averageRating)
                         ? 'fill-[#E88D67] text-[#E88D67]'
                         : 'text-gray-300'
                     }`}
@@ -141,7 +141,7 @@ export default function BookDetail() {
                 ))}
               </div>
               <span className="font-semibold text-sm">
-                {stats.averageRating.toFixed(1)}
+                {stats?.averageRating?.toFixed(1)}
               </span>
             </div>
           </div>
@@ -173,7 +173,7 @@ export default function BookDetail() {
                 ?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
-            리뷰({stats.reviewCount.toLocaleString()})
+            리뷰({stats?.reviewCount?.toLocaleString()}){/* 리뷰(0) */}
           </button>
 
           <button

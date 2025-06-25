@@ -1,4 +1,5 @@
 import { X, Upload } from 'lucide-react';
+import { url } from '../../../config/config';
 
 // PlaceDetailForm.jsx
 export default function PlaceDetailForm({
@@ -23,6 +24,12 @@ export default function PlaceDetailForm({
     setKeywords(keywords.filter((_, index) => index !== indexToRemove));
   };
 
+  const isRawImage = (img) =>
+    typeof img === 'string' &&
+    (img.startsWith('data:image') ||
+      img.startsWith('blob:') ||
+      img.startsWith('http'));
+
   return (
     <section className="bg-white p-6 rounded-lg shadow">
       <h2 className="text-lg font-semibold mb-6">상세 정보</h2>
@@ -40,7 +47,7 @@ export default function PlaceDetailForm({
         </div>
         {/* 키워드 */}
         <div>
-          <label className="block text-sm font-medium mb-2">키워드</label>
+          <label className="block text-sm font-medium mb-2">태그</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {keywords.map((keyword, index) => (
               <span
@@ -64,7 +71,7 @@ export default function PlaceDetailForm({
             onChange={(e) => setNewKeyword(e.target.value)}
             onKeyPress={handleAddKeyword}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-            placeholder="키워드를 입력하고 Enter를 눌러주세요"
+            placeholder="태그를 입력하고 Enter를 눌러주세요"
           />
         </div>
         {/* 사진 업로드 */}
@@ -77,9 +84,13 @@ export default function PlaceDetailForm({
             {imagePreviews.map((img, index) => (
               <div key={index} className="relative">
                 <img
-                  src={img}
-                  alt={`preview-${index}`}
-                  className="w-32 h-32 object-cover rounded-lg"
+                  src={
+                    isRawImage(img)
+                      ? img // 작성 중인 새 이미지
+                      : `${url}/image?filename=${img}` // 서버에 저장된 이미지
+                  }
+                  alt="방 사진"
+                  className="w-full h-32 object-cover rounded-lg"
                 />
                 <button
                   type="button"

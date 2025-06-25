@@ -1,4 +1,5 @@
 import { Trash2, Upload } from 'lucide-react';
+import { url } from '../../../config/config';
 
 export function RoomList({
   rooms,
@@ -7,6 +8,11 @@ export function RoomList({
   facilityOptions,
 }) {
   if (rooms.length === 0) return null;
+  const isRawImage = (img) =>
+    typeof img === 'string' &&
+    (img.startsWith('data:image') ||
+      img.startsWith('blob:') ||
+      img.startsWith('http'));
 
   return (
     <div className="mb-8 space-y-4">
@@ -21,24 +27,29 @@ export function RoomList({
               <Trash2 className="w-5 h-5" />
             </button>
             <div className="flex gap-4">
-              {room.image ? (
+              {room.images && room.images.length > 0 ? (
                 <img
-                  src={room.image}
+                  src={
+                    isRawImage(room.images[0])
+                      ? room.images[0]
+                      : `${url}/image?filename=${room.images[0]}`
+                  }
                   alt={room.name}
-                  className="w-24 h-24 object-cover rounded-lg"
+                  className="w-32 h-20 object-cover rounded-md border"
                 />
               ) : (
-                <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Upload className="w-6 h-6 text-gray-400" />
+                <div className="w-32 h-20 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 border">
+                  <span className="text-sm">이미지 없음</span>
                 </div>
               )}
+
               <div className="flex-1">
                 <h4 className="font-medium mb-2">{room.name}</h4>
-                <p className="text-sm text-gray-600 mb-2">{room.description}</p>
+                <p className="text-sm text-gray-600 mb-2">{room.introduce}</p>
                 <div className="text-sm text-gray-600">
                   <p>크기: {room.size}</p>
                   <p>
-                    수용 인원: {room.minCapacity}~{room.maxCapacity}명
+                    수용 인원: {room.minPerson}~{room.maxPerson}명
                   </p>
                 </div>
               </div>
