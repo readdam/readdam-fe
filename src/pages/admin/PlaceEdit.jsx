@@ -134,7 +134,7 @@ export default function PlaceEdit() {
     );
 
     const newRoom = {
-      id: editingRoom?.id ?? Date.now(),
+      id: editingRoom?.id ?? `new_${Date.now()}`,
       name,
       introduce,
       size,
@@ -249,7 +249,7 @@ export default function PlaceEdit() {
 
     // 📌 roomDtoList
     const roomDtoList = rooms.map((room) => ({
-      placeRoomId: room.id,
+      id: `new_${Date.now()}`,
       name: room.name,
       introduce: room.introduce,
       size: room.size,
