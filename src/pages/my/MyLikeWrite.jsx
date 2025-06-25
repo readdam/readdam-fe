@@ -20,6 +20,21 @@ export default function MyLikeWrite() {
   const [posts, setPosts] = useState([]);
   const [likedMap, setLikedMap] = useState({});
 
+
+      const typeMap = {
+        bookreview: '독후감',
+        essay: '수필',
+        personal: '자기소개서',
+        assignment: '과제',
+        other: '기타',
+      };
+
+      const getReviewStatus = (endDate) => {
+        if (!endDate) return '첨삭 제외'; // endDate가 없으면 제외
+        const now = new Date();
+        return new Date(endDate) > now ? '첨삭 가능' : '첨삭 마감';
+      };
+
       const fetchLikedWrites = () => {
       axios
         .get(`${url}/my/likeWrite`, {
@@ -134,14 +149,14 @@ export default function MyLikeWrite() {
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div className="flex space-x-2 mb-1">
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
-                      {post.type}
+                      {typeMap[post.type]}
                     </span>
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         post.endDate ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'
                       }`}
                     >
-                      {post.endDate ? '첨삭마감' : '첨삭가능'}
+                      {getReviewStatus(post.endDate)}
                     </span>
                   </div>
                   <h3 className="text-sm font-semibold line-clamp-1">{post.title}</h3>
