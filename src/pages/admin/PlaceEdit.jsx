@@ -134,7 +134,7 @@ export default function PlaceEdit() {
     );
 
     const newRoom = {
-      id: editingRoom?.id ?? `new_${Date.now()}`,
+      id: editingRoom?.id ?? null,
       name,
       introduce,
       size,
@@ -248,22 +248,25 @@ export default function PlaceEdit() {
     );
 
     // 📌 roomDtoList
-    const roomDtoList = rooms.map((room) => ({
-      id: `new_${Date.now()}`,
-      name: room.name,
-      introduce: room.introduce,
-      size: room.size,
-      minPerson: room.minPerson,
-      maxPerson: room.maxPerson,
-      hasAirConditioner: !!room.facilities.airConditioner,
-      hasHeater: !!room.facilities.heater,
-      hasWifi: !!room.facilities.wifi,
-      hasWindow: !!room.facilities.window,
-      hasPowerOutlet: !!room.facilities.powerOutlet,
-      hasTv: !!room.facilities.tv,
-      hasProjector: !!room.facilities.projector,
-      hasWhiteboard: !!room.facilities.whiteboard,
-    }));
+    const roomDtoList = rooms.map((room) => {
+      const isNew = typeof room.id === 'string' && room.id.startsWith('new_');
+      return {
+        placeRoomId: isNew ? null : room.id,
+        name: room.name,
+        introduce: room.introduce,
+        size: room.size,
+        minPerson: room.minPerson,
+        maxPerson: room.maxPerson,
+        hasAirConditioner: !!room.facilities.airConditioner,
+        hasHeater: !!room.facilities.heater,
+        hasWifi: !!room.facilities.wifi,
+        hasWindow: !!room.facilities.window,
+        hasPowerOutlet: !!room.facilities.powerOutlet,
+        hasTv: !!room.facilities.tv,
+        hasProjector: !!room.facilities.projector,
+        hasWhiteboard: !!room.facilities.whiteboard,
+      };
+    });
     formData.append(
       'roomDtoList',
       new Blob([JSON.stringify(roomDtoList)], { type: 'application/json' })
@@ -307,30 +310,25 @@ export default function PlaceEdit() {
     );
 
     // 🔹 새 이미지 업로드
-    rooms.forEach((room) => {
+    rooms.forEach((room, i) => {
       room.images.forEach((img, index) => {
         if (typeof img === 'string' && img.startsWith('data:image/')) {
-          const file = dataURLtoFile(img, `room_${room.id}_${index}.jpg`);
-          if (file) {
-            formData.append(
-              'roomImagesMap',
-              file,
-              `room_${room.id}_${index}.jpg`
-            );
-          }
+          const file = dataURLtoFile(img, `room_${i}_${index}.jpg`);
+          formData.append('roomImagesMap', file, `room_${i}_${index}.jpg`);
         }
       });
     });
 
     // 🔹 기존 이미지 유지
     const existingRoomImages = [];
-    rooms.forEach((room) => {
+    rooms.forEach((room, i) => {
       room.images.forEach((img) => {
         if (typeof img === 'string' && !img.startsWith('data:image/')) {
-          existingRoomImages.push(`${room.id}|${img}`);
+          existingRoomImages.push(`${i}|${img}`);
         }
       });
     });
+
     formData.append(
       'existingRoomImages',
       new Blob([JSON.stringify(existingRoomImages)], {
