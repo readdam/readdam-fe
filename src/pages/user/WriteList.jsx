@@ -13,6 +13,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { tokenAtom } from '../../atoms';
 import { url } from '../../config/config';
+import TimeRemainingText from '@components/write/TimeRemainingText';
 
 const WriteList = () => {
   const navigate = useNavigate();
@@ -48,8 +49,8 @@ const WriteList = () => {
   };
 
   const sortMap = {
-    recent: '최신순',
-    views: '조회순',
+    recent: '최신 순',
+    views: '조회 순',
   };
 
   const getReviewStatus = (endDate) => {
@@ -182,7 +183,12 @@ const WriteList = () => {
 
         {/* 글 목록 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {writeList.map((post) => (
+          {writeList.map((post) => {
+            const reviewStatus = getReviewStatus(post.endDate);
+            const statusClass = reviewStatus === '첨삭 가능' ? 'text-[#006989] font-semibold' : 'text-gray-400 font-semibold';
+            const tags = [post.tag1, post.tag2, post.tag3, post.tag4, post.tag5].filter(Boolean);
+
+            return (
             <div key={post.writeId} className="bg-white rounded-lg p-4 flex gap-4 hover:shadow-sm transition-shadow">
               {post.img ? (
                 <img src={`${url}/image?filename=${post.img}`} alt="" className="w-48 h-48 object-cover rounded-lg flex-shrink-0" />
@@ -192,25 +198,42 @@ const WriteList = () => {
                 </div>
               )}
               <div className="flex-1">
-                <div className="flex gap-2 mb-2">
-                  <span className="px-3 py-1 text-sm rounded-full bg-[#F3F7EC] text-[#006989]">{typeMap[post.type]}</span>
-                  <span className="px-3 py-1 text-sm rounded-full bg-[#FDF3F0] text-[#E88D67]">{getReviewStatus(post.endDate)}</span>
+                <div className="flex gap-1 mb-1">
+                  {/* 카테고리 */}
+                  <span className="px-3 py-1 text-sm rounded-full bg-[#F3F7EC] text-[#006989]">
+                    {typeMap[post.type]}</span>
+                  {/* 상태 */}
+                  <span className={`px-3 py-1 text-sm ${statusClass}`}>{reviewStatus}</span>
                 </div>
-                <h3 className="text-lg font-bold mb-2">{post.title}</h3>
+                {/* 태그 한 줄 표시 */}
+                <div className="flex flex-wrap gap-2 mt-3 mb-2">
+                  {tags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-1 text-xs rounded-full bg-[#FDF3F0] text-[#E88D67]"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+                <h3 className="text-lg font-bold mb-2 ">{post.title}</h3>
                 <div className="flex items-center text-sm text-gray-500 mb-4">
-                  <span className="font-medium text-[#006989]">{post.username}</span>
-                  <span className="mx-2">•</span>
+                  <span className="font-medium text-[#006989]">{post.nickname}</span>
+                  <span className="mx-2">• 등록일 </span>
                   <span>{post.regDate?.split('T')[0]}</span>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <div className="flex items-center gap-1"><HeartIcon className="w-4 h-4 text-[#E88D67]" />{post.likes}</div>
                   <div className="flex items-center gap-1"><MessageSquareIcon className="w-4 h-4 text-[#006989]" />{post.commentCnt}</div>
                   <div className="flex items-center gap-1"><EyeIcon className="w-4 h-4" />{post.viewCnt}</div>
-                  <div className="flex items-center gap-1 ml-auto"><ClockIcon className="w-4 h-4" /><span>{post.timeAgo}</span></div>
+                  <div className="flex items-center gap-1 ml-auto"><span>
+                      {reviewStatus === '첨삭 가능' && <TimeRemainingText endDate={post.endDate} />}
+                    </span></div>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* 더보기 버튼 */}
