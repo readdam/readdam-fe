@@ -6,6 +6,7 @@ import singoIcon from '@assets/singo.png';
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
 import { url } from '../../config/config';
+import TimeRemainingText from '@components/write/TimeRemainingText';
 
 
 // 모달 컴포넌트들을 별도로 분리
@@ -20,8 +21,8 @@ const WriteDetail = () => {
   const [token] = useAtom(tokenAtom);
   const isLoggedIn = !!token?.access_token;
   const [isAuthor, setIsAuthor] = useState(true); // 작성자 여부
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(24);
+  const [liked, setLiked] = useState(null);
+  const [likeCount, setLikeCount] = useState(0);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showReportConfirm, setShowReportConfirm] = useState(false);
   const [reportType, setReportType] = useState('');
@@ -33,36 +34,40 @@ const WriteDetail = () => {
   const navigate = useNavigate();
 
   // 글 상세 정보를 가져오는 함수
-  // const fetchWriteDetail = async (id) => {
-  //   try {
-  //     const response = await axios.get(`/writedetail/${id}`);
-  //     const data = response.data;
-  //     setPost(data.write);
-  //     setComments(data.comments);
-  //   } catch (error) {
-  //     console.error('Error fetching write detail:', error);
-  //   }
-  // };
-      const fetchWriteDetail = async (id) => {
+    const fetchWriteDetail = async (id) => {
       try {
-        const response = await axios.get(`${url}/writeDetail/${id}`);
-        console.log("✅ response.data:", response.data);
-        const data = response.data;
-        setPost(data.write);
-        setLiked(data.liked); // ← 백엔드에서 isLiked 여부 함께 보내주는 경우
-        setLikeCount(data.write.likeCnt); // ← 서버에서 넘긴 likeCnt 사용
-        setComments(data.comments);
+        const headers = token?.access_token
+          ? { Authorization: `Bearer ${token.access_token}` }
+          : {};
+
+        const response = await axios.get(`${url}/writeDetail/${id}`, {
+          headers,
+        });
+
+        console.log("✅ liked from server:", response.data.liked);
+
+        setPost(response.data.write);
+        setLikeCount(response.data.write.likeCnt);
+        setComments(response.data.comments);
+
+        // 로그인한 경우만 liked 상태 반영
+        if (token?.access_token) {
+          setLiked(response.data.liked);
+        } else {
+          setLiked(null); // 또는 false, 표시만 회색으로
+        }
+
       } catch (error) {
-        console.error('❌ Error fetching write detail:', error);
+        console.error("❌ Error fetching write detail:", error);
       }
     };
 
   // 페이지가 처음 렌더링될 때 데이터 가져오기
-  useEffect(() => {
-    if (id) {
-      fetchWriteDetail(id);
-    }
-  }, [id]);
+      useEffect(() => {
+        if (id) {
+          fetchWriteDetail(id);
+        }
+      }, [id, token]);
 
 
       const getReviewStatus = (endDate) => {
@@ -72,18 +77,18 @@ const WriteDetail = () => {
       return deadline > now ? '첨삭 가능' : '첨삭 종료';
     };
 
-    const getTimeLeft = (endDate) => {
-      const now = new Date();
-      const deadline = new Date(endDate);
-      const diffMs = deadline - now;
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      return diffDays > 0 ? `${diffDays}일 남음` : null;
-    };
+    // const getTimeLeft = (endDate) => {
+    //   const now = new Date();
+    //   const deadline = new Date(endDate);
+    //   const diffMs = deadline - now;
+    //   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    //   return diffDays > 0 ? `${diffDays}일 남음` : null;
+    // };
 
     const handleSubmitComment = async () => {
       if (!token || !token.access_token) {
-        alert("로그인이 필요한 서비스입니다."); // 👉 안내 메시지
-        navigate('/login'); // 👉 로그인 페이지로 이동
+        alert("로그인이 필요한 서비스입니다."); // 안내 메시지
+        navigate('/login'); // 로그인 페이지로 이동
         return;
       }
       if (!commentContent.trim()) {
@@ -121,11 +126,6 @@ const WriteDetail = () => {
     };
   // 좋아요 처리
     const handleLike = async () => {
-      if (!isLoggedIn) {
-        navigate('/login');
-        return;
-      }
-
       try {
         const response = await axios.post(`${url}/my/write-like`, {
           writeId: post.writeId,
@@ -208,10 +208,21 @@ const WriteDetail = () => {
 
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-2">
-                    <button onClick={handleLike} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${liked ? 'text-[#E88D67] bg-[#F3F7EC]' : 'text-gray-600 hover:bg-gray-100'}`}>
-                      <HeartIcon className={`w-5 h-5 ${liked ? 'fill-[#E88D67]' : ''}`} />
-                      <span>{likeCount}</span>
-                    </button>
+                  <button
+                    onClick={() => {
+                      if (!isLoggedIn) {
+                        alert("로그인이 필요한 서비스입니다.");
+                        navigate('/login');
+                        return;
+                      }
+                      handleLike(); // 실제 좋아요 처리 함수
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors 
+                      ${liked ? 'text-[#E88D67] bg-[#F3F7EC]' : 'text-gray-600 hover:bg-gray-100'}`}
+                  >
+                    <HeartIcon className={`w-5 h-5 ${liked ? 'fill-[#E88D67]' : ''}`} />
+                    <span>{likeCount}</span>
+                  </button>
                     <button onClick={handleShare} className="flex items-center gap-2 px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
                       <ShareIcon className="w-5 h-5" />
                       <span>공유하기</span>
@@ -255,11 +266,14 @@ const WriteDetail = () => {
 
               {/* 첨삭 상태 */}
               <div className="mt-6 flex items-center gap-3 text-sm text-gray-500">
-                <span className={`font-medium ${getReviewStatus(post.endDate) === '첨삭가능' ? 'text-[#E88D67]' : 'text-gray-500'}`}>
+                <span className={`font-bold ${getReviewStatus(post.endDate) === '첨삭 가능' ? 'text-[#006989]' : 'text-gray-500'}`}>
                   {getReviewStatus(post.endDate)}
                 </span>
-                {getReviewStatus(post.endDate) === '첨삭가능' && (
-                  <span><span>•</span> 마감까지 {getTimeLeft(post.endDate)}</span>
+                {getReviewStatus(post.endDate) === '첨삭 가능' && (
+                  <>
+                    <span>•</span>
+                    <TimeRemainingText endDate={post.endDate} autoUpdate={true} />
+                  </>
                 )}
                 <span>•</span>
                 <span>{post.regDate?.split('T')[0]}</span>
