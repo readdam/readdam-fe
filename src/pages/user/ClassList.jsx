@@ -8,8 +8,11 @@ import {
   CompassIcon,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import { tokenAtom } from '../../atoms';
 
 const ClassList = () => {
+  const [token] = useAtom(tokenAtom);
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [hasSearched, setHasSearched] = useState(false)
@@ -105,7 +108,15 @@ const ClassList = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">전체 모임</h1>
-          <button onClick={() => navigate('/classCreate')} className="px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center">
+          <button onClick={() => {
+            if(!token?.access_token) {
+              alert("로그인이 필요한 서비스입니다.")
+              navigate("/login");
+              return;
+            }
+            navigate('/classCreate');
+            }} 
+            className="px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center">
             <PlusCircleIcon className="w-5 h-5 mr-2" />
             모임 만들기
           </button>
