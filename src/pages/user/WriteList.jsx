@@ -223,7 +223,7 @@ const WriteList = () => {
                   <span>{post.regDate?.split('T')[0]}</span>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <div className="flex items-center gap-1"><HeartIcon className="w-4 h-4 text-[#E88D67]" />{post.likes}</div>
+                  <div className="flex items-center gap-1"><HeartIcon className="w-4 h-4 text-[#E88D67]" />{post.likeCnt}</div>
                   <div className="flex items-center gap-1"><MessageSquareIcon className="w-4 h-4 text-[#006989]" />{post.commentCnt}</div>
                   <div className="flex items-center gap-1"><EyeIcon className="w-4 h-4" />{post.viewCnt}</div>
                   <div className="flex items-center gap-1 ml-auto"><span>
