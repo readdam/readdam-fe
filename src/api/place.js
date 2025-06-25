@@ -33,11 +33,13 @@ export const getPlace = async (token, placeId) => {
   }
 };
 
-//  axios
-//       .get(`/place/${placeId}`)
-//       .then((res) => {
-//         setPlace(res.data);
-//       })
-//       .catch((err) => {
-//         console.error('장소 상세 조회 실패:', err);
-//       });
+// 장소 수정 API
+export const updatePlace = async (token, placeId, formData) => {
+  const response = await axios.post(`${url}/placeEdit/${placeId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: token.access_token,
+    },
+  });
+  return response.data;
+};
