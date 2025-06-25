@@ -7,6 +7,7 @@ import { tokenAtom, userAtom } from '../../atoms'
 import { url } from '../../config/config';
 import singoIcon from '@assets/singo.png';
 import PostcardModal from '@components/write/PostcardModal'
+import TimeRemainingText from '@components/write/TimeRemainingText';
 
 const WriteShortList = () => {
   const navigate = useNavigate()
@@ -20,7 +21,6 @@ const WriteShortList = () => {
   const [page, setPage] = useState(1)
   const [hasWritten, setHasWritten] = useState(null)  // 로그인한 사용자가 글 썼는지
   const [event, setEvent] = useState(null)
-  const [remainingTime, setRemainingTime] = useState(''); // 남은 시간 상태값 추가
 
 
   // 색상 매핑
@@ -51,12 +51,6 @@ const WriteShortList = () => {
         fetchAnswers(1)
       }, [user, token])
 
-      // 남은 시간 1분마다 갱신
-      useEffect(() => {
-        calculateRemainingTime()
-        const interval = setInterval(calculateRemainingTime, 60000)
-        return () => clearInterval(interval)
-      }, [event?.endTime])
 
       // 로그인 여부 또는 답변 변경 시 작성 여부 확인
       useEffect(() => {
@@ -134,25 +128,6 @@ const WriteShortList = () => {
       alert('작성 실패')
     }
   }
-
-    const calculateRemainingTime = () => {
-      if (!event?.endTime) return;
-
-      const now = new Date();
-      const end = new Date(event.endTime);
-      const diffMs = end - now;
-
-      if (diffMs <= 0) {
-        setRemainingTime('종료됨');
-        return;
-      }
-
-      const minutes = Math.floor(diffMs / (1000 * 60)) % 60;
-      const hours = Math.floor(diffMs / (1000 * 60 * 60)) % 24;
-      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-      setRemainingTime(`${days}일 ${hours}시간 ${minutes}분`);
-    };
 
     const handleToggleLike = async (writeShortId) => {
     if (!token?.access_token) {
@@ -235,11 +210,8 @@ const WriteShortList = () => {
                 {event?.title || '이달의 담소 업데이트 중...'}
               </h2>
               <div className="flex items-center text-sm text-gray-500">
-                <ClockIcon className="w-4 h-4 mr-2" />
                 <span>
-                  <span>
-                    {remainingTime}
-                  </span>
+                  <TimeRemainingText endDate={event?.endTime} autoUpdate={true} />
                 </span>
               </div>
             </div>
