@@ -33,7 +33,8 @@ export default function PlaceEdit() {
         setPlace(data);
 
         setPlaceName(data.name);
-        setPlaceAddress(data.location);
+        setPlaceAddress(data.basicAddress || '');
+        setDetailAddress(data.detailAddress || '');
         setPhoneNumber(data.phone);
         setIntroduceText(data.introduce);
         setLat(data.lat);
@@ -226,7 +227,8 @@ export default function PlaceEdit() {
     // 📌 placeDto
     const placeDto = {
       name: placeName,
-      location: `${placeAddress} ${detailAddress}`,
+      basicAddress: placeAddress,
+      detailAddress: detailAddress,
       phone: phoneNumber,
       introduce: introduceText,
       tag1: keywords[0] || null,
