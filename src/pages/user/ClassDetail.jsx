@@ -35,9 +35,9 @@ const ClassDetail = () => {
       <main className="container mx-auto px-4 py-8 max-w-[1200px]">
         <GroupHeader group={classData} />
         <GroupDescription group={classData} />
-        {/* <GroupLeader leader={groupData.leader} />
-        <GroupMembers members={groupData.members} />
-        <GroupQnAReviews /> */}
+        <GroupLeader leader={classData} />
+        {/* <GroupMembers members={groupData.members} /> 
+        <GroupQnAReviews classId={classId}/> */}
       </main>
     </div>
   );
