@@ -17,7 +17,8 @@ const WriteDetail = () => {
   const [error, setError] = useState(null); // ✅ 디버깅용 에러 상태 추가
   const [comments, setComments] = useState([]); // 댓글 목록
   const [commentContent, setCommentContent] = useState(''); // 단일 댓글
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // 로그인 여부
+  const [token] = useAtom(tokenAtom);
+  const isLoggedIn = !!token?.access_token;
   const [isAuthor, setIsAuthor] = useState(true); // 작성자 여부
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(24);
@@ -27,7 +28,6 @@ const WriteDetail = () => {
   const [reportContent, setReportContent] = useState('');
   const [isSecret, setIsSecret] = useState(false);
   const tags = post ? [post.tag1, post.tag2, post.tag3, post.tag4, post.tag5].filter(Boolean) : [];
-  const [token] = useAtom(tokenAtom);
   const [user] = useAtom(userAtom); // ← comment 작성자 확인용도
   const { id } = useParams();
   const navigate = useNavigate();
@@ -49,6 +49,8 @@ const WriteDetail = () => {
         console.log("✅ response.data:", response.data);
         const data = response.data;
         setPost(data.write);
+        setLiked(data.liked); // ← 백엔드에서 isLiked 여부 함께 보내주는 경우
+        setLikeCount(data.write.likeCnt); // ← 서버에서 넘긴 likeCnt 사용
         setComments(data.comments);
       } catch (error) {
         console.error('❌ Error fetching write detail:', error);
@@ -118,14 +120,30 @@ const WriteDetail = () => {
       other: '기타',
     };
   // 좋아요 처리
-  const handleLike = () => {
-    if (!isLoggedIn) {
-      navigate('/login');
-      return;
-    }
-    setLiked(!liked);
-    setLikeCount(liked ? likeCount - 1 : likeCount + 1);
-  };
+    const handleLike = async () => {
+      if (!isLoggedIn) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        const response = await axios.post(`${url}/my/write-like`, {
+          writeId: post.writeId,
+        }, {
+          headers: {
+            Authorization: `Bearer ${token.access_token}`,
+          },
+        });
+
+        const liked = response.data; // ← boolean 응답 그대로 사용
+        setLiked(liked);
+        setLikeCount((prev) => liked ? prev + 1 : Math.max(0, prev - 1));
+
+      } catch (error) {
+        console.error('좋아요 처리 실패', error);
+        alert('좋아요 처리 중 오류가 발생했습니다.');
+      }
+    };
 
   // 공유 처리
   const handleShare = () => {

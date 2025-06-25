@@ -20,42 +20,50 @@ export default function MyLikeWrite() {
   const [posts, setPosts] = useState([]);
   const [likedMap, setLikedMap] = useState({});
 
+      const fetchLikedWrites = () => {
+      axios
+        .get(`${url}/my/likeWrite`, {
+          headers: { Authorization: `Bearer ${token.access_token}` },
+          withCredentials: true,
+        })
+        .then(res => {
+          setPosts(res.data);
+          const map = {};
+          res.data.forEach(p => { map[p.writeId] = true; });
+          setLikedMap(map);
+        })
+        .catch(err => console.error('좋아요 글 조회 실패:', err));
+    };
+
   // 1) 좋아요한 글 목록 조회
   useEffect(() => {
     if (!token?.access_token) return;
-    axios
-      .get(`${url}/my/likeWrite`, {
-        headers: { Authorization: `Bearer ${token.access_token}` },
-        withCredentials: true,
-      })
-      .then(res => {
-        setPosts(res.data);
-        const map = {};
-        res.data.forEach(p => { map[p.writeId] = true; });
-        setLikedMap(map);
-      })
-      .catch(err => console.error('좋아요 글 조회 실패:', err));
+    fetchLikedWrites();
   }, [token, user.username]);
 
   // 2) 좋아요 토글
-  const handleToggleLike = async (writeId) => {
-    try {
-      const { data: msg } = await axios.post(
-        `${url}/my/write-like`,
-        null,
-        {
-          params: { writeId },
-          headers: { Authorization: `Bearer ${token.access_token}` },
-          withCredentials: true,
+    const handleToggleLike = async (writeId) => {
+      try {
+        const { data: liked } = await axios.post(
+          `${url}/my/write-like`,
+          { writeId },
+          {
+            headers: { Authorization: `Bearer ${token.access_token}` },
+            withCredentials: true,
+          }
+        );
+
+        // 좋아요 취소된 경우: 목록 새로고침
+        if (!liked) {
+          alert('좋아요가 취소되었습니다');
+          // 다시 목록을 불러와서 해당 항목 제외
+          fetchLikedWrites();
         }
-      );
-      const isNowLiked = !msg.includes('취소');
-      setLikedMap(prev => ({ ...prev, [writeId]: isNowLiked }));
-      if (!isNowLiked) alert('좋아요가 취소되었습니다');
-    } catch (e) {
-      console.error('좋아요 토글 실패:', e);
-    }
-  };
+
+      } catch (e) {
+        console.error('좋아요 토글 실패:', e);
+      }
+    };
 
   return (
     <div className="px-4 py-6 max-w-screen-xl mx-auto">
