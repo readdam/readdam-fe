@@ -34,8 +34,8 @@ const ClassDetail = () => {
   <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-[1200px]">
         <GroupHeader group={classData} />
-        {/* <GroupDescription group={classData.description} />
-        <GroupLeader leader={groupData.leader} />
+        <GroupDescription group={classData} />
+        {/* <GroupLeader leader={groupData.leader} />
         <GroupMembers members={groupData.members} />
         <GroupQnAReviews /> */}
       </main>
