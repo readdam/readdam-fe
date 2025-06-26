@@ -2,6 +2,9 @@
 import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './index.css';
+import { getFcmToken } from './fcmToken';
+import { messaging, onMessage } from './firebase';
+
 
 // 🔹 라우트 설정
 import AdminRoutes from '@routes/AdminRoutes';
@@ -75,11 +78,28 @@ import MyInquiryWrite from '@pages/my/MyInquiryWrite';
 import Success from '@pages/my/Success';
 import Fail from '@pages/my/Fail';
 
-// 🔹 유틸
-import axiosInstance from '@api/axiosInstance';
+
 
 function App() {
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const unsubscribe = onMessage(messaging, (payload) => {
+      console.log('🔔 Foreground 알림 수신:', payload);
+  
+      const { title, body, icon } = payload.notification;
+  
+      new Notification(title, {
+        body,
+        icon: icon || '/favicon.ico', 
+      });
+  
+    });
+  
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+
 
   return (
     <>

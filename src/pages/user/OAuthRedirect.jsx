@@ -3,43 +3,63 @@ import { useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
 import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
+import { url } from '../../config/config';
+import { getFcmToken } from '../../fcmToken';
 
 const OAuthRedirect = () => {
   const [, setToken] = useAtom(tokenAtom);
   const [, setUser] = useAtom(userAtom);
   const navigate = useNavigate();
-  const hasHandled = useRef(false); // ✅ 중복 실행 방지
+  const hasHandled = useRef(false);
 
   useEffect(() => {
-    if (hasHandled.current) return; // ✅ navigate 이후 재실행 방지
+    if (hasHandled.current) return;
     hasHandled.current = true;
 
-    const url = new URL(window.location.href);
-    const access_token = url.searchParams.get('access_token');
+    const handleOAuth = async () => {
+      const urlObj = new URL(window.location.href);
+      const access_token = urlObj.searchParams.get('access_token');
 
-    console.log('🧭 현재 URL:', window.location.href);
-    console.log('🧪 access_token:', access_token);
+      if (!access_token) {
+        alert("access_token이 없습니다.");
+        return navigate('/login');
+      }
 
-    if (access_token) {
-      setToken({
+      const tokenObj = {
         access_token: `Bearer ${access_token}`,
         refresh_token: '',
-      });
+      };
+      setToken(tokenObj);
+      sessionStorage.setItem("token", JSON.stringify(tokenObj));
 
       const decoded = jwtDecode(access_token);
-      setUser(prev => ({
-        ...prev,
+      const userInfo = {
         username: decoded.sub,
         nickname: decoded.nickname,
         isAdmin: decoded.isAdmin,
         lat: decoded.lat,
         lng: decoded.lng,
-      }));
+      };
+      setUser(userInfo);
+      sessionStorage.setItem("user", JSON.stringify(userInfo));
 
-      navigate('/'); // ✅ 이제 여기서 navigate 이후 다시 실행되지 않음
-    } else {
-      alert('access_token이 없습니다. 다시 로그인해주세요.');
-    }
+      // ✅ FCM 토큰 직접 발급해서 서버에 저장 요청
+      const fcmToken = await getFcmToken();
+      if (fcmToken) {
+        console.log("✅ 받은 fcmToken:", fcmToken);
+        await axios.post(`${url}/user`, { fcmToken }, {
+          headers: {
+            Authorization: tokenObj.access_token,
+            "Content-Type": "application/json",
+          },
+        });
+      }
+
+      navigate('/');
+    };
+
+    handleOAuth();
   }, []);
 
   return null;
