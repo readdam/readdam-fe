@@ -48,7 +48,7 @@ export default function OtherPlaceList() {
         <h1 className="text-2xl font-bold text-gray-800">외부 장소 목록</h1>
         <button
           className="flex items-center gap-2 px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-all duration-200 cursor-pointer"
-          onClick={() => navigate('/otherPlaceAdd')}
+          onClick={() => navigate('/admin/otherPlaceAdd')}
         >
           <PlusIcon className="w-5 h-5" />새 장소 추가
         </button>
