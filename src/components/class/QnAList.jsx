@@ -94,7 +94,7 @@ const QnAList = ({ classDetail }) => {
         },
         {
           headers: {
-            Authorization: token.access_token,
+            Authorization: token.access_token
           },
         }
       );
@@ -146,7 +146,7 @@ const QnAList = ({ classDetail }) => {
         <p className="text-gray-500">질문을 작성하려면 로그인이 필요해요.</p>
       )}
       
-      {/* 예시 Q&A 목록 (아코디언 스타일로) */}
+      {/* Q&A 목록 (아코디언 스타일로) */}
       <div className="space-y-4">
         {qnaList.map((item) => {
           const isSecret = item.isSecret;
@@ -154,7 +154,7 @@ const QnAList = ({ classDetail }) => {
           const canView = !isSecret || isOwner || isLeader;
 
           return (
-            <div key={item.classQnaId} className="border rounded p-4 bg-gray-50">
+            <div key={item.classQnaId} className=" rounded p-4 bg-gray-50">
               <button onClick={() => HandleAccordionToggle(item.classQnaId)}
                 className="w-full text-left">
                 <div className="flex justify-between items-center">
@@ -176,8 +176,8 @@ const QnAList = ({ classDetail }) => {
                   <p className="mb-2 text-gray-700 whitespace-pre-line">{item.content}</p>
 
                   {item.answer ? (
-                    <div className="p-3 bg-white border rounded text-gray-800">
-                    <p className="text-sm font-medium mb-1">모임장 답변</p>
+                    <div className="p-3 bg-white border border-gray-300 rounded text-gray-800">
+                    <p className="text-sm text-gray-400">모임장 답변</p>
                     <p className="whitespace-pre-line">{item.answer}</p>
                   </div>
                   ) : (
@@ -185,7 +185,7 @@ const QnAList = ({ classDetail }) => {
                     (!isSecret || item.username === user.username || isLeader) && (
                       <div className="mt-4">
                         <textarea
-                          className="w-full border rounded p-2"
+                          className="w-full border border-gray-300 rounded-lg p-2"
                           placeholder="답변을 입력하세요"
                           value={answerInput[item.classQnaId] || ""}
                           onChange={(e) => handleAnswerChange(item.classQnaId, e.target.value)}
@@ -205,25 +205,6 @@ const QnAList = ({ classDetail }) => {
           );
         })}
 
-        {/* 이 부분은 실제 질문 리스트 데이터로 반복 렌더링
-        {[
-          {
-            id: 1,
-            content: "모임은 몇 시에 시작하나요?",
-            secret: false,
-            writer: "user1",
-          },
-        ].map((item) => (
-          <details key={item.id} className="bg-gray-50 p-4 rounded">
-            <summary className="cursor-pointer font-medium text-gray-800">
-              {item.secret && !isLeader && item.writer !== user.username
-                ? "비밀글입니다."
-                : item.content}
-            </summary> 
-
-            
-          </details>
-        ))} */}
       </div>
     </div>
   );
