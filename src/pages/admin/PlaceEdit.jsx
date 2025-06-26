@@ -6,9 +6,7 @@ import PlaceDetailForm from '@components/admin/place/PlaceDetailForm';
 import { RoomList } from '@components/admin/place/RoomList';
 import RoomForm from '@components/admin/place/RoomForm';
 import { ArrowLeft } from 'lucide-react';
-import axios from 'axios';
-import { url } from '../../config/config';
-import { getPlace } from '@api/place';
+import { getPlace, updatePlace } from '@api/place';
 import { useAtomValue } from 'jotai';
 import { tokenAtom } from '../../atoms';
 
@@ -35,7 +33,8 @@ export default function PlaceEdit() {
         setPlace(data);
 
         setPlaceName(data.name);
-        setPlaceAddress(data.location);
+        setPlaceAddress(data.basicAddress || '');
+        setDetailAddress(data.detailAddress || '');
         setPhoneNumber(data.phone);
         setIntroduceText(data.introduce);
         setLat(data.lat);
@@ -110,8 +109,9 @@ export default function PlaceEdit() {
     };
   }
 
-  const handleAddRoom = async () => {
-    const { name, introduce, size, minPerson, maxPerson } = currentRoom;
+  const handleAddRoom = () => {
+    const { name, introduce, size, minPerson, maxPerson, facilities } =
+      currentRoom;
 
     if (!name || !name.trim()) return alert('방 이름을 입력하세요.');
     if (!introduce || !introduce.trim()) return alert('방 소개를 입력하세요.');
@@ -122,10 +122,7 @@ export default function PlaceEdit() {
       return alert('최대 인원은 최소 인원보다 같거나 커야 합니다.');
     if (images.length === 0) return alert('방 사진을 1장 이상 등록하세요.');
 
-    // 이미지 분리
-    const newImageFiles = images.filter(
-      (img) => typeof img !== 'string' || img.startsWith('blob:')
-    );
+    // ✅ 기존 이미지 경로와 새 이미지 분리
     const existingImageNames = images.filter(
       (img) =>
         typeof img === 'string' &&
@@ -133,22 +130,30 @@ export default function PlaceEdit() {
         !img.startsWith('data:')
     );
 
-    const roomData = {
-      ...currentRoom,
-      images: undefined, // images 필드 제거
-      existingImages: existingImageNames,
+    const newImageFiles = images.filter(
+      (img) => typeof img === 'string' && img.startsWith('data:image/')
+    );
+
+    const newRoom = {
+      id: editingRoom?.id ?? null,
+      name,
+      introduce,
+      size,
+      minPerson,
+      maxPerson,
+      facilities,
+      images: [...existingImageNames, ...newImageFiles], // 이미지 전체 저장
     };
 
-    const formData = new FormData();
-    formData.append(
-      'room',
-      new Blob([JSON.stringify(roomData)], {
-        type: 'application/json',
-      })
-    );
-    newImageFiles.forEach((file) => {
-      formData.append('files', file instanceof File ? file : null);
-    });
+    if (editingRoom) {
+      setRooms(rooms.map((r) => (r.id === editingRoom.id ? newRoom : r)));
+      setEditingRoom(null);
+    } else {
+      setRooms([...rooms, newRoom]);
+    }
+
+    setCurrentRoom(createInitialRoom());
+    setImages([]);
   };
 
   const handleEditRoom = (room) => {
@@ -178,6 +183,9 @@ export default function PlaceEdit() {
   };
 
   function dataURLtoFile(dataurl, filename) {
+    if (!dataurl || typeof dataurl !== 'string') return null;
+    if (!dataurl.startsWith('data:image/')) return null;
+
     const arr = dataurl.split(',');
     const mime = arr[0].match(/:(.*?);/)[1];
     const bstr = atob(arr[1]);
@@ -190,79 +198,37 @@ export default function PlaceEdit() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!placeName.trim()) {
-      alert('장소명을 입력해주세요.');
-      return;
-    }
-    if (!placeAddress.trim()) {
-      alert('주소를 입력해주세요.');
-      return;
-    }
-    if (!detailAddress.trim()) {
-      alert('상세 주소를 입력해주세요.');
-      return;
-    }
-    if (!phoneNumber.trim()) {
-      alert('전화번호를 입력해주세요.');
-      return;
-    }
-    if (!introduceText.trim()) {
-      alert('소개글을 입력해주세요.');
-      return;
-    }
-    if (lat == null || lng == null) {
-      alert('지도에서 위치를 선택해주세요.');
-      return;
-    }
+    if (!placeName.trim()) return alert('장소명을 입력해주세요.');
+    if (!placeAddress.trim()) return alert('주소를 입력해주세요.');
+    if (!detailAddress.trim()) return alert('상세 주소를 입력해주세요.');
+    if (!phoneNumber.trim()) return alert('전화번호를 입력해주세요.');
+    if (!introduceText.trim()) return alert('소개글을 입력해주세요.');
+    if (lat == null || lng == null)
+      return alert('지도에서 위치를 선택해주세요.');
+    if (keywords.length === 0 || keywords.some((k) => !k.trim()))
+      return alert('태그(키워드)를 최소 1개 이상 입력해주세요.');
+    if (imagePreviews.length === 0)
+      return alert('장소 사진을 1장 이상 등록해주세요.');
+    if (rooms.length === 0) return alert('방을 최소 1개 이상 등록해주세요.');
 
-    // ✅ 키워드 1개 이상 필수 (선택적으로 조정 가능)
-    if (keywords.length === 0 || keywords.some((k) => !k.trim())) {
-      alert('태그(키워드)를 최소 1개 이상 입력해주세요.');
-      return;
-    }
-
-    // ✅ 장소 사진 1장 이상 필수
-    if (imagePreviews.length === 0) {
-      alert('장소 사진을 1장 이상 등록해주세요.');
-      return;
-    }
-
-    // ✅ 방 1개 이상 필수
-    if (rooms.length === 0) {
-      alert('방을 최소 1개 이상 등록해주세요.');
-      return;
-    }
-
-    // ✅ 각 방 필수값 검사
     for (const room of rooms) {
-      if (!room.name.trim()) {
-        alert('방 이름을 입력해주세요.');
-        return;
-      }
-      if (!room.size.trim()) {
-        alert('방 크기를 입력해주세요.');
-        return;
-      }
-      if (!room.minPerson || !room.maxPerson) {
-        alert('방 최소/최대 인원을 입력해주세요.');
-        return;
-      }
-      if (room.minPerson > room.maxPerson) {
-        alert('방 최대 인원은 최소 인원보다 같거나 커야 합니다.');
-        return;
-      }
-      if (!room.images || room.images.length === 0) {
-        alert(`"${room.name}" 방에 사진을 1장 이상 등록해주세요.`);
-        return;
-      }
+      if (!room.name.trim()) return alert('방 이름을 입력해주세요.');
+      if (!room.size.trim()) return alert('방 크기를 입력해주세요.');
+      if (!room.minPerson || !room.maxPerson)
+        return alert('방 최소/최대 인원을 입력해주세요.');
+      if (room.minPerson > room.maxPerson)
+        return alert('방 최대 인원은 최소 인원보다 같거나 커야 합니다.');
+      if (!room.images || room.images.length === 0)
+        return alert(`"${room.name}" 방에 사진을 1장 이상 등록해주세요.`);
     }
 
     const formData = new FormData();
 
-    // ✅ placeDto
+    // 📌 placeDto
     const placeDto = {
       name: placeName,
-      location: `${placeAddress} ${detailAddress}`,
+      basicAddress: placeAddress,
+      detailAddress: detailAddress,
       phone: phoneNumber,
       introduce: introduceText,
       tag1: keywords[0] || null,
@@ -275,7 +241,7 @@ export default function PlaceEdit() {
       tag8: keywords[7] || null,
       tag9: keywords[8] || null,
       tag10: keywords[9] || null,
-      lat: lat,
+      lat,
       log: lng,
     };
     formData.append(
@@ -283,28 +249,32 @@ export default function PlaceEdit() {
       new Blob([JSON.stringify(placeDto)], { type: 'application/json' })
     );
 
-    // ✅ roomDtoList
-    const roomDtoList = rooms.map((room) => ({
-      name: room.name,
-      introduce: room.introduce,
-      size: room.size,
-      minPerson: room.minPerson,
-      maxPerson: room.maxPerson,
-      hasAirConditioner: room.facilities.airConditioner,
-      hasHeater: room.facilities.heater,
-      hasWifi: room.facilities.wifi,
-      hasWindow: room.facilities.window,
-      hasPowerOutlet: room.facilities.hasPowerOutlet,
-      hasTv: room.facilities.tv,
-      hasProjector: room.facilities.projector,
-      hasWhiteboard: room.facilities.whiteboard,
-    }));
+    // 📌 roomDtoList
+    const roomDtoList = rooms.map((room) => {
+      const isNew = typeof room.id === 'string' && room.id.startsWith('new_');
+      return {
+        placeRoomId: isNew ? null : room.id,
+        name: room.name,
+        introduce: room.introduce,
+        size: room.size,
+        minPerson: room.minPerson,
+        maxPerson: room.maxPerson,
+        hasAirConditioner: !!room.facilities.airConditioner,
+        hasHeater: !!room.facilities.heater,
+        hasWifi: !!room.facilities.wifi,
+        hasWindow: !!room.facilities.window,
+        hasPowerOutlet: !!room.facilities.powerOutlet,
+        hasTv: !!room.facilities.tv,
+        hasProjector: !!room.facilities.projector,
+        hasWhiteboard: !!room.facilities.whiteboard,
+      };
+    });
     formData.append(
       'roomDtoList',
       new Blob([JSON.stringify(roomDtoList)], { type: 'application/json' })
     );
 
-    // ✅ sharedTimeSlots
+    // 📌 sharedTimeSlots
     const sharedTimeSlots = [
       ...selectedWeekdaySlots.map((time) => ({
         time,
@@ -322,38 +292,59 @@ export default function PlaceEdit() {
       new Blob([JSON.stringify(sharedTimeSlots)], { type: 'application/json' })
     );
 
-    // ✅ placeImages (imagePreviews → File 변환)
-    imagePreviews.forEach((base64, i) => {
-      const file = dataURLtoFile(base64, `place_${i}.jpg`);
-      formData.append('placeImages', file);
+    // 📌 placeImages: 신규
+    imagePreviews.forEach((img, i) => {
+      if (typeof img === 'string' && img.startsWith('data:image/')) {
+        const file = dataURLtoFile(img, `place_${i}.jpg`);
+        if (file) formData.append('placeImages', file);
+      }
     });
 
-    // ✅ roomImagesMap
-    rooms.forEach((room, roomIndex) => {
-      room.images.forEach((base64, imageIndex) => {
-        const file = dataURLtoFile(
-          base64,
-          `room_${roomIndex}_${imageIndex}.jpg`
-        );
-        formData.append(
-          'roomImagesMap',
-          file,
-          `room_${roomIndex}_${imageIndex}.jpg`
-        );
+    // 📌 placeImages: 기존
+    const existingPlaceImages = imagePreviews.filter(
+      (img) => typeof img === 'string' && !img.startsWith('data:image/')
+    );
+    formData.append(
+      'existingPlaceImages',
+      new Blob([JSON.stringify(existingPlaceImages)], {
+        type: 'application/json',
+      })
+    );
+
+    // 🔹 새 이미지 업로드
+    rooms.forEach((room, i) => {
+      room.images.forEach((img, index) => {
+        if (typeof img === 'string' && img.startsWith('data:image/')) {
+          const file = dataURLtoFile(img, `room_${i}_${index}.jpg`);
+          formData.append('roomImagesMap', file, `room_${i}_${index}.jpg`);
+        }
       });
     });
+
+    // 🔹 기존 이미지 유지
+    const existingRoomImages = [];
+    rooms.forEach((room, i) => {
+      room.images.forEach((img) => {
+        if (typeof img === 'string' && !img.startsWith('data:image/')) {
+          existingRoomImages.push(`${i}|${img}`);
+        }
+      });
+    });
+
+    formData.append(
+      'existingRoomImages',
+      new Blob([JSON.stringify(existingRoomImages)], {
+        type: 'application/json',
+      })
+    );
 
     try {
-      await axios.post(`${url}/placeAdd`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      alert('장소 등록 완료!');
-      navigate('/admin/placeList'); //  일단 목록으로 보냄
+      await updatePlace(token, placeId, formData);
+      alert('장소 수정 완료!');
+      navigate('/admin/placeList');
     } catch (err) {
       console.error(err);
-      alert('등록 실패!');
+      alert('수정 실패!');
     }
   };
 
@@ -376,25 +367,42 @@ export default function PlaceEdit() {
     if (!files.length) return;
 
     const allowedCount = 10 - currentRoom.images.length;
-    const filesToAdd = files.slice(0, allowedCount); // 최대 10장 제한
+    const filesToAdd = files.slice(0, allowedCount);
 
     filesToAdd.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCurrentRoom((prevRoom) => ({
-          ...prevRoom,
-          images: [...prevRoom.images, reader.result],
+        const base64 = reader.result;
+
+        // 기존 이미지 + 새 이미지 유지
+        setCurrentRoom((prev) => ({
+          ...prev,
+          images: [...(prev.images || []), base64],
         }));
+
+        // UI용 이미지 프리뷰도 갱신
+        setImages((prev) => [...prev, base64]);
       };
       reader.readAsDataURL(file);
     });
   };
 
   const handleRemoveRoomImage = (index) => {
+    const updatedImages = currentRoom.images.filter((_, i) => i !== index);
+
     setCurrentRoom((prevRoom) => ({
       ...prevRoom,
-      images: prevRoom.images.filter((_, i) => i !== index),
+      images: updatedImages,
     }));
+
+    setImages(updatedImages); // UI 이미지 프리뷰 반영
+
+    // ✅ 현재 방이 rooms에 존재한다면, 그 방의 images도 갱신
+    setRooms((prevRooms) =>
+      prevRooms.map((room) =>
+        room.id === currentRoom.id ? { ...room, images: updatedImages } : room
+      )
+    );
   };
 
   return (
