@@ -92,7 +92,7 @@ export default function PlaceList() {
           onChange={(e) => setFilterField(e.target.value)}
         >
           <option value="name">장소명</option>
-          <option value="location">주소</option>
+          <option value="basic_address">주소</option>
         </select>
         <div className="flex-1 relative">
           <input
@@ -158,7 +158,7 @@ export default function PlaceList() {
                             {place.name}
                           </div>
                           <div className="text-gray-500 text-sm">
-                            {place.location}
+                            {place.basicAddress} {place.detailAddress}
                           </div>
                           <div className="text-gray-500 text-sm">
                             {place.introduce}
