@@ -1,19 +1,11 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import {
-  HeartIcon,
-  MessageSquareIcon,
-  EyeIcon,
-  SearchIcon,
-  PenIcon,
-  BookOpenIcon,
-  ClockIcon,
-} from 'lucide-react';
+import { SearchIcon,PenIcon } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { tokenAtom } from '../../atoms';
 import { url } from '../../config/config';
-import TimeRemainingText from '@components/write/TimeRemainingText';
+import WriteCard from '@components/write/WriteCard';
 
 const WriteList = () => {
   const navigate = useNavigate();
@@ -183,57 +175,13 @@ const WriteList = () => {
 
         {/* 글 목록 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {writeList.map((post) => {
-            const reviewStatus = getReviewStatus(post.endDate);
-            const statusClass = reviewStatus === '첨삭 가능' ? 'text-[#006989] font-semibold' : 'text-gray-400 font-semibold';
-            const tags = [post.tag1, post.tag2, post.tag3, post.tag4, post.tag5].filter(Boolean);
-
-            return (
-            <div key={post.writeId} className="bg-white rounded-lg p-4 flex gap-4 hover:shadow-sm transition-shadow">
-              {post.img ? (
-                <img src={`${url}/image?filename=${post.img}`} alt="" className="w-48 h-48 object-cover rounded-lg flex-shrink-0" />
-              ) : (
-                <div className="w-48 h-48 bg-[#F3D5C9] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <BookOpenIcon className="w-12 h-12 text-[#E88D67]" />
-                </div>
-              )}
-              <div className="flex-1">
-                <div className="flex gap-1 mb-1">
-                  {/* 카테고리 */}
-                  <span className="px-3 py-1 text-sm rounded-full bg-[#F3F7EC] text-[#006989]">
-                    {typeMap[post.type]}</span>
-                  {/* 상태 */}
-                  <span className={`px-3 py-1 text-sm ${statusClass}`}>{reviewStatus}</span>
-                </div>
-                {/* 태그 한 줄 표시 */}
-                <div className="flex flex-wrap gap-2 mt-3 mb-2">
-                  {tags.map((tag, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 text-xs rounded-full bg-[#FDF3F0] text-[#E88D67]"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-                <h3 className="text-lg font-bold mb-2 ">{post.title}</h3>
-                <div className="flex items-center text-sm text-gray-500 mb-4">
-                  <span className="font-medium text-[#006989]">{post.nickname}</span>
-                  <span className="mx-2">• 등록일 </span>
-                  <span>{post.regDate?.split('T')[0]}</span>
-                </div>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <div className="flex items-center gap-1"><HeartIcon className="w-4 h-4 text-[#E88D67]" />{post.likes}</div>
-                  <div className="flex items-center gap-1"><MessageSquareIcon className="w-4 h-4 text-[#006989]" />{post.commentCnt}</div>
-                  <div className="flex items-center gap-1"><EyeIcon className="w-4 h-4" />{post.viewCnt}</div>
-                  <div className="flex items-center gap-1 ml-auto"><span>
-                      {reviewStatus === '첨삭 가능' && <TimeRemainingText endDate={post.endDate} />}
-                    </span></div>
-                </div>
-              </div>
-            </div>
-            );
-          })}
+          {writeList.map((post) => (
+            <WriteCard
+              key={post.writeId}
+              post={post}
+              onClick={() => navigate(`/writeDetail/${post.writeId}`)}
+            />
+          ))}
         </div>
 
         {/* 더보기 버튼 */}
