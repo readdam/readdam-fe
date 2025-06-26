@@ -1,3 +1,4 @@
+// src/components/MyLibraryShow.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,28 +29,45 @@ const MyLibraryShow = ({ category, books, onClose, onEdit }) => {
         {/* 책 목록 */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto">
           {books.length > 0 ? (
-            books.map((book) => (
-              <div
-                key={book.librarybookId || book.isbn}
-                onClick={() => handleBookClick(book.isbn)}
-                className="cursor-pointer"
-              >
-                <img
-                  src={book.thumbnail || book.bookImg || '/no-image.png'}
-                  alt={book.bookName || book.title}
-                  className="w-full h-40 object-cover rounded"
-                />
-                <p className="mt-2 text-sm font-semibold text-center line-clamp-2">
-                  {book.bookName || book.title}
-                </p>
-                <p className="text-xs text-gray-600 text-center">
-                  {book.bookWriter || (book.authors?.join(', ') || '저자 정보 없음')}
-                </p>
-                <p className="text-xs text-gray-600 text-center">
-                  {book.publisher || '출판사 정보 없음'}
-                </p>
-              </div>
-            ))
+            books.map((book) => {
+              // 여기서 cover 먼저 확인하도록 순서 변경
+              const src =
+                book.cover ||
+                book.thumbnail ||
+                book.bookImg ||
+                '/no-image.png';
+              const title = book.title || book.bookName;
+              const author =
+                book.author ||
+                book.bookWriter ||
+                (Array.isArray(book.authors)
+                  ? book.authors.join(', ')
+                  : '저자 정보 없음');
+              const publisher = book.publisher || '출판사 정보 없음';
+
+              return (
+                <div
+                  key={book.id ?? book.librarybookId ?? book.isbn}
+                  onClick={() => handleBookClick(book.isbn)}
+                  className="cursor-pointer"
+                >
+                  <img
+                    src={src}
+                    alt={title}
+                    className="w-full h-40 object-cover rounded"
+                  />
+                  <p className="mt-2 text-sm font-semibold text-center line-clamp-2">
+                    {title}
+                  </p>
+                  <p className="text-xs text-gray-600 text-center">
+                    {author}
+                  </p>
+                  <p className="text-xs text-gray-600 text-center">
+                    {publisher}
+                  </p>
+                </div>
+              );
+            })
           ) : (
             <p className="text-gray-400 col-span-full text-center">
               책이 없습니다.
