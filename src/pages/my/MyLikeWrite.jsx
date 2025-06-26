@@ -20,42 +20,65 @@ export default function MyLikeWrite() {
   const [posts, setPosts] = useState([]);
   const [likedMap, setLikedMap] = useState({});
 
+
+      const typeMap = {
+        bookreview: '독후감',
+        essay: '수필',
+        personal: '자기소개서',
+        assignment: '과제',
+        other: '기타',
+      };
+
+      const getReviewStatus = (endDate) => {
+        if (!endDate) return '첨삭 제외'; // endDate가 없으면 제외
+        const now = new Date();
+        return new Date(endDate) > now ? '첨삭 가능' : '첨삭 마감';
+      };
+
+      const fetchLikedWrites = () => {
+      axios
+        .get(`${url}/my/likeWrite`, {
+          headers: { Authorization: `Bearer ${token.access_token}` },
+          withCredentials: true,
+        })
+        .then(res => {
+          setPosts(res.data);
+          const map = {};
+          res.data.forEach(p => { map[p.writeId] = true; });
+          setLikedMap(map);
+        })
+        .catch(err => console.error('좋아요 글 조회 실패:', err));
+    };
+
   // 1) 좋아요한 글 목록 조회
   useEffect(() => {
     if (!token?.access_token) return;
-    axios
-      .get(`${url}/my/likeWrite`, {
-        headers: { Authorization: `Bearer ${token.access_token}` },
-        withCredentials: true,
-      })
-      .then(res => {
-        setPosts(res.data);
-        const map = {};
-        res.data.forEach(p => { map[p.writeId] = true; });
-        setLikedMap(map);
-      })
-      .catch(err => console.error('좋아요 글 조회 실패:', err));
+    fetchLikedWrites();
   }, [token, user.username]);
 
   // 2) 좋아요 토글
-  const handleToggleLike = async (writeId) => {
-    try {
-      const { data: msg } = await axios.post(
-        `${url}/my/write-like`,
-        null,
-        {
-          params: { writeId },
-          headers: { Authorization: `Bearer ${token.access_token}` },
-          withCredentials: true,
+    const handleToggleLike = async (writeId) => {
+      try {
+        const { data: liked } = await axios.post(
+          `${url}/my/write-like`,
+          { writeId },
+          {
+            headers: { Authorization: `Bearer ${token.access_token}` },
+            withCredentials: true,
+          }
+        );
+
+        // 좋아요 취소된 경우: 목록 새로고침
+        if (!liked) {
+          alert('좋아요가 취소되었습니다');
+          // 다시 목록을 불러와서 해당 항목 제외
+          fetchLikedWrites();
         }
-      );
-      const isNowLiked = !msg.includes('취소');
-      setLikedMap(prev => ({ ...prev, [writeId]: isNowLiked }));
-      if (!isNowLiked) alert('좋아요가 취소되었습니다');
-    } catch (e) {
-      console.error('좋아요 토글 실패:', e);
-    }
-  };
+
+      } catch (e) {
+        console.error('좋아요 토글 실패:', e);
+      }
+    };
 
   return (
     <div className="px-4 py-6 max-w-screen-xl mx-auto">
@@ -126,14 +149,14 @@ export default function MyLikeWrite() {
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div className="flex space-x-2 mb-1">
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
-                      {post.type}
+                      {typeMap[post.type]}
                     </span>
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         post.endDate ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'
                       }`}
                     >
-                      {post.endDate ? '첨삭마감' : '첨삭가능'}
+                      {getReviewStatus(post.endDate)}
                     </span>
                   </div>
                   <h3 className="text-sm font-semibold line-clamp-1">{post.title}</h3>
