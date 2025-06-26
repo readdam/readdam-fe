@@ -6,6 +6,7 @@ import { userAtom, tokenAtom } from '../../atoms';
 import axios from 'axios';
 import { url } from '../../config/config';
 import { jwtDecode } from 'jwt-decode';
+import { getFcmToken } from '../../fcmToken';
 
 
 const Login = () => {
@@ -43,11 +44,14 @@ const Login = () => {
     e.preventDefault();
 
     try {
+      const fcmToken = await getFcmToken(); // ✅ FCM 토큰 가져오기
+
       const response = await axios.post(
         `${url}/loginProc`,
         {
           username: userId,
           password: password,
+          fcmToken: fcmToken || null,
         },
         {
           withCredentials: true,
@@ -66,16 +70,15 @@ const Login = () => {
           lat: decoded.lat,
           lng: decoded.lng,
         };
-          const tokenObj = {
-            access_token: access_token.startsWith("Bearer") ? access_token : `Bearer ${access_token}`,
-            refresh_token: '',
-          };
+        const tokenObj = {
+          access_token: access_token.startsWith("Bearer") ? access_token : `Bearer ${access_token}`,
+          refresh_token: '',
+        };
 
         // ✅ Jotai 상태 설정
         setToken(tokenObj);
         setUser(userInfo);
 
-        // ✅ 저장소 결정: 로그인 상태 유지 시 localStorage, 아니면 sessionStorage
         const storage = saveId ? localStorage : sessionStorage;
         storage.setItem('token', JSON.stringify(tokenObj));
         storage.setItem('user', JSON.stringify(userInfo));
@@ -89,6 +92,7 @@ const Login = () => {
       console.error(err);
     }
   };
+
 
   return (
     <div className="min-h-screen flex flex-col pt-28 items-center bg-white text-gray-800 px-4">
