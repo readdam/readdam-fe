@@ -12,12 +12,13 @@ const MyReservation = () => {
 
   useEffect(() => {
     if (!token?.access_token) return;
-    axios.get(`${url}/my/reservations`, {
-      headers: { Authorization: `Bearer ${token.access_token}` },
-      withCredentials: true,
-    })
-    .then(res => setReservations(res.data))
-    .catch(console.error);
+    axios
+      .get(`${url}/my/reservations`, {
+        headers: { Authorization: `Bearer ${token.access_token}` },
+        withCredentials: true,
+      })
+      .then((res) => setReservations(res.data))
+      .catch(console.error);
   }, [token]);
 
   const handleCancel = async (id, e) => {
@@ -29,11 +30,9 @@ const MyReservation = () => {
         headers: { Authorization: `Bearer ${token.access_token}` },
         withCredentials: true,
       });
-      setReservations(prev =>
-        prev.map(r =>
-          r.reservationId === id
-            ? { ...r, status: 'CANCELLED' }
-            : r
+      setReservations((prev) =>
+        prev.map((r) =>
+          r.reservationId === id ? { ...r, status: 'CANCELLED' } : r
         )
       );
       alert('예약이 취소되었습니다.');
@@ -42,13 +41,13 @@ const MyReservation = () => {
     }
   };
 
-  const today = new Date().toISOString().slice(0,10);
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8">
       <h2 className="text-xl font-bold mb-6">내 예약 목록</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {reservations.map(post => {
+        {reservations.map((post) => {
           const isToday = post.date === today;
 
           return (
@@ -58,18 +57,24 @@ const MyReservation = () => {
               className="block bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
             >
               <img
-                src={post.image
-                  ? `${url}/image?filename=${post.image}`
-                  : '/images/default.jpg'}
+                src={
+                  post.image
+                    ? `${url}/image?filename=${post.image}`
+                    : '/images/default.jpg'
+                }
                 alt={post.placeName}
                 className="w-full h-48 object-cover"
               />
               <div className="p-4 space-y-2">
                 <h3 className="text-sm font-bold">{post.placeName}</h3>
-                <p className="text-sm text-gray-500">📍 {post.location}</p>
+                <p className="text-sm text-gray-500">
+                  📍 {post.basicAddress} {post.detailAddress}
+                </p>
                 <p className="text-sm text-gray-500">📅 {post.date}</p>
                 <p className="text-sm text-gray-500">⏰ {post.timeRange}</p>
-                <p className="text-sm text-gray-500">👥 인원 {post.participantCount}명</p>
+                <p className="text-sm text-gray-500">
+                  👥 인원 {post.participantCount}명
+                </p>
 
                 {post.status === 'CANCELLED' ? (
                   <span className="mt-3 block text-center text-gray-500 text-sm font-medium">
