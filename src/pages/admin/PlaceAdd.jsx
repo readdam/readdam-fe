@@ -192,7 +192,8 @@ export default function PlaceAdd() {
     // ✅ placeDto
     const placeDto = {
       name: placeName,
-      location: `${placeAddress} ${detailAddress}`,
+      basicAddress: placeAddress,
+      detailAddress: detailAddress,
       phone: phoneNumber,
       introduce: introduceText,
       tag1: keywords[0] || null,
