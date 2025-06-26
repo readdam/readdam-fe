@@ -32,6 +32,7 @@ const WriteDetail = () => {
   const [user] = useAtom(userAtom); // ← comment 작성자 확인용도
   const { id } = useParams();
   const navigate = useNavigate();
+  
 
   // 글 상세 정보를 가져오는 함수
     const fetchWriteDetail = async (id) => {
@@ -62,13 +63,28 @@ const WriteDetail = () => {
       }
     };
 
-  // 페이지가 처음 렌더링될 때 데이터 가져오기
+    const increaseViewCount = async (id) => {
+      try {
+        await axios.post(`${url}/write-ViewCount`, { writeId: parseInt(id) });
+      } catch (err) {
+        console.error("❌ 조회수 증가 실패", err);
+      }
+    };
+
+      // 페이지가 처음 렌더링될 때 데이터 가져오기
       useEffect(() => {
         if (id) {
           fetchWriteDetail(id);
+          increaseViewCount(id); // 진입 시마다 +1
         }
       }, [id, token]);
 
+      // 작성자 여부 판단 
+      useEffect(() => {
+        if (post && user) {
+          setIsAuthor(post.username === user.username);
+        }
+      }, [post, user]);
 
       const getReviewStatus = (endDate) => {
       if (!endDate) return '첨삭 제외';
@@ -77,13 +93,6 @@ const WriteDetail = () => {
       return deadline > now ? '첨삭 가능' : '첨삭 종료';
     };
 
-    // const getTimeLeft = (endDate) => {
-    //   const now = new Date();
-    //   const deadline = new Date(endDate);
-    //   const diffMs = deadline - now;
-    //   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    //   return diffDays > 0 ? `${diffDays}일 남음` : null;
-    // };
 
     const handleSubmitComment = async () => {
       if (!token || !token.access_token) {
@@ -158,12 +167,40 @@ const WriteDetail = () => {
   };
 
   // 신고 제출
-  const handleSubmitReport = () => {
-    setShowReportModal(false);
-    setShowReportConfirm(true);
-    setReportType('');
-    setReportContent('');
-  };
+    const handleSubmitReport = async () => {
+      try {
+        await axios.post(`${url}/my/writeShortReport`, {
+          type: reportType, // 'post' or 'comment'
+          targetId: reportType === 'post' ? post.writeId : reportTargetId,
+          content: reportContent,
+        }, {
+          headers: { Authorization: `Bearer ${token.access_token}` },
+        });
+
+        setShowReportModal(false);
+        setShowReportConfirm(true);
+        setReportType('');
+        setReportContent('');
+      } catch (err) {
+        console.error("신고 실패", err);
+        alert("신고 처리 중 오류가 발생했습니다.");
+      }
+    };
+
+    const handleAdopt = async (commentId) => {
+      if (!window.confirm("이 댓글을 채택하시겠습니까?")) return;
+      try {
+        await axios.post(`${url}/my/writeComment-adopt`, {
+          writeCommentId: commentId,
+        }, {
+          headers: { Authorization: `Bearer ${token.access_token}` },
+        });
+        fetchWriteDetail(id); // 채택 후 다시 불러오기
+      } catch (err) {
+        console.error("채택 실패", err);
+        alert("채택 처리 중 오류가 발생했습니다.");
+      }
+    };
 
   // ✅ 디버깅용
   if (!post && !error) return <div>Loading...</div>;

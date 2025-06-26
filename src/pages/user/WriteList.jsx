@@ -93,8 +93,27 @@ const WriteList = () => {
   };
 
   useEffect(() => {
-    fetchWrites(true);
-  }, [searchParams]);
+      // searchParams 바뀌면 page를 초기화 (1로)
+    //   const p = parseInt(searchParams.get("page")) || 1;
+    //   setPage(p);
+    // }, [searchParams]);
+      const urlParams = new URLSearchParams(searchParams);
+      const currentPage = urlParams.get('page');
+
+      if (currentPage !== '1') {
+        urlParams.set('page', '1');
+        setSearchParams(urlParams);  // 검색조건은 그대로, page만 1로 변경
+        setPage(1);
+      } else {
+        fetchWrites(true); // page=1인 경우만 초기 데이터 로드
+      }
+    }, []);
+
+
+      // page 상태 바뀌면 fetch 실행
+    useEffect(() => {
+      fetchWrites(page === 1); // 초기화 필요시 1로 변경
+    }, [page]);
 
   return (
     <div className="w-full min-h-screen bg-[#F9F9F7] py-8">
