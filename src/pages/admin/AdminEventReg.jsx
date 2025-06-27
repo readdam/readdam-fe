@@ -1,298 +1,143 @@
-import React, { useState } from 'react'
-import {
-  HomeIcon,
-  PlusIcon,
-} from 'lucide-react'
+// src/pages/admin/AdminEventReg.jsx
+import React, { useState, useEffect } from 'react'
+import { HomeIcon } from 'lucide-react'
+import EventTopicRegistration from '../../components/admin/EventTopicRegistration'
+import EventStatusList         from '../../components/admin/EventStatusList'
+import { useAxios }            from '../../hooks/useAxios'
+
 const AdminEventReg = () => {
-  const [activePage, setActivePage] = useState('이벤트 주제 등록')
-  const [isEventMenuOpen, setIsEventMenuOpen] = useState(true)
- 
-  // 이벤트 등록 폼 상태 업데이트
+  const axios = useAxios()
+
+  // 폼 상태
   const [eventForm, setEventForm] = useState({
     month: '',
     startDate: '',
     endDate: '',
     title: '',
   })
-  // 페이지네이션 상태
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
 
-  // 더미 이벤트 데이터 업데이트
-  const events = [
-    {
-      id: 1,
-      month: '2025-01',
-      title: '신년 독서 챌린지',
-      startDate: '2025-01-01',
-      endDate: '2025-01-31',
-      topParticipants: [
-        {
-          name: '김독서',
-          likes: 245,
-        },
-        {
-          name: '이책벌레',
-          likes: 189,
-        },
-        {
-          name: '박글쓴이',
-          likes: 156,
-        },
-      ],
-      pointsDistributed: true,
-    },
-    {
-      id: 2,
-      month: '2024-12',
-      title: '겨울 독서 마라톤',
-      startDate: '2024-12-01',
-      endDate: '2024-12-31',
-      topParticipants: [
-        {
-          name: '최독자',
-          likes: 198,
-        },
-        {
-          name: '정책임',
-          likes: 167,
-        },
-        {
-          name: '강열독',
-          likes: 145,
-        },
-      ],
-      pointsDistributed: false,
-    },
-    // ... 더미 데이터 추가
-  ]
- 
+  // 백에서 받아온 이벤트 목록
+  const [upcoming, setUpcoming]   = useState([])
+  const [ongoing, setOngoing]     = useState([])
+  const [completed, setCompleted] = useState([])
 
-  const handleEventSubmit = (e) => {
+  // 로딩 상태(optional)
+  const [loading, setLoading] = useState(false)
+
+  // 백엔드에서 이벤트 목록을 가져오는 함수
+  const fetchEvents = async () => {
+    setLoading(true)
+    try {
+      const [resUp, resOn, resCo] = await Promise.all([
+        axios.get('/admin/events/upcoming'),
+        axios.get('/admin/events/ongoing'),
+        axios.get('/admin/events/completed'),
+      ])
+      setUpcoming(resUp.data)
+      setOngoing(resOn.data)
+      setCompleted(resCo.data)
+    } catch (err) {
+      console.error('이벤트 목록 조회 실패', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  // month 선택 시 자동 start/end 세팅
+  const handleChange = e => {
+    const { name, value } = e.target
+    if (name === 'month') {
+      const first = `${value}-01`
+      const [y, m]   = value.split('-').map(v => parseInt(v, 10))
+      const lastDay  = new Date(y, m, 0).getDate().toString().padStart(2, '0')
+      const last    = `${value}-${lastDay}`
+      setEventForm(prev => ({ ...prev, month: value, startDate: first, endDate: last }))
+    } else {
+      setEventForm(prev => ({ ...prev, [name]: value }))
+    }
+  }
+
+  // 새 이벤트 등록
+  const handleSubmit = async e => {
     e.preventDefault()
-    console.log('이벤트 등록:', eventForm)
-    setEventForm({
-      month: '',
-      startDate: '',
-      endDate: '',
-      title: '',
-    })
+    try {
+      await axios.post('/admin/events', {
+        title:      eventForm.title,
+        startTime:  eventForm.startDate + 'T00:00:00',
+        endTime:    eventForm.endDate   + 'T23:59:59',
+      })
+      setEventForm({ month: '', startDate: '', endDate: '', title: '' })
+      fetchEvents()
+    } catch (err) {
+      console.error('이벤트 등록 실패', err)
+    }
   }
-  const handlePointsDistribution = (eventId) => {
-    // 포인트 지급 로직 구현
-    console.log('포인트 지급:', eventId)
+
+  // 완료된 이벤트에 포인트 지급
+  const handlePointsDistribution = async id => {
+    try {
+      await axios.post(`/admin/events/${id}/distribute-points`)
+      fetchEvents()
+    } catch (err) {
+      console.error('포인트 지급 실패', err)
+    }
   }
-  
-  const renderEventTopicPage = () => (
-    <div className="space-y-8">
-      {/* 이벤트 주제 등록 영역 */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <h3 className="text-lg font-bold mb-6">이벤트 주제 등록</h3>
-        <form onSubmit={handleEventSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                월 선택
-              </label>
-              <input
-                type="month"
-                value={eventForm.month}
-                onChange={(e) =>
-                  setEventForm({
-                    ...eventForm,
-                    month: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-                required
+
+  // 예정/완료 이벤트 삭제
+  const handleDelete = async id => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return
+    try {
+      await axios.delete(`/admin/events/${id}`)
+      fetchEvents()
+    } catch (err) {
+      console.error('이벤트 삭제 실패', err)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 py-8">
+      <div className="max-w-4xl mx-auto px-4 space-y-12">
+        {/* breadcrumb */}
+        <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <HomeIcon className="w-4 h-4" />
+          <span>이벤트 관리</span>
+        </div>
+
+        {/* 이벤트 주제 등록 */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            이벤트 주제 등록
+          </h2>
+          <EventTopicRegistration
+            eventForm={eventForm}
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+          />
+        </section>
+
+        {/* 이벤트 현황 */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            이벤트 현황
+          </h2>
+          {loading
+            ? <p className="text-center text-gray-500">로딩 중...</p>
+            : (
+              <EventStatusList
+                events={[...upcoming, ...ongoing, ...completed]}
+                onPointsDistribution={handlePointsDistribution}
+                onDelete={handleDelete}
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  시작일
-                </label>
-                <input
-                  type="date"
-                  value={eventForm.startDate}
-                  onChange={(e) =>
-                    setEventForm({
-                      ...eventForm,
-                      startDate: e.target.value,
-                    })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  종료일
-                </label>
-                <input
-                  type="date"
-                  value={eventForm.endDate}
-                  onChange={(e) =>
-                    setEventForm({
-                      ...eventForm,
-                      endDate: e.target.value,
-                    })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              주제 제목
-            </label>
-            <input
-              type="text"
-              value={eventForm.title}
-              onChange={(e) =>
-                setEventForm({
-                  ...eventForm,
-                  title: e.target.value,
-                })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-              placeholder="이벤트 주제를 입력하세요"
-              required
-            />
-          </div>
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center"
-            >
-              <PlusIcon className="w-4 h-4 mr-2" />
-              등록
-            </button>
-          </div>
-        </form>
-      </div>
-      {/* 진행된 이벤트 현황 */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-bold">진행된 이벤트 현황</h3>
-          <span className="text-sm text-gray-600">총 {events.length}건</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-[#F3F7EC]">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  월
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  주제 제목
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  진행 기간
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Top 3 참여자
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  포인트 지급
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {events.map((event) => (
-                <tr key={event.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {event.month}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {event.title}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {event.startDate} ~ {event.endDate}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    <div className="space-y-1">
-                      {event.topParticipants.map((participant, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-2"
-                        >
-                          <span className="text-xs px-2 py-0.5 bg-[#F3F7EC] text-[#006989] rounded-full">
-                            {index + 1}위
-                          </span>
-                          <span>
-                            {participant.name} ({participant.likes}좋아요)
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {event.pointsDistributed ? (
-                      <span className="px-3 py-1.5 text-sm bg-[#E88D67] text-white rounded-lg inline-block opacity-50 cursor-not-allowed">
-                        지급 완료
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handlePointsDistribution(event.id)}
-                        className="px-3 py-1.5 text-sm bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
-                      >
-                        포인트 지급
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* 페이지네이션 */}
-        <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <div className="text-sm text-gray-700">총 {events.length}건</div>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50">
-              ◀
-            </button>
-            <button className="px-4 py-2 bg-[#006989] text-white rounded">
-              1
-            </button>
-            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
-              2
-            </button>
-            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
-              3
-            </button>
-            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
-              ▶
-            </button>
-          </div>
-        </div>
+            )
+          }
+        </section>
       </div>
     </div>
   )
-  
-  return (
-    <div className="min-h-screen bg-gray-100">
-      
-        {/* 메인 콘텐츠 */}
-        <main className="flex-1 p-6">
-          {/* breadcrumb */}
-          <div className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
-            <HomeIcon className="w-4 h-4" />
-            <span>이벤트</span>
-            <span>&gt;</span>
-            <span>{activePage}</span>
-          </div>
-          {/* 페이지 제목 */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">{activePage}</h2>
-          </div>
-          {/* 페이지별 콘텐츠 */}
-          {activePage === '이벤트 주제 등록' && renderEventTopicPage()}
-        </main>
-      </div>
-  );
-};
-export default AdminEventReg;
+}
+
+export default AdminEventReg
