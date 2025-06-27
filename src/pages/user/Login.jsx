@@ -83,7 +83,7 @@ const Login = () => {
         storage.setItem('token', JSON.stringify(tokenObj));
         storage.setItem('user', JSON.stringify(userInfo));
 
-        window.location.href = '/';
+        navigate('/');
       } else {
         alert('로그인 응답이 올바르지 않습니다.');
       }

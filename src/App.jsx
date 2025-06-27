@@ -1,9 +1,11 @@
 // 🔹 외부 라이브러리
-import { useEffect } from 'react';
+import { useEffect, useState  } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './index.css';
 import { getFcmToken } from './fcmToken';
 import { messaging, onMessage } from './firebase';
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from './atoms';
 
 // 🔹 스크롤탑 설정
 import ScrollToTop from '@components/ScrollToTop';
@@ -101,7 +103,23 @@ function App() {
     };
   }, []);
 
+  const [, setToken] = useAtom(tokenAtom);
+  const [, setUser ] = useAtom(userAtom);
+  const [ready, setReady] = useState(false);
 
+  useEffect(() => {
+    const savedToken = sessionStorage.getItem('token');
+    const savedUser  = sessionStorage.getItem('user');
+    if (savedToken) {
+      setToken(JSON.parse(savedToken));
+    }
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+    setReady(true);
+  }, [setToken, setUser]);
+
+  if (!ready) return null;
 
   return (
     <>
