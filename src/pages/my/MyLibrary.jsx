@@ -1,11 +1,7 @@
 // src/components/MyLibrary.jsx
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { url } from '../../config/config'
-import { useAtomValue } from 'jotai'
-import { tokenAtom } from '../../atoms'
-
+import { useAxios } from '../../hooks/useAxios'       // 변경
 import { BookshelfHeader } from '../../components/book/BookshelfHeader'
 import { BookSection } from '../../components/book/BookSection'
 import { PersonalShelf } from '../../components/book/PersonalShelf'
@@ -16,13 +12,7 @@ import MyLibraryEdit from './MyLibraryEdit'
 
 export function MyLibrary() {
   const navigate = useNavigate()
-  const token = useAtomValue(tokenAtom)
-
-  const accessToken = token?.access_token
-    ? token.access_token.startsWith('Bearer ')
-      ? token.access_token
-      : `Bearer ${token.access_token}`
-    : null
+  const axios = useAxios()                           
 
   const [libraries, setLibraries] = useState([])
   const [showModal, setShowModal] = useState(null)
@@ -30,19 +20,17 @@ export function MyLibrary() {
   const [modalBooks, setModalBooks] = useState([])
 
   const fetchLibraries = useCallback(() => {
-    if (!accessToken) return
     axios
-      .get(`${url}/my/myLibrary`, {
-        headers: { Authorization: accessToken },
-        withCredentials: true,
-      })
+      .get('/my/myLibrary', { withCredentials: true })  // 상대경로만 사용
       .then(res => setLibraries(Array.isArray(res.data) ? res.data : []))
       .catch(err => {
         console.error('서재 목록 불러오기 실패', err)
-        if (err.response?.status === 401) navigate('/login', { replace: true })
-        else setLibraries([])
+        if (err.response?.status === 401)
+          navigate('/login', { replace: true })
+        else
+          setLibraries([])
       })
-  }, [accessToken, navigate])
+  }, [axios, navigate])
 
   useEffect(() => {
     fetchLibraries()
@@ -54,6 +42,7 @@ export function MyLibrary() {
     cover: book.thumbnail ?? '/no-image.png',
     title: book.title,
     author: (book.authors || []).join(', '),
+    publisher: book.publisher ?? '출판사 정보 없음'
   })
 
   const inLifeApi = libraries.find(l => l.name === '인생 책') || { name: '인생 책', books: [] }
@@ -85,10 +74,8 @@ export function MyLibrary() {
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-10">
-      {/* 헤더 */}
       <BookshelfHeader />
 
-      {/* 인생 책 섹션 */}
       <BookSection
         title="인생 책"
         books={inLife}
@@ -97,7 +84,6 @@ export function MyLibrary() {
         onBookClick={handleBookClick}
       />
 
-      {/* 읽은 책 섹션 */}
       <BookSection
         title="읽은 책"
         books={inRead}
@@ -109,14 +95,12 @@ export function MyLibrary() {
       <PersonalShelf
         shelves={customShelves}
         onAdd={openAddModal}
-        onSelect={shelfName => {
-          const shelf = customShelves.find(s => s.name === shelfName)
-          openShowModal(shelfName, shelf?.books || [])
+        onSelect={name => {
+          const shelf = customShelves.find(s => s.name === name)
+          openShowModal(name, shelf?.books || [])
         }}
       />
 
-
-      {/* 모달 */}
       {showModal === 'show' && (
         <MyLibraryShow
           category={modalCategory}
@@ -141,7 +125,6 @@ export function MyLibrary() {
       )}
     </div>
   )
-
 }
 
 export default MyLibrary
