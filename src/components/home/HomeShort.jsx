@@ -6,6 +6,7 @@ import {
   PenIcon,
 } from 'lucide-react';
 import singoIcon from '@assets/singo.png';
+import { Link } from 'react-router-dom';
 
 const HomeShort = () => {
 
@@ -37,9 +38,12 @@ const HomeShort = () => {
           <h2 className="text-2xl font-bold mb-2">
             <span role="img" aria-label="flag">🧡</span> 오늘의 한 문장으로 마음을 나눠요!
           </h2>
-          <p className="text-sm text-gray-500 underline cursor-pointer hover:text-[#006989]">
+          <Link
+            to="/writeShortList"
+            className="text-sm text-gray-500 underline cursor-pointer hover:text-[#006989]"
+          >
             읽담한줄 보러가기
-          </p>
+          </Link>
         </div>
 
         {/* 카드 리스트 */}

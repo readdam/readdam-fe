@@ -257,7 +257,7 @@ const ClassCreate = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#006989] focus:border-transparent"
                   value={form.title}
                   onChange={(e) =>
                     setForm({
@@ -274,7 +274,7 @@ const ClassCreate = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#006989] focus:border-transparent"
                   value={form.shortDescription}
                   onChange={(e) =>
                     setForm({
@@ -310,7 +310,7 @@ const ClassCreate = () => {
                       onClick={() => handleTagToggle(tag)}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                         form.tags.includes(tag)
-                          ? "bg-primary text-white"
+                          ? "bg-[#006989] text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
@@ -392,7 +392,7 @@ const ClassCreate = () => {
                     onClick={() => handleSessionCountChange(3)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       form.sessionCount === 3
-                        ? "bg-primary text-white"
+                        ? "bg-[#006989] text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -403,7 +403,7 @@ const ClassCreate = () => {
                     onClick={() => handleSessionCountChange(4)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       form.sessionCount === 4
-                        ? "bg-primary text-white"
+                        ? "bg-[#006989] text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -427,7 +427,7 @@ const ClassCreate = () => {
                   }
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     form.venue === "읽담"
-                      ? "bg-primary text-white"
+                      ? "bg-[#006989] text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -443,7 +443,7 @@ const ClassCreate = () => {
                   }
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     form.venue === "외부"
-                      ? "bg-primary text-white"
+                      ? "bg-[#006989] text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -486,7 +486,7 @@ const ClassCreate = () => {
                   <button
                     onClick={()=> setIsModalOpen(true)}
                     disabled={form.venue === "읽담"}
-                    className={`px-4 py-2 bg-primary text-white rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className={`px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <SearchIcon className="w-5 h-5" />
                   </button>
@@ -551,7 +551,7 @@ const ClassCreate = () => {
                         {index + 1}회차 진행 상세 내용
                       </h3>
                       <div className="flex gap-4 mb-4">
-                        <label className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                        <label className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#006989] transition-colors">
                           {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
                           {!roundImgPreviews[roundField] && (
                             <>
@@ -607,7 +607,7 @@ const ClassCreate = () => {
                       </div>
                       <button
                         type="button"
-                        className="px-4 py-2 bg-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
+                        className="px-4 py-2 bg-[#E88D67] text-white rounded-lg hover:opacity-90 transition-opacity"
                       >
                         북커버 이미지 검색
                       </button>
@@ -629,7 +629,7 @@ const ClassCreate = () => {
               </label>
               <label
                 htmlFor="mainImgUpload"
-                className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors"
+                className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#006989] transition-colors"
               >
                 {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
                 {!mainImgFPreview && (
@@ -689,7 +689,7 @@ const ClassCreate = () => {
               <div className="flex gap-4">
                 <label
                   htmlFor="leaderImgUpload"
-                  className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors"
+                  className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#006989] transition-colors"
                 >
                   {/* 이미지가 없을 때만 아이콘 + 문구 보여줌 */}
                   {!leaderImgFPreview && (
@@ -749,7 +749,7 @@ const ClassCreate = () => {
             </button>
             <button
               type="submit"
-              className="px-8 py-3 bg-primary text-white rounded-lg hover:bg-accent transition-colors"
+              className="px-8 py-3 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors"
             >
               등록
             </button>
@@ -763,7 +763,7 @@ const ClassCreate = () => {
             <p className="text-lg mb-4">작성하신 글이 임시저장 됐습니다.</p>
             <button
               onClick={() => setShowTempSaveModal(false)}
-              className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-accent transition-colors"
+              className="w-full px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors"
             >
               확인
             </button>

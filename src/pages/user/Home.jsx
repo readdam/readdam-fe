@@ -7,7 +7,7 @@ import About from '@components/home/About';
 
 const Home = () => {
   return (
-    <div className="space-y-16">
+    <div>
       <Banner />
       <HomeClass />
       {/* <HomePlace /> */}

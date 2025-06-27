@@ -129,7 +129,7 @@ const BookPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <main className="flex-grow container mx-auto px-4 py-8">
         {/* 상단 배너 */}
-        <div className="bg-[#006989] rounded-lg p-8 mb-8 text-white">
+        <div className="rounded-lg py-8 mb-8 ">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">읽담 베스트셀러</h1>
@@ -148,15 +148,23 @@ const BookPage = () => {
                   );
                 }}
               >
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="도서, 작가, 출판사 검색하세요"
-                    className="w-full md:w-80 px-4 py-2 pl-10 bg-white/20 border border-white border-opacity-30 rounded-lg focus:outline-none text-white placeholder-white text-opacity-70"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white" />
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="도서, 작가, 출판사 검색하세요"
+                      className="w-full md:w-80 px-4 py-2 pl-10 bg-white/20 border border-[#E88D67] border-opacity-30 rounded focus:outline-none text-opacity-70"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" />
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-[#E88D67] hover:bg-[#d97850] text-white font-semibold px-4 py-2 rounded transition duration-200 text-nowrap cursor-pointer"
+                  >
+                    검색
+                  </button>
                 </div>
               </form>
             </div>
