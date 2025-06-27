@@ -43,6 +43,7 @@ const WriteList = () => {
   const sortMap = {
     recent: '최신 순',
     views: '조회 순',
+    likes: '좋아요 순',
   };
 
   const getReviewStatus = (endDate) => {
@@ -51,24 +52,32 @@ const WriteList = () => {
     return new Date(endDate) > now ? '첨삭 가능' : '첨삭 종료';
   };
 
-  const fetchWrites = async (reset = false) => {
+  // fetchWrites 파라미터 받도록
+  const fetchWrites = async (params) => {
+    console.log("✅ axios 호출 직전 파라미터:", params);
     try {
       const res = await axios.post(`${url}/writeList`, {
-        page: reset ? 1 : page,
-        type: normalize(type),
-        status: normalize(status),
-        sort,
-        keyword: normalize(keyword),
+        page: params.page,
+        type: normalize(params.type),
+        status: normalize(params.status),
+        sort : params.sort,
+        keyword: normalize(params.keyword),
       });
-      const newList = res.data.writeList;
-      setWriteList(reset ? newList : (prev) => [...prev, ...newList]);
-      setHasNext(res.data.pageInfo.hasNext);
+    if (params.page === 1) {
+      setWriteList(res.data.writeList);
+    } else {
+      setWriteList((prev) => [...prev, ...res.data.writeList]);
+    }
+
+    setHasNext(res.data.pageInfo.hasNext);
     } catch (err) {
       console.error('[❌ 목록 로드 실패]', err);
     }
   };
 
+  // handleSearchdptj fetch 실행 안하고 url만 바꾸도록 함
   const handleSearch = () => {
+    
     setSearchParams({
       type,
       status,
@@ -76,15 +85,27 @@ const WriteList = () => {
       keyword: searchInput,
       page: 1,
     });
-    setKeyword(searchInput);
-    setPage(1);
     setIsSearchActive(!!searchInput);
   };
 
   const handleResetSearch = () => {
-    setSearchParams({});
-    setType('');
-    setStatus('');
+    console.log("✅ handleSearch 호출 params:", {
+      type,
+      status,
+      sort,
+      keyword: searchInput,
+      page: 1,
+    });
+
+    setSearchParams({
+      type : 'all',
+      status : 'all',
+      sort : 'recent',
+      keyword: '',
+      page: 1,
+    });
+    setType('all');
+    setStatus('all');
     setSort('recent');
     setKeyword('');
     setSearchInput('');
@@ -92,28 +113,40 @@ const WriteList = () => {
     setIsSearchActive(false);
   };
 
+  // URLSearchParams -> state 동기화 + fetchWrites 
   useEffect(() => {
       // searchParams 바뀌면 page를 초기화 (1로)
     //   const p = parseInt(searchParams.get("page")) || 1;
     //   setPage(p);
     // }, [searchParams]);
       const urlParams = new URLSearchParams(searchParams);
-      const currentPage = urlParams.get('page');
+      const typeVal = urlParams.get('type') || 'all';
+      const statusVal = urlParams.get('status') || 'all';
+      const sortVal = urlParams.get('sort') || 'recent';
+      const keywordVal = urlParams.get('keyword') || '';
+      const pageVal = parseInt(urlParams.get('page')) || 1;
 
-      if (currentPage !== '1') {
-        urlParams.set('page', '1');
-        setSearchParams(urlParams);  // 검색조건은 그대로, page만 1로 변경
-        setPage(1);
-      } else {
-        fetchWrites(true); // page=1인 경우만 초기 데이터 로드
-      }
-    }, []);
+      setType(typeVal);
+      setStatus(statusVal);
+      setSort(sortVal);
+      setKeyword(keywordVal);
+      setSearchInput(keywordVal);
+      setPage(pageVal);
+
+      fetchWrites({
+        type: typeVal,
+        status: statusVal,
+        sort: sortVal,
+        keyword: keywordVal,
+        page: pageVal,
+      });
+    }, [searchParams]);
 
 
       // page 상태 바뀌면 fetch 실행
-    useEffect(() => {
-      fetchWrites(page === 1); // 초기화 필요시 1로 변경
-    }, [page]);
+    // useEffect(() => {
+    //   fetchWrites(page === 1); // 초기화 필요시 1로 변경
+    // }, [page]);
 
   return (
     <div className="w-full min-h-screen bg-[#F9F9F7] py-8">
@@ -148,13 +181,13 @@ const WriteList = () => {
         {/* 필터/검색 */}
         <div className="flex flex-wrap gap-4 items-center mb-6">
           <select value={type} onChange={(e) => setType(e.target.value)} className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#E88D67] focus:border-[#E88D67]">
-            <option value="">전체 카테고리</option>
+            <option value="all">전체 카테고리</option>
             {Object.entries(typeMap).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
             ))}
           </select>
           <select value={status} onChange={(e) => setStatus(e.target.value)} className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#E88D67] focus:border-[#E88D67]">
-            <option value="">전체 상태</option>
+            <option value="all">전체 상태</option>
             {Object.entries(statusMap).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
             ))}
