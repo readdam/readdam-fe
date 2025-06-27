@@ -5,6 +5,8 @@ import './index.css';
 import { getFcmToken } from './fcmToken';
 import { messaging, onMessage } from './firebase';
 
+// 🔹 스크롤탑 설정
+import ScrollToTop from '@components/ScrollToTop';
 
 // 🔹 라우트 설정
 import AdminRoutes from '@routes/AdminRoutes';
@@ -103,6 +105,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       <Routes>
         <Route path="/token" element={<Token />} />
         <Route path="/success" element={<Success />} />
