@@ -25,8 +25,15 @@ import WriteCard from '@components/write/WriteCard';
    return (
     <section className="w-full py-16 bg-[#F3F7EC]">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-2 text-center text-gray-800">최신 글 모아보기</h2>
-        <p className="text-center text-gray-600 mb-8">글을 공유하고 첨삭 받을 수 있어요.</p>
+        <h2 className="text-2xl font-bold mb-2 text-center text-gray-800">
+          <span role="img" aria-label="memo">✍️</span> 함께 쓰고, 첨삭으로 더 나아져요!
+        </h2>
+        <Link
+          to="/writeList"
+          className="text-sm text-center block text-gray-500 underline hover:text-[#006989] mb-8"
+        >
+          전체 글 보러가기
+        </Link>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {posts.map((post) => (

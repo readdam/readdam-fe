@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom';
 import { MapPinIcon, CalendarIcon, UsersIcon } from 'lucide-react'
 const HomeClass = () => {
   const groups = [
@@ -42,11 +43,20 @@ const HomeClass = () => {
   return (
     <section className="w-full py-16 bg-white">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800">
-            최근 등록된 독서모임
+        {/* ✅ 상단 타이틀 + 링크 */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <span role="img" aria-label="books">📚</span> 나와 취향이 맞는 독서모임을 찾아보세요!
           </h2>
+          <Link
+            to="/classList"
+            className="text-sm text-gray-500 underline hover:text-[#006989]"
+          >
+            전체 모임 보러가기
+          </Link>
         </div>
+
+        {/* ✅ 카드 그리드 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {groups.map((group) => (
             <div
@@ -85,6 +95,7 @@ const HomeClass = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
+
 export default HomeClass
