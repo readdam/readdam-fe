@@ -30,8 +30,8 @@ export default function DetailInfoSection({
           <label className="block text-sm font-medium mb-2">공간 소개</label>
           <textarea
             rows={4}
-            value={form.description}
-            onChange={(e) => onChange('description', e.target.value)}
+            value={form.introduce}
+            onChange={(e) => onChange('introduce', e.target.value)}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
             placeholder="공간에 대해 소개해주세요"
           />
