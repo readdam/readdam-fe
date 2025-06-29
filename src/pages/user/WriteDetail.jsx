@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef  } from 'react';
+import { useAxios } from '../../hooks/useAxios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookIcon, ShareIcon, PencilIcon, MessageSquareIcon, CheckCircleIcon, UserIcon, HeartIcon } from 'lucide-react';
 import singoIcon from '@assets/singo.png';
@@ -14,6 +14,7 @@ import ReportModal from '@components/ReportModal';
 import ReportConfirmModal from '@components/ReportConfirmModal';
 
 const WriteDetail = () => {
+  const axios = useAxios();
   const [post, setPost] = useState(null);
   const [error, setError] = useState(null); // ✅ 디버깅용 에러 상태 추가
   const [comments, setComments] = useState([]); // 댓글 목록
@@ -32,18 +33,14 @@ const WriteDetail = () => {
   const [user] = useAtom(userAtom); // ← comment 작성자 확인용도
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const called = useRef(false); // StrictMode 때문에 useEffect 두 번 실행되지 않도록 방지
+  const [reportTargetId, setReportTargetId] = useState(null);
 
   // 글 상세 정보를 가져오는 함수
     const fetchWriteDetail = async (id) => {
       try {
-        const headers = token?.access_token
-          ? { Authorization: `Bearer ${token.access_token}` }
-          : {};
 
-        const response = await axios.get(`${url}/writeDetail/${id}`, {
-          headers,
-        });
+        const response = await axios.get(`${url}/writeDetail/${id}`);
 
         console.log("✅ liked from server:", response.data.liked);
 
@@ -73,9 +70,10 @@ const WriteDetail = () => {
 
       // 페이지가 처음 렌더링될 때 데이터 가져오기
       useEffect(() => {
-        if (id) {
+       if (id && !called.current) {
           fetchWriteDetail(id);
           increaseViewCount(id); // 진입 시마다 +1
+          called.current = true;
         }
       }, [id, token]);
 
@@ -110,10 +108,6 @@ const WriteDetail = () => {
           content: commentContent,
           isSecret: isSecret,
           writeId: post.writeId,
-        }, {
-          headers: {
-            Authorization: `Bearer ${token?.access_token}`, // 로그인 상태로 보호된 경우
-          },
         });
 
         // 등록 후 상태 초기화
@@ -138,10 +132,6 @@ const WriteDetail = () => {
       try {
         const response = await axios.post(`${url}/my/write-like`, {
           writeId: post.writeId,
-        }, {
-          headers: {
-            Authorization: `Bearer ${token.access_token}`,
-          },
         });
 
         const liked = response.data; // ← boolean 응답 그대로 사용
@@ -163,6 +153,8 @@ const WriteDetail = () => {
   // 신고 처리
   const handleReport = (type, targetId) => {
     if (type !== 'post' && type !== 'comment') return;
+    setReportType(type);
+    setReportTargetId(targetId);
     setShowReportModal(true);
   };
 
@@ -173,8 +165,6 @@ const WriteDetail = () => {
           type: reportType, // 'post' or 'comment'
           targetId: reportType === 'post' ? post.writeId : reportTargetId,
           content: reportContent,
-        }, {
-          headers: { Authorization: `Bearer ${token.access_token}` },
         });
 
         setShowReportModal(false);
@@ -192,8 +182,6 @@ const WriteDetail = () => {
       try {
         await axios.post(`${url}/my/writeComment-adopt`, {
           writeCommentId: commentId,
-        }, {
-          headers: { Authorization: `Bearer ${token.access_token}` },
         });
         fetchWriteDetail(id); // 채택 후 다시 불러오기
       } catch (err) {
