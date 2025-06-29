@@ -2,40 +2,79 @@ import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from "../atoms";
 import { SearchIcon, BookOpenIcon, MapPinIcon } from 'lucide-react';
 import { Link, useNavigate  } from 'react-router-dom';
-import React, { useEffect } from 'react';
+import { useAxios } from "../hooks/useAxios";
+import { useEffect, useState } from 'react';
+
 const Header = () => {
+  const axios = useAxios();
   const [token, setToken] = useAtom(tokenAtom);
   const [user, setUser] = useAtom(userAtom);
   const navigate = useNavigate();
   const isAdmin = user?.isAdmin === true;
+  const [address, setAddress] = useState('');
 
-  // ✅ 저장된 토큰/유저 복원
-  useEffect(() => {
-    const savedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-
-    if (savedToken && savedUser) {
-      setToken(JSON.parse(savedToken)); // 중첩방지
-      setUser(JSON.parse(savedUser));
-      //setToken({ access_token: savedToken, refresh_token: '' });
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error('❌ 유저 정보 파싱 실패:', e);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-      }
-    }
-  }, []);
   const logout = () => {
-    sessionStorage.clear();  // 모든 세션 제거
-    localStorage.removeItem("token"); //자동로그인 정보 제거
-    localStorage.removeItem("user"); //자동로그인 정보 제거
-    setToken(null);
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    setToken({ access_token: '', refresh_token: '' });
     setUser(null);
+    setAddress('');
     navigate('/');
 
   };  
+  const handleUpdateLocation = () => {
+    if (!token || !user) {
+      alert("로그인이 필요한 서비스입니다.");
+      navigate("/login");
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      alert("이 브라우저는 위치 정보를 지원하지 않습니다.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const latitude = pos.coords.latitude;
+        const longitude = pos.coords.longitude;
+
+        axios
+          .put("/user/location", {
+            latitude,
+            longitude,
+          })
+          .then((res) => {
+            setUser(res.data);
+            alert("위치가 갱신되었어요! 😊");
+          })
+          .catch((err) => {
+            const msg =
+              err.response?.data ||
+              "위치 저장에 실패했어요 😥";
+            alert(msg);
+            console.error(err);
+          });
+      },
+      (err) => {
+        alert("위치 정보를 가져올 수 없어요 😥");
+        console.error(err);
+      }
+    );
+  };
+
+  useEffect(() => {
+    if (user?.lat && user?.lng) {
+      axios
+        .get('/user/location-address')
+        .then((res) => {
+          setAddress(res.data.address);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    }
+  }, [user?.lat, user?.lng]);
   
   return (
     <header className="w-full py-4 bg-white shadow-sm">
@@ -97,9 +136,16 @@ const Header = () => {
 
           {/* 로그인 상태에 따른 버튼 */}
           <div className="flex items-center space-x-2">
-            <button className="px-3 py-1.5 text-sm text-[#006989] hover:text-[#005C78] flex items-center">
+            <button 
+            onClick={handleUpdateLocation}
+            className="px-3 py-1.5 text-sm text-[#006989] hover:text-[#005C78] flex items-center">
               <MapPinIcon className="w-4 h-4 mr-1" />내 위치
             </button>
+            {address && (
+              <span className="text-sm text-gray-500">
+                : {address}
+              </span>
+            )}
 
             {token && user && (user.nickname || user.username) ?  (
               <>

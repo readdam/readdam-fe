@@ -3,13 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FaComment, FaLeaf } from 'react-icons/fa';
 import { useSetAtom } from 'jotai';
 import { userAtom, tokenAtom } from '../../atoms';
-import axios from 'axios';
 import { url } from '../../config/config';
 import { jwtDecode } from 'jwt-decode';
 import { getFcmToken } from '../../fcmToken';
-
+import { useAxios } from '../../hooks/useAxios';
 
 const Login = () => {
+  const axios = useAxios(); 
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [saveId, setSaveId] = useState(false);  // ✅ 로그인 상태 유지 체크박스
@@ -17,6 +17,19 @@ const Login = () => {
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // ✅ 세션에서 아이디/비번 복원
+  useEffect(() => {
+    const savedId = sessionStorage.getItem('savedId') || '';
+    const savedPw = sessionStorage.getItem('savedPw') || '';
+    const savedChecked = sessionStorage.getItem('saveId') === 'true';
+
+    if (savedChecked) {
+      setUserId(savedId);
+      setPassword(savedPw);
+      setSaveId(true);
+    }
+  }, []);
 
   // ✅ 1. OAuth 로그인 후 access_token 쿠키에서 꺼내 처리
   useEffect(() => {
@@ -37,7 +50,7 @@ const Login = () => {
         navigate('/login');
       }
     }
-  }, [location.pathname]);
+  }, [location.pathname, setToken, setUser, navigate]);
 
   // ✅ 2. 일반 로그인 처리
   const handleSubmit = async (e) => {
@@ -79,11 +92,17 @@ const Login = () => {
         setToken(tokenObj);
         setUser(userInfo);
 
-        const storage = saveId ? localStorage : sessionStorage;
-        storage.setItem('token', JSON.stringify(tokenObj));
-        storage.setItem('user', JSON.stringify(userInfo));
+        if (saveId) {
+          sessionStorage.setItem('savedId', userId);
+          sessionStorage.setItem('savedPw', password);
+          sessionStorage.setItem('saveId', 'true');
+        } else {
+          sessionStorage.removeItem('savedId');
+          sessionStorage.removeItem('savedPw');
+          sessionStorage.setItem('saveId', 'false');
+        }
 
-        window.location.href = '/';
+        navigate('/');
       } else {
         alert('로그인 응답이 올바르지 않습니다.');
       }
@@ -131,7 +150,7 @@ const Login = () => {
               onChange={() => setSaveId(!saveId)}
               className="mr-2 w-4 h-4"
             />
-            <label htmlFor="saveId">로그인 상태 유지</label>
+            <label htmlFor="saveId">아이디/비번 기억하기</label>
           </div>
 
           <button
