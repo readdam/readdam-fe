@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
-import axios from 'axios';
+import { useAxios } from '../../hooks/useAxios';
 import { url } from '../../config/config';
 import {
   BookIcon,
@@ -18,6 +18,7 @@ import {
   UploadIcon,
 } from 'lucide-react'
 const WriteCreate = () => {
+  const axios = useAxios();
   const [formData, setFormData] = useState({
     type: '',
     visibility: 'public',
@@ -62,12 +63,8 @@ const WriteCreate = () => {
     submitData.append("tag5", tagArray[4] || "");
     //이미지
     if (ifile) submitData.append("ifile", ifile); 
-    console.log(token);
-      axios.post(`${url}/my/write`, submitData, {
-        headers: {
-          Authorization: token.access_token,
-        }
-      })
+
+    axios.post(`${url}/my/write`, submitData)
       .then((res) => {
         console.log(res);
 

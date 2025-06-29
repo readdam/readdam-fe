@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { HeartIcon, PenIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import { useAxios } from '../../hooks/useAxios'
 import { useAtom } from 'jotai'
 import { tokenAtom, userAtom } from '../../atoms'
 import { url } from '../../config/config';
@@ -10,6 +10,7 @@ import PostcardModal from '@components/write/PostcardModal'
 import TimeRemainingText from '@components/write/TimeRemainingText';
 
 const WriteShortList = () => {
+  const axios = useAxios();
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
   const [answerText, setAnswerText] = useState('')
@@ -77,11 +78,7 @@ const WriteShortList = () => {
     // 답변 목록 불러오기
     const fetchAnswers = async (pageNum) => {
       try {
-            const res = await axios.get(`${url}/writeShortList?page=${pageNum}&size=10`, {
-              headers: token?.access_token
-                ? { Authorization: `Bearer ${token.access_token}` }
-                : {},
-            });
+            const res = await axios.get(`${url}/writeShortList?page=${pageNum}&size=10`);
 
         const { list: writeShortList, pageInfo, totalCount } = res.data;
 
@@ -116,10 +113,6 @@ const WriteShortList = () => {
       const res = await axios.post(`${url}/my/writeShort`, {
         content: answerText,
         color: selectedColor,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token.access_token}`,
-        },
       })
 
       setAnswers([res.data, ...answers])
@@ -142,11 +135,6 @@ const WriteShortList = () => {
     try {
       const res = await axios.post(`${url}/my/writeShort-like`, 
         { writeshortId: writeShortId  },
-        {
-          headers: {
-            Authorization: `Bearer ${token.access_token}`,
-          },
-        }
       );
 
       const isLiked = res.data;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useAxios } from '../../hooks/useAxios';
 import { SearchIcon,PenIcon } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAtom } from 'jotai';
@@ -8,10 +8,10 @@ import { url } from '../../config/config';
 import WriteCard from '@components/write/WriteCard';
 
 const WriteList = () => {
+  const axios = useAxios();
   const navigate = useNavigate();
   const [token] = useAtom(tokenAtom);
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [writeList, setWriteList] = useState([]);
   const [hasNext, setHasNext] = useState(false);
   const [totalCount, setTotalCount] = useState(0);

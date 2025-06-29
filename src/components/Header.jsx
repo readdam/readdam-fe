@@ -2,36 +2,16 @@ import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from "../atoms";
 import { SearchIcon, BookOpenIcon, MapPinIcon } from 'lucide-react';
 import { Link, useNavigate  } from 'react-router-dom';
-import React, { useEffect } from 'react';
 const Header = () => {
   const [token, setToken] = useAtom(tokenAtom);
   const [user, setUser] = useAtom(userAtom);
   const navigate = useNavigate();
   const isAdmin = user?.isAdmin === true;
 
-  // ✅ 저장된 토큰/유저 복원
-  useEffect(() => {
-    const savedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-
-    if (savedToken && savedUser) {
-      setToken(JSON.parse(savedToken)); // 중첩방지
-      setUser(JSON.parse(savedUser));
-      //setToken({ access_token: savedToken, refresh_token: '' });
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error('❌ 유저 정보 파싱 실패:', e);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-      }
-    }
-  }, []);
   const logout = () => {
-    sessionStorage.clear();  // 모든 세션 제거
-    localStorage.removeItem("token"); //자동로그인 정보 제거
-    localStorage.removeItem("user"); //자동로그인 정보 제거
-    setToken(null);
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    setToken({ access_token: '', refresh_token: '' });
     setUser(null);
     navigate('/');
 
