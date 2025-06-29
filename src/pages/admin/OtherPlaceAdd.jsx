@@ -23,7 +23,7 @@ export default function OtherPlaceAdd() {
     introduce: '',
     fee: '',
     usageGuide: '',
-    facilityGuide: '',
+    facilities: '',
     caution: '',
     keywords: [],
     images: [],
@@ -140,8 +140,6 @@ export default function OtherPlaceAdd() {
       name: form.name,
       phone: form.phone,
       domain: form.domain,
-      fee: parseInt(form.price) || 0,
-      facilities: form.facilityGuide,
       introduce: form.introduce,
       lat: form.lat,
       lng: form.lng,
@@ -151,6 +149,9 @@ export default function OtherPlaceAdd() {
       weekendEtime: toHHMMSS(form.weekendEtime),
       basicAddress: form.basicAddress,
       detailAddress: form.detailAddress, // 필요시 detailAddress도 검증에 포함
+      fee: form.fee,
+      usageGuide: form.usageGuide,
+      facilities: form.facilities,
       caution: form.caution,
     };
 

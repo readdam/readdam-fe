@@ -172,7 +172,12 @@ export default function OtherPlaceList() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
-                    <button className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
+                    <button
+                      className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer"
+                      onClick={() =>
+                        navigate(`/admin/otherPlaceEdit/${place.otherPlaceId}`)
+                      }
+                    >
                       수정
                     </button>
                     <button className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-600 hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">

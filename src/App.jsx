@@ -143,7 +143,10 @@ function App() {
           />
           <Route path="/admin/otherPlaceList" element={<OtherPlaceList />} />
           <Route path="/admin/otherPlaceAdd" element={<OtherPlaceAdd />} />
-          <Route path="/admin/otherPlaceEdit" element={<OtherPlaceEdit />} />
+          <Route
+            path="/admin/otherPlaceEdit/:placeId"
+            element={<OtherPlaceEdit />}
+          />
           <Route path="/admin/pointStats" element={<AdminPointStats />} />
           <Route path="/admin/reportList" element={<AdminReportList />} />
           <Route path="/admin/alertList" element={<AdminAlertList />} />
