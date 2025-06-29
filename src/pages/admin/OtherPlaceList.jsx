@@ -118,7 +118,7 @@ export default function OtherPlaceList() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {places.map((place) => (
+            {places?.map((place) => (
               <tr key={place.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <div className="flex items-start gap-4">
@@ -154,7 +154,7 @@ export default function OtherPlaceList() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2">
-                    {place.tags.map((k, i) => (
+                    {place.tags?.map((k, i) => (
                       <span
                         key={i}
                         className="px-2 py-1 bg-[#F3F7EC] text-[#006989] text-xs rounded-full"
@@ -167,7 +167,7 @@ export default function OtherPlaceList() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1 text-pink-500">
                     <HeartIcon className="w-4 h-4" />
-                    <span>{place.likes}</span>
+                    <span>{place.likeCount}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -182,6 +182,13 @@ export default function OtherPlaceList() {
                 </td>
               </tr>
             ))}
+            {places.length === 0 && (
+              <tr>
+                <td colSpan={7} className="text-center py-4 text-gray-400">
+                  등록된 장소가 없습니다
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
