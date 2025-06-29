@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { HeartIcon, ClockIcon, PenIcon } from 'lucide-react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { HeartIcon, PenIcon } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAtom } from 'jotai'
 import { tokenAtom, userAtom } from '../../atoms'
@@ -21,6 +21,7 @@ const WriteShortList = () => {
   const [page, setPage] = useState(1)
   const [hasWritten, setHasWritten] = useState(null)  // 로그인한 사용자가 글 썼는지
   const [event, setEvent] = useState(null)
+  const [totalCount, setTotalCount] = useState(0);
 
 
   // 색상 매핑
@@ -72,6 +73,7 @@ const WriteShortList = () => {
           console.error('이벤트 데이터 불러오기 실패', err)
         }
       }
+
     // 답변 목록 불러오기
     const fetchAnswers = async (pageNum) => {
       try {
@@ -81,10 +83,11 @@ const WriteShortList = () => {
                 : {},
             });
 
-        const { list: writeShortList, pageInfo } = res.data;
+        const { list: writeShortList, pageInfo, totalCount } = res.data;
 
         setAnswers(prev => pageNum === 1 ? writeShortList : [...prev, ...writeShortList]);
         setPageInfo(pageInfo);
+        setTotalCount(totalCount || 0);
 
         // 로그인 사용자만 hasWritten 계산
           if (user?.username) {
@@ -165,8 +168,8 @@ const WriteShortList = () => {
       }
     };
 
-    useEffect(() => {
-    }, [answers]);
+    // useEffect(() => {
+    // }, [answers]);
 
   return (
     <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
@@ -216,6 +219,13 @@ const WriteShortList = () => {
               </div>
             </div>
           </div>
+
+        {/* 총 글 수 표시 */}
+        {totalCount > 0 && (
+            <div className="text-gray-500 text-sm mt-4 mb-8">
+              총 {totalCount.toLocaleString()}개의 글
+            </div>
+          )} 
 
         {/* Post-it 답변카드들 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

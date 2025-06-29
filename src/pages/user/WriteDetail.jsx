@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef  } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BookIcon, ShareIcon, PencilIcon, MessageSquareIcon, CheckCircleIcon, UserIcon, HeartIcon } from 'lucide-react';
@@ -32,6 +32,7 @@ const WriteDetail = () => {
   const [user] = useAtom(userAtom); // ← comment 작성자 확인용도
   const { id } = useParams();
   const navigate = useNavigate();
+  const called = useRef(false); // StrictMode 때문에 useEffect 두 번 실행되지 않도록 방지
   
 
   // 글 상세 정보를 가져오는 함수
@@ -73,9 +74,10 @@ const WriteDetail = () => {
 
       // 페이지가 처음 렌더링될 때 데이터 가져오기
       useEffect(() => {
-        if (id) {
+       if (id && !called.current) {
           fetchWriteDetail(id);
           increaseViewCount(id); // 진입 시마다 +1
+          called.current = true;
         }
       }, [id, token]);
 

@@ -14,7 +14,7 @@ const WriteList = () => {
 
   const [writeList, setWriteList] = useState([]);
   const [hasNext, setHasNext] = useState(false);
-
+  const [totalCount, setTotalCount] = useState(0);
   const [type, setType] = useState(searchParams.get('type') || '');
   const [status, setStatus] = useState(searchParams.get('status') || '');
   const [sort, setSort] = useState(searchParams.get('sort') || 'recent');
@@ -52,9 +52,40 @@ const WriteList = () => {
     return new Date(endDate) > now ? '첨삭 가능' : '첨삭 종료';
   };
 
-  // fetchWrites 파라미터 받도록
+  // 모든 페이지를 순차 호출하는 fetch
+  const fetchAllPages = async (params, lastPage) => {
+    console.log("✅ 새로고침용 fetchAllPages 호출:", params, lastPage);
+
+    let accumulatedList = [];
+    let finalHasNext = false;
+
+    for (let i = 1; i <= lastPage; i++) {
+      try {
+        const res = await axios.post(`${url}/writeList`, {
+          page: i,
+          type: normalize(params.type),
+          status: normalize(params.status),
+          sort: params.sort,
+          keyword: normalize(params.keyword),
+        });
+
+        accumulatedList = [...accumulatedList, ...res.data.writeList];
+
+        // 마지막 호출 결과에서 hasNext 갱신
+        if (i === lastPage) {
+          finalHasNext = res.data.pageInfo.hasNext;
+        }
+      } catch (err) {
+        console.error(`[❌ page ${i} 목록 로드 실패]`, err);
+      }
+    }
+
+    setWriteList(accumulatedList);
+    setHasNext(finalHasNext);
+  };
+  // 단일 page 호출용
   const fetchWrites = async (params) => {
-    console.log("✅ axios 호출 직전 파라미터:", params);
+    // console.log("✅ axios 호출 직전 파라미터:", params);
     try {
       const res = await axios.post(`${url}/writeList`, {
         page: params.page,
@@ -70,6 +101,7 @@ const WriteList = () => {
     }
 
     setHasNext(res.data.pageInfo.hasNext);
+    setTotalCount(res.data.totalCount || 0);
     } catch (err) {
       console.error('[❌ 목록 로드 실패]', err);
     }
@@ -114,11 +146,8 @@ const WriteList = () => {
   };
 
   // URLSearchParams -> state 동기화 + fetchWrites 
+  // searchParams가 바뀔 때마다 실행
   useEffect(() => {
-      // searchParams 바뀌면 page를 초기화 (1로)
-    //   const p = parseInt(searchParams.get("page")) || 1;
-    //   setPage(p);
-    // }, [searchParams]);
       const urlParams = new URLSearchParams(searchParams);
       const typeVal = urlParams.get('type') || 'all';
       const statusVal = urlParams.get('status') || 'all';
@@ -133,6 +162,15 @@ const WriteList = () => {
       setSearchInput(keywordVal);
       setPage(pageVal);
 
+        if (pageVal > 1) {
+      // 새로고침 시 누적 fetch
+      fetchAllPages({
+        type: typeVal,
+        status: statusVal,
+        sort: sortVal,
+        keyword: keywordVal,
+      }, pageVal);
+    } else {
       fetchWrites({
         type: typeVal,
         status: statusVal,
@@ -140,13 +178,9 @@ const WriteList = () => {
         keyword: keywordVal,
         page: pageVal,
       });
+    }
     }, [searchParams]);
 
-
-      // page 상태 바뀌면 fetch 실행
-    // useEffect(() => {
-    //   fetchWrites(page === 1); // 초기화 필요시 1로 변경
-    // }, [page]);
 
   return (
     <div className="w-full min-h-screen bg-[#F9F9F7] py-8">
@@ -222,6 +256,12 @@ const WriteList = () => {
             <button onClick={handleResetSearch} className="text-gray-400 text-xs underline hover:text-[#006989]">
               검색 초기화
             </button>
+          </div>
+        )}
+
+        {!isSearchActive && totalCount > 0 && (
+          <div className="text-sm text-gray-500 mb-4">
+            총 {totalCount}개의 글
           </div>
         )}
 
