@@ -1,12 +1,19 @@
-import React, { Fragment,useState, useEffect } from 'react';
-import { Heart, ShareIcon, MapPinIcon, CalendarIcon, ClockIcon, UsersIcon} from 'lucide-react';
-import { url } from '../../config/config';
-import { useAtomValue } from 'jotai';
-import { userAtom, tokenAtom } from '../../atoms';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React, { Fragment, useState, useEffect } from "react";
+import {
+  Heart,
+  ShareIcon,
+  MapPinIcon,
+  CalendarIcon,
+  ClockIcon,
+  UsersIcon,
+} from "lucide-react";
+import { url } from "../../config/config";
+import { useAtomValue } from "jotai";
+import { userAtom, tokenAtom } from "../../atoms";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-const GroupHeader = ({group}) => {
+const GroupHeader = ({ group }) => {
   const user = useAtomValue(userAtom);
   const token = useAtomValue(tokenAtom);
 
@@ -16,30 +23,38 @@ const GroupHeader = ({group}) => {
   const navigate = useNavigate();
 
   const tagList = [group.tag1, group.tag2, group.tag3].filter(Boolean);
-  const dateList = [group.round1Date, group.round2Date, group.round3Date, group.round4Date]
+  const dateList = [
+    group.round1Date,
+    group.round2Date,
+    group.round3Date,
+    group.round4Date,
+  ]
     .filter(Boolean)
-    .map(date => date.split('T')[0]);
+    .map((date) => date.split("T")[0]);
 
-  useEffect(()=>{
+  useEffect(() => {
     const fetchLikeStatus = async () => {
-      try{
-        const res = await axios.get(`${url}/classDetail/${group.classId}/like`, {
-          headers: {
-            Authorization: token.access_token,
-          },
-        });
+      try {
+        const res = await axios.get(
+          `${url}/classDetail/${group.classId}/like-status`,
+          {
+            headers: {
+              Authorization: token.access_token,
+            },
+          }
+        );
         setLiked(res.data.liked);
         setLikeCount(res.data.likeCount);
-      }catch(err){
+      } catch (err) {
         console.error("좋아요 상태 조회 실패: ", err);
       }
     };
 
-    if(user.username) fetchLikeStatus();
+    if (user.username) fetchLikeStatus();
   }, [group.classId, user]);
 
   const HandleLikeToggle = async () => {
-    if(!user.username) {
+    if (!user.username) {
       alert("로그인이 필요한 서비스입니다.");
       navigate("/login");
       return;
@@ -47,20 +62,23 @@ const GroupHeader = ({group}) => {
 
     try {
       // 좋아요 토글 API 호출
-      const response = await axios.post(`${url}/classDetail/${group.classId}/like`,
-        {}, {
+      const response = await axios.post(
+        `${url}/classDetail/${group.classId}/like`,
+        {},
+        {
           headers: {
             Authorization: token.access_token,
           },
-        });
+        }
+      );
       // if (response.ok) {
       //   setLiked(response.data.liked);
       //   setLikeCount(prev => liked ? prev - 1 : prev +1);
       // }
       setLiked(response.data.liked);
       setLikeCount(response.data.likeCount);
-    }catch (err){
-      console.err('좋아요 실패:', err);
+    } catch (err) {
+      console.error("좋아요 실패:", err);
       alert("좋아요 처리중 오류가 발생했습니다.");
     }
   };
@@ -68,7 +86,7 @@ const GroupHeader = ({group}) => {
   const handleShare = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
-    alert('링크가 복사되었습니다!');
+    alert("링크가 복사되었습니다!");
   };
 
   const openJoinModal = () => {
@@ -83,7 +101,11 @@ const GroupHeader = ({group}) => {
     <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
       <div className="flex flex-col md:flex-row gap-8">
         <div className="md:w-1/2">
-          <img src={`${url}/image?filename=${group.mainImg}`} alt={group.title} className="w-full h-[400px] object-cover rounded-lg" />
+          <img
+            src={`${url}/image?filename=${group.mainImg}`}
+            alt={group.title}
+            className="w-full h-[400px] object-cover rounded-lg"
+          />
         </div>
         <div className="md:w-1/2">
           <div className="flex justify-between items-start mb-4">
@@ -91,19 +113,21 @@ const GroupHeader = ({group}) => {
           </div>
           <p className="text-gray-600 mb-6">{group.classIntro}</p>
           <div className="flex flex-wrap gap-2 mb-6">
-              {tagList.map((tag,index) => (
-                <span key={index} className="px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm rounded-full">
-                  {tag}
-                </span>
-              ))}
+            {tagList.map((tag, index) => (
+              <span
+                key={index}
+                className="px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm rounded-full"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
           <div className="space-y-4 mb-8">
             <div className="flex items-center text-gray-600">
               <UsersIcon className="w-5 h-5 mr-2" />
               <span>
                 {/* 현재 {group.currentParticipants}명 / */}
-                최소{' '}
-                {group.minPerson}명 ~ 최대 {group.maxPerson}명
+                최소 {group.minPerson}명 ~ 최대 {group.maxPerson}명
               </span>
             </div>
             <div className="flex items-center text-gray-600">
@@ -118,15 +142,19 @@ const GroupHeader = ({group}) => {
               <CalendarIcon className="w-5 h-5 mr-2" />
               <div className="flex gap-2">
                 {dateList.map((date, index) => (
-                <Fragment key={index}>
+                  <Fragment key={index}>
                     <span>{date}</span>
                     {index < dateList.length - 1 && <span>|</span>}
-                  </Fragment>))}
+                  </Fragment>
+                ))}
               </div>
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={openJoinModal} className="flex justify-between px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors">
+            <button
+              onClick={openJoinModal}
+              className="flex justify-between px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
+            >
               참여하기
             </button>
             {/* <Heart 
@@ -135,15 +163,22 @@ const GroupHeader = ({group}) => {
                 }`}
                 onClick={HandleLikeToggle}
               /> */}
-            <button onClick={HandleLikeToggle} disabled={!user.username} className="p-2 hover:bg-gray-100 rounded-full">
+            <button
+              onClick={HandleLikeToggle}
+              disabled={!user.username}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
               {liked ? (
-                <Heart className= "w-6 h-6 text-red-500 fill-red-500" />
+                <Heart className="w-6 h-6 text-red-500 fill-red-500" />
               ) : (
                 <Heart className="w-6 h-6 text-gray-600" />
-              )}  
+              )}
               <span>{likeCount}</span>
             </button>
-            <button onClick={handleShare} className="p-2 hover:bg-gray-100 rounded-full">
+            <button
+              onClick={handleShare}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
               <ShareIcon className="w-6 h-6 text-gray-600" />
             </button>
           </div>
