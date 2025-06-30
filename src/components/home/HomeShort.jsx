@@ -1,33 +1,32 @@
-import React, { useState } from 'react';
-import {
-  HeartIcon,
-  MessageSquareIcon,
-  ClockIcon,
-  PenIcon,
-} from 'lucide-react';
-import singoIcon from '@assets/singo.png';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import PostItCard from '@components/write/PostItCard';
+import { useAxios } from '../../hooks/useAxios'
 
 const HomeShort = () => {
+  const axios = useAxios();
+  const [answers, setAnswers] = useState([]);
 
-  const dummyAnswers = [
-    { id: 1, author: '책벌레123', content: '삶이 그대를 속일지라도 슬퍼하거나 노하지 말라...', likes: 12, color: 'mint' },
-    { id: 2, author: '독서광89', content: '우리는 우리가 꿈꾸는 세상을 만들어 갈 수 있다', likes: 8, color: 'yellow' },
-    { id: 3, author: '문학소녀', content: '지나간 시간은 다시 돌아오지 않는다...', likes: 15, color: 'mint' },
-    { id: 4, author: '책읽는밤', content: '별을 따려면 하늘 높이 올라가야 한다', likes: 10, color: 'pink' },
-  ];
+  useEffect(() => {
+    fetchAnswers();
+  }, []);
 
-  const getPostItColor = (color) => {
-    switch (color) {
-      case 'mint': return 'bg-[#E8F3F1]';
-      case 'yellow': return 'bg-[#FFF8E7]';
-      case 'pink': return 'bg-[#FFE8F3]';
-      default: return 'bg-[#E8F3F1]';
+  const fetchAnswers = async () => {
+    try {
+      const res = await axios.get('/writeShortList?page=1&size=4');
+      const { list: writeShortList } = res.data;
+      setAnswers(writeShortList || []);
+    } catch (err) {
+      console.error('한줄글 목록 불러오기 실패', err);
     }
   };
 
   const handleReport = (id) => {
     alert('신고가 접수되었습니다.');
+  };
+
+  const handleLike = (id) => {
+    alert(`id ${id} 좋아요 클릭됨 (연동 예정)`);
   };
 
   return (
@@ -48,30 +47,17 @@ const HomeShort = () => {
 
         {/* 카드 리스트 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dummyAnswers.map((answer) => (
-            <div
-              key={answer.id}
-              className={`${getPostItColor(answer.color)} aspect-square p-6 rounded-sm shadow-md hover:shadow-lg transition-shadow relative transform hover:-rotate-1 hover:translate-y-[-2px]`}
-              style={{
-                boxShadow: '2px 2px 5px rgba(0,0,0,0.1)',
-                backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
-              }}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <span className="font-medium text-gray-800">{answer.author}</span>
-                <div className="flex items-center gap-1 text-gray-600">
-                  <HeartIcon className="w-4 h-4" />
-                  <span>{answer.likes}</span>
-                </div>
-              </div>
-              <p className="text-gray-700 text-sm line-clamp-5 mb-6">{answer.content}</p>
-              <button
-                onClick={() => handleReport(answer.id)}
-                className="absolute bottom-4 right-4 text-gray-400 hover:text-gray-600"
-              >
-                <img src={singoIcon} alt="신고" className="w-4 h-4" />
-              </button>
-            </div>
+          {answers.map((answer) => (
+            <PostItCard
+              key={answer.writeshortId}
+              color={answer.color}
+              nickname={answer.nickname}
+              content={answer.content}
+              likes={answer.likes}
+              isLiked={answer.isLiked}
+              onLikeClick={() => handleLike(answer.writeshortId)}
+              onReportClick={() => handleReport(answer.writeshortId)}
+            />
           ))}
         </div>
       </div>
