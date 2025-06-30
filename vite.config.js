@@ -17,7 +17,7 @@ export default defineConfig({
       { find: '@pages', replacement: '/src/pages' },
       { find: '@routes', replacement: '/src/routes' },
       { find: '@utils', replacement: '/src/utils' },
-     ],
+      { find: '@config', replacement: '/src/config' },
+    ],
   },
-
 });

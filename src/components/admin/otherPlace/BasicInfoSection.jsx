@@ -89,6 +89,7 @@ export default function BasicInfoSection({ form, onChange }) {
           <div className="flex gap-2">
             <input
               type="text"
+              disabled
               value={form.basicAddress}
               onChange={(e) => onChange('basicAddress', e.target.value)}
               className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
