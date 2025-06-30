@@ -1,13 +1,6 @@
 import React, { useState } from "react";
 import QnAList from "./QnAList";
 import ReviewList from "./ReviewList";
-import {
-  LockIcon,
-  ImageIcon,
-  StarIcon,
-  SendIcon,
-  MessageCircleIcon,
-} from "lucide-react";
 
 const GroupQnAReviews = ({ classId, classDetail }) => {
   const [activeTab, setActiveTab] = useState("qna");
