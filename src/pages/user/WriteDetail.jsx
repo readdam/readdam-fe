@@ -150,6 +150,14 @@ const WriteDetail = () => {
     alert('링크가 복사되었습니다.');
   };
 
+  // 내 글 체크
+  const isMyPost = post?.username === user?.username;
+
+  // 댓글 작성 체크
+  const hasCommentByMe = comments.some(
+  (c) => c.username === user?.username
+  );
+
   // 신고 처리
   const handleReport = (type, targetId) => {
     if (type !== 'post' && type !== 'comment') return;
@@ -312,7 +320,8 @@ const WriteDetail = () => {
           <div className="prose max-w-none text-gray-600 whitespace-pre-line">{post.content}</div>
         </div>
 
-        {/* 댓글 영역 */}
+        {/* 첨삭 제외가 아닐 때만 댓글 영역 표시 */}
+        {getReviewStatus(post.endDate) !== '첨삭 제외' && (
         <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
           <h2 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-6">
             <MessageSquareIcon className="w-5 h-5 text-[#006989]" />
@@ -321,8 +330,11 @@ const WriteDetail = () => {
             </span>
           </h2>
 
-          {/* 댓글 작성 폼 */}
-          {isLoggedIn && (
+            {/* 첨삭 가능할 때만 작성 폼 노출 */}
+            {isLoggedIn && 
+              getReviewStatus(post.endDate) === '첨삭 가능' && 
+              post.username !== user?.username &&
+              !comments.some(c => c.username === user?.username) && (
             <div className="mb-8">
             <textarea
               value={commentContent}
@@ -355,6 +367,25 @@ const WriteDetail = () => {
             </div>
           )}
 
+          {/* 내 글 안내 문구 */}
+          {isLoggedIn &&
+            getReviewStatus(post.endDate) === '첨삭 가능' &&
+            post.username === user?.username && (
+              <p className="text-sm text-gray-500 mt-4 mb-4">
+                본인이 작성한 글에는 댓글을 작성할 수 없습니다.
+              </p>
+          )}
+
+          {/* 이미 댓글 작성했을 때 안내문구 */}
+          {isLoggedIn &&
+            getReviewStatus(post.endDate) === '첨삭 가능' &&
+            post.username !== user?.username &&
+            comments.some(c => c.username === user?.username) && (
+              <p className="text-sm text-gray-500 mt-4 mb-4">
+                이미 이 글에 댓글을 작성하셨습니다.
+              </p>
+          )}
+
           {/* 첨삭 댓글 목록 */}
           <div className="space-y-6">
             {comments
@@ -370,9 +401,24 @@ const WriteDetail = () => {
                   >
                     <div className="flex items-start justify-between mb-4">
                       {/* 작성자 정보 */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <span className="font-medium text-[#006989]">{comment.nickname}</span>
+                      {/* 프로필 이미지 */}
+                      {comment.profileImg ? (
+                        <img
+                          src={`${url}/image?filename=${comment.profileImg}`}
+                          alt="avatar"
+                          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-[#F3D5C9] rounded-full flex items-center justify-center">
+                          <UserIcon className="w-8 h-8 text-[#E88D67]" />
+                        </div>
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between mb-2 flex-wrap">
+                          {/* 닉네임 + 날짜 */}
+                          <div className="flex items-center gap-2">
+                          <span className="ml-3 font-medium text-[#006989]">{comment.nickname}</span>
                           <span className="text-sm text-gray-500">{comment.regDate?.split('T')[0]}</span>
                         </div>
                         {comment.adopted && (
@@ -382,6 +428,9 @@ const WriteDetail = () => {
                           </span>
                         )}
                       </div>
+                    </div>
+
+
 
                       {/* 채택/신고 버튼 */}
                       <div className="flex items-center gap-2">
@@ -402,22 +451,25 @@ const WriteDetail = () => {
                       </div>
                     </div>
 
-                    {/* 댓글 내용 */}
-                    {(comment.isSecret && !(isOwner || isCommentAuthor)) ? (
-                      <p className="text-gray-400 italic">비밀 첨삭 댓글입니다.</p>
-                    ) : (
-                      <p className="text-gray-600">{comment.content}</p>
-                    )}
+                     {/* 댓글 내용 */}
+                      {(comment.isSecret && !(isOwner || isCommentAuthor)) ? (
+                        <p className="text-gray-400 italic">비밀 첨삭 댓글입니다.</p>
+                      ) : (
+                        <p className="text-gray-600">{comment.content}</p>
+                     )}
+
+
                   </div>
                 );
               })}
           </div>
-
+        </div>
+        )}
+         
         {/* 모달 */}
         {showReportModal && <ReportModal />}
         {showReportConfirm && <ReportConfirmModal />}
       </div>
-    </div>
     </div>
   );
 };
