@@ -11,7 +11,6 @@ import {
 import axios from "axios";
 import { url } from "../../config/config";
 
-
 const QnAList = ({ classDetail }) => {
   const user = useAtomValue(userAtom); //로그인한 사용자 정보
   const [token] = useAtom(tokenAtom);
@@ -21,7 +20,7 @@ const QnAList = ({ classDetail }) => {
   const [answerInput, setAnswerInput] = useState({});
   const [expandedId, setExpandedId] = useState(false);
   const [qnaList, setQnaList] = useState([]);
-  const [question, setQuestion] = useState('');
+  const [question, setQuestion] = useState("");
   const [secret, setSecret] = useState(false);
 
   useEffect(() => {
@@ -46,28 +45,32 @@ const QnAList = ({ classDetail }) => {
   }, [classDetail]);
 
   const submitQ = async () => {
-    if(!question.trim()){
-      alert('질문 내용을 입력해주세요.');
+    if (!question.trim()) {
+      alert("질문 내용을 입력해주세요.");
       return;
     }
 
-    try{
-      await axios.post(`${url}/classQna`, {
-        classId: classDetail.classId,
-        content: question,
-        isSecret: showPrivate
-      }, {
-        headers: {
-        Authorization: token.access_token  // ✅ 헤더에 토큰 추가
-      }
-    });
-      alert('질문이 등록되었습니다.');
-      setQuestion('');
+    try {
+      await axios.post(
+        `${url}/classQna`,
+        {
+          classId: classDetail.classId,
+          content: question,
+          isSecret: showPrivate,
+        },
+        {
+          headers: {
+            Authorization: token.access_token, // ✅ 헤더에 토큰 추가
+          },
+        }
+      );
+      alert("질문이 등록되었습니다.");
+      setQuestion("");
       setSecret(false);
       // onSubmitted();  // 목록 새로고침
-    } catch(err){
-      console.log('질문 등록 실패: ', err);
-      alert('질문 등록 중 오류가 발생했습니다.');
+    } catch (err) {
+      console.log("질문 등록 실패: ", err);
+      alert("질문 등록 중 오류가 발생했습니다.");
     }
   };
 
@@ -94,7 +97,7 @@ const QnAList = ({ classDetail }) => {
         },
         {
           headers: {
-            Authorization: token.access_token
+            Authorization: token.access_token,
           },
         }
       );
@@ -122,7 +125,7 @@ const QnAList = ({ classDetail }) => {
             rows={3}
             placeholder="모임에 대해 궁금한 점을 물어보세요"
             value={question}
-            onChange={(e)=> setQuestion(e.target.value)}
+            onChange={(e) => setQuestion(e.target.value)}
           />
           <div className="flex items-center justify-between">
             <label className="flex items-center text-sm text-gray-600">
@@ -136,8 +139,9 @@ const QnAList = ({ classDetail }) => {
               <LockIcon className="w-4 h-4 ml-1" />
             </label>
             <button
-              onClick={submitQ} 
-              className="px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors">
+              onClick={submitQ}
+              className="px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
+            >
               등록
             </button>
           </div>
@@ -145,50 +149,58 @@ const QnAList = ({ classDetail }) => {
       ) : (
         <p className="text-gray-500">질문을 작성하려면 로그인이 필요해요.</p>
       )}
-      
+
       {/* Q&A 목록 (아코디언 스타일로) */}
       <div className="space-y-4">
         {qnaList.map((item) => {
           const isSecret = item.isSecret;
-          const isOwner = user.username === item.username;
+          const isOwner = !!user && user.username === item.username;
           const canView = !isSecret || isOwner || isLeader;
 
           return (
             <div key={item.classQnaId} className=" rounded p-4 bg-gray-50">
-              <button onClick={() => HandleAccordionToggle(item.classQnaId)}
-                className="w-full text-left">
+              <button
+                onClick={() => HandleAccordionToggle(item.classQnaId)}
+                className="w-full text-left"
+              >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     {/* <img src={item.writerProfile || '/default-profile.png'}
                       alt="writer"
                       className="w-8 h-8 rounded-full"/> */}
-                      <span className="font-semibold">{item.username}</span>
-                      {isSecret && (
-                        <span className="text-sm text-gray-500">(비밀글)</span>
-                      )}
+                    <span className="font-semibold">{item.username}</span>
+                    {isSecret && (
+                      <span className="text-sm text-gray-500">(비밀글)</span>
+                    )}
                   </div>
-                      <span>{item.regDate}</span>
+                  <span>{item.regDate}</span>
                 </div>
               </button>
 
               {expandedId === item.classQnaId && canView && (
                 <div className="mt-4">
-                  <p className="mb-2 text-gray-700 whitespace-pre-line">{item.content}</p>
+                  <p className="mb-2 text-gray-700 whitespace-pre-line">
+                    {item.content}
+                  </p>
 
                   {item.answer ? (
                     <div className="p-3 bg-white border border-gray-300 rounded text-gray-800">
-                    <p className="text-sm text-gray-400">모임장 답변</p>
-                    <p className="whitespace-pre-line">{item.answer}</p>
-                  </div>
+                      <p className="text-sm text-gray-400">모임장 답변</p>
+                      <p className="whitespace-pre-line">{item.answer}</p>
+                    </div>
                   ) : (
                     isLeader &&
-                    (!isSecret || item.username === user.username || isLeader) && (
+                    (!isSecret ||
+                      item.username === user?.username ||
+                      isLeader) && (
                       <div className="mt-4">
                         <textarea
                           className="w-full border border-gray-300 rounded-lg p-2"
                           placeholder="답변을 입력하세요"
                           value={answerInput[item.classQnaId] || ""}
-                          onChange={(e) => handleAnswerChange(item.classQnaId, e.target.value)}
+                          onChange={(e) =>
+                            handleAnswerChange(item.classQnaId, e.target.value)
+                          }
                         />
                         <button
                           className="mt-2 px-4 py-2 bg-[#E88D67] text-white rounded"
@@ -204,7 +216,6 @@ const QnAList = ({ classDetail }) => {
             </div>
           );
         })}
-
       </div>
     </div>
   );

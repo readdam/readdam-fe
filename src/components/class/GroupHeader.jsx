@@ -50,7 +50,7 @@ const GroupHeader = ({ group }) => {
       }
     };
 
-    if (user.username) fetchLikeStatus();
+    if (user && user.username) fetchLikeStatus();
   }, [group.classId, user]);
 
   const HandleLikeToggle = async () => {
@@ -71,10 +71,7 @@ const GroupHeader = ({ group }) => {
           },
         }
       );
-      // if (response.ok) {
-      //   setLiked(response.data.liked);
-      //   setLikeCount(prev => liked ? prev - 1 : prev +1);
-      // }
+
       setLiked(response.data.liked);
       setLikeCount(response.data.likeCount);
     } catch (err) {
@@ -90,6 +87,11 @@ const GroupHeader = ({ group }) => {
   };
 
   const openJoinModal = () => {
+    if (!user?.username) {
+      alert("참여하려면 로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
     setShowModal(true);
   };
 
@@ -159,7 +161,7 @@ const GroupHeader = ({ group }) => {
             </button>
             <button
               onClick={HandleLikeToggle}
-              disabled={!user.username}
+              disabled={!user?.username}
               className="p-2 hover:bg-gray-100 rounded-full"
             >
               {liked ? (
@@ -167,7 +169,6 @@ const GroupHeader = ({ group }) => {
               ) : (
                 <Heart className="w-6 h-6 text-gray-600" />
               )}
-              
             </button>
             <span className="flex items-center text-gray-600">{likeCount}</span>
             <button
