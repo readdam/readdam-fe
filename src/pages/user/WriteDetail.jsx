@@ -150,12 +150,17 @@ const WriteDetail = () => {
     alert('링크가 복사되었습니다.');
   };
 
-  // 내 글 체크
+  // 내 글 여부 체크
   const isMyPost = post?.username === user?.username;
 
   // 댓글 작성 체크
   const hasCommentByMe = comments.some(
   (c) => c.username === user?.username
+  );
+
+  // 채택 상태 체크
+  const hasAdoptedComment = comments.some(
+  (c) => c.adopted
   );
 
   // 신고 처리
@@ -197,6 +202,14 @@ const WriteDetail = () => {
         alert("채택 처리 중 오류가 발생했습니다.");
       }
     };
+
+    // 정렬
+    const sortedComments = comments
+      .filter((comment) => !comment.isHide)
+      .sort((a, b) => {
+        if (a.adopted === b.adopted) return 0;
+        return a.adopted ? -1 : 1;
+      });
 
   // ✅ 디버깅용
   if (!post && !error) return <div>Loading...</div>;
@@ -388,9 +401,7 @@ const WriteDetail = () => {
 
           {/* 첨삭 댓글 목록 */}
           <div className="space-y-6">
-            {comments
-              .filter((comment) => !comment.isHide) // 숨김 처리된 댓글 제외
-              .map((comment) => {
+            {sortedComments.map((comment) => {
                 const isOwner = user?.username === post.username; // 글 작성자 여부
                 const isCommentAuthor = user?.username === comment.username; // 댓글 작성자 여부
 
@@ -424,7 +435,7 @@ const WriteDetail = () => {
                         {comment.adopted && (
                           <span className="flex items-center gap-1 text-sm text-[#006989]">
                             <CheckCircleIcon className="w-4 h-4" />
-                            채택된 첨삭
+                            <span className="relative -top-[2px]">채택된 첨삭</span><span>  </span>
                           </span>
                         )}
                       </div>
@@ -436,7 +447,12 @@ const WriteDetail = () => {
                       <div className="flex items-center gap-2">
                         {isOwner && !comment.adopted && (
                           <button
-                            className="px-3 py-1 text-sm text-[#006989] border border-[#006989] rounded hover:bg-[#F3F7EC] transition-colors"
+                            disabled={hasAdoptedComment}
+                            className={`px-3 py-1 text-sm border rounded transition-colors
+                              ${hasAdoptedComment
+                                ? 'text-gray-400 border-gray-300 cursor-not-allowed'
+                                : 'text-[#006989] border-[#006989] hover:bg-[#F3F7EC]'}
+                            `}
                             onClick={() => handleAdopt(comment.writeCommentId)}
                           >
                             채택하기
