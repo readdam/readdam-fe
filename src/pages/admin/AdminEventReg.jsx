@@ -38,6 +38,7 @@ const AdminEventReg = () => {
       setCompleted(resCo.data)
     } catch (err) {
       console.error('이벤트 목록 조회 실패', err)
+      alert('이벤트 목록을 불러오는 중 오류가 발생했습니다.')
     } finally {
       setLoading(false)
     }
@@ -72,18 +73,22 @@ const AdminEventReg = () => {
       })
       setEventForm({ month: '', startDate: '', endDate: '', title: '' })
       fetchEvents()
+      alert('이벤트가 성공적으로 등록되었습니다.')
     } catch (err) {
       console.error('이벤트 등록 실패', err)
+      alert('이벤트 등록 중 오류가 발생했습니다.')
     }
   }
 
-  // 완료된 이벤트에 포인트 지급
+  // 완료된 이벤트에 포인트 지급 (+알림)
   const handlePointsDistribution = async id => {
     try {
       await axios.post(`/admin/events/${id}/distribute-points`)
+      alert('포인트 지급이 완료되었습니다.')
       fetchEvents()
     } catch (err) {
       console.error('포인트 지급 실패', err)
+      alert('포인트 지급 중 오류가 발생했습니다.')
     }
   }
 
@@ -93,14 +98,16 @@ const AdminEventReg = () => {
     try {
       await axios.delete(`/admin/events/${id}`)
       fetchEvents()
+      alert('이벤트가 삭제되었습니다.')
     } catch (err) {
       console.error('이벤트 삭제 실패', err)
+      alert('이벤트 삭제 중 오류가 발생했습니다.')
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-4xl mx-auto px-4 space-y-12">
+      <div className="max-w-6xl mx-auto px-4 space-y-12">
         {/* breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600">
           <HomeIcon className="w-4 h-4" />

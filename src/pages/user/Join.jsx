@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { UserIcon } from 'lucide-react';
-import axios from 'axios';
+import { useAxios } from '../../hooks/useAxios';
 import { url } from '../../config/config';
 import { useNavigate } from 'react-router-dom'
 
 const Join = () => {
+  const axios = useAxios();
   const [step, setStep] = useState(1);
   const [agreements, setAgreements] = useState({
     all: false,
@@ -24,14 +25,27 @@ const Join = () => {
     introduction: '',
   });
 
+  // 이미지 파일 및 미리보기 URL 상태 추가
+  const [profileFile, setProfileFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (formData.password !== formData.passwordConfirm) {
+      alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
     try {
-      const payload = {
-        username: formData.username, // ✅ 직접 받은 아이디
+       // ✅ FormData 객체 생성
+      const fd = new FormData();
+
+      // ✅ userDto를 JSON → Blob으로 변환 후 FormData에 담음
+      const userDto = {
+        username: formData.username,
         name: formData.name,
         nickname: formData.nickname,
         password: formData.password,
@@ -39,13 +53,26 @@ const Join = () => {
         email: formData.email,
         birth: formData.birth,
         introduce: formData.introduction,
-        isAdmin: false 
+        isAdmin: false,
       };
 
-      const res = await axios.post(`${url}/join`, payload);
+
+      fd.append(
+        "userDto",
+        new Blob([JSON.stringify(userDto)], { type: "application/json" })
+      );
+
+      // 파일도 FormData에 추가
+      if (profileFile) {
+        fd.append("file", profileFile);
+      }
+
+      // multipart/form-data로 전송
+      const res = await axios.post(`${url}/join`, fd);
+
       if (res.status === 200) {
         alert('회원가입이 완료되었습니다.');
-        navigate('/login'); // ✅ 회원가입 후 로그인 페이지로 이동
+        navigate('/login'); // 회원가입 후 로그인 페이지로 이동
       }
     } catch (err) {
       console.error('회원가입 실패', err);
@@ -203,15 +230,33 @@ const Join = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">프로필 이미지</label>
                       <div className="flex items-center gap-4">
-                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
-                          <UserIcon className="w-12 h-12 text-gray-400" />
+                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                          {/*  미리보기 이미지 */}
+                          {previewUrl ? (
+                            <img
+                              src={previewUrl}
+                              alt="preview"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <UserIcon className="w-12 h-12 text-gray-400" />
+                          )}
                         </div>
-                        <button
-                          type="button"
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
-                        >
+                        <label className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
                           이미지 업로드
-                        </button>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                setProfileFile(file);
+                                setPreviewUrl(URL.createObjectURL(file));
+                              }
+                            }}
+                          />
+                        </label>
                       </div>
                     </div>
                     <div>

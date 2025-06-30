@@ -22,8 +22,8 @@ export default function Token() {
       const refreshToken = parsed.refresh_token;
 
       const fullToken = {
-        access_token,
-        refresh_token,
+        access_token: accessToken,
+        refresh_token: refreshToken,
       };
 
       // ✅ 상태 저장
@@ -42,6 +42,7 @@ export default function Token() {
         }
       ).then((res) => {
         setUser(res.data);
+        sessionStorage.setItem("user", JSON.stringify(res.data)); 
         navigate("/");
       }).catch((err) => {
         console.error("❌ 유저 정보 요청 실패:", err);
@@ -49,7 +50,7 @@ export default function Token() {
     } catch (e) {
       console.error("❌ 토큰 파싱 실패:", e);
     }
-  }, [tokenString]);
+  }, [tokenString, setToken, setUser, navigate, fcmToken]);
 
   return null;
 }
