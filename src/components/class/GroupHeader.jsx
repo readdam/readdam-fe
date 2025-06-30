@@ -157,12 +157,6 @@ const GroupHeader = ({ group }) => {
             >
               참여하기
             </button>
-            {/* <Heart 
-              className={`w-6 h-6 cursor-pointer transition-colors duration-200 ${
-                  liked ? 'text-red-500 fill-red-500' : 'text-gray-600'
-                }`}
-                onClick={HandleLikeToggle}
-              /> */}
             <button
               onClick={HandleLikeToggle}
               disabled={!user.username}
@@ -173,8 +167,9 @@ const GroupHeader = ({ group }) => {
               ) : (
                 <Heart className="w-6 h-6 text-gray-600" />
               )}
-              <span>{likeCount}</span>
+              
             </button>
+            <span className="flex items-center text-gray-600">{likeCount}</span>
             <button
               onClick={handleShare}
               className="p-2 hover:bg-gray-100 rounded-full"
