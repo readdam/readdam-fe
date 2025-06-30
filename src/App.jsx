@@ -1,5 +1,5 @@
 // 🔹 외부 라이브러리
-import { useEffect, useState  } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './index.css';
 import { getFcmToken } from './fcmToken';
@@ -82,34 +82,31 @@ import MyInquiryWrite from '@pages/my/MyInquiryWrite';
 import Success from '@pages/my/Success';
 import Fail from '@pages/my/Fail';
 
-
-
 function App() {
   useEffect(() => {
     const unsubscribe = onMessage(messaging, (payload) => {
       console.log('🔔 Foreground 알림 수신:', payload);
-  
+
       const { title, body, icon } = payload.notification;
-  
+
       new Notification(title, {
         body,
-        icon: icon || '/favicon.ico', 
+        icon: icon || '/favicon.ico',
       });
-  
     });
-  
+
     return () => {
       unsubscribe();
     };
   }, []);
 
   const [, setToken] = useAtom(tokenAtom);
-  const [, setUser ] = useAtom(userAtom);
+  const [, setUser] = useAtom(userAtom);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const savedToken = sessionStorage.getItem('token');
-    const savedUser  = sessionStorage.getItem('user');
+    const savedUser = sessionStorage.getItem('user');
     if (savedToken) {
       setToken(JSON.parse(savedToken));
     }
@@ -146,6 +143,10 @@ function App() {
           />
           <Route path="/admin/otherPlaceList" element={<OtherPlaceList />} />
           <Route path="/admin/otherPlaceAdd" element={<OtherPlaceAdd />} />
+          <Route
+            path="/admin/otherPlaceEdit/:placeId"
+            element={<OtherPlaceEdit />}
+          />
           <Route path="/admin/pointStats" element={<AdminPointStats />} />
           <Route path="/admin/reportList" element={<AdminReportList />} />
           <Route path="/admin/alertList" element={<AdminAlertList />} />

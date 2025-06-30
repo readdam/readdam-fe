@@ -1,4 +1,5 @@
 import { X, Upload } from 'lucide-react';
+import { url } from '@config/config';
 
 export default function DetailInfoSection({
   form,
@@ -17,10 +18,6 @@ export default function DetailInfoSection({
       img.startsWith('blob:') ||
       img.startsWith('http'));
 
-  const handleRemoveImage = (index) => {
-    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
-  };
-
   return (
     <section className="bg-white p-6 rounded-lg shadow">
       <h2 className="text-lg font-semibold mb-6">상세 정보</h2>
@@ -30,8 +27,8 @@ export default function DetailInfoSection({
           <label className="block text-sm font-medium mb-2">공간 소개</label>
           <textarea
             rows={4}
-            value={form.description}
-            onChange={(e) => onChange('description', e.target.value)}
+            value={form.introduce}
+            onChange={(e) => onChange('introduce', e.target.value)}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
             placeholder="공간에 대해 소개해주세요"
           />
@@ -78,13 +75,17 @@ export default function DetailInfoSection({
             {imagePreviews.map((img, index) => (
               <div key={index} className="relative">
                 <img
-                  src={isRawImage(img) ? img : `/image?filename=${img}`}
+                  src={isRawImage(img) ? img : `${url}/image?filename=${img}`}
                   alt="공간 사진"
                   className="w-32 h-32 object-cover rounded-lg"
                 />
                 <button
                   type="button"
-                  onClick={() => handleRemoveImage(index)}
+                  onClick={() =>
+                    setImagePreviews(
+                      imagePreviews.filter((_, i) => i !== index)
+                    )
+                  }
                   className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                 >
                   <X className="w-4 h-4" />
