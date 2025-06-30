@@ -8,6 +8,7 @@ import { url } from '../../config/config';
 import PostcardModal from '@components/write/PostcardModal'
 import TimeRemainingText from '@components/write/TimeRemainingText';
 import PostItCard from '@components/write/PostItCard';
+import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
 
 const WriteShortList = () => {
   const axios = useAxios();
@@ -23,6 +24,7 @@ const WriteShortList = () => {
   const [hasWritten, setHasWritten] = useState(null)  // 로그인한 사용자가 글 썼는지
   const [event, setEvent] = useState(null)
   const [totalCount, setTotalCount] = useState(0);
+  const { toggleLike } = useListWriteShortLike(setAnswers);
 
   const handleReport = (writeshortId) => {
     alert('신고가 접수되었습니다.')
@@ -110,39 +112,6 @@ const WriteShortList = () => {
     }
   }
 
-    const handleToggleLike = async (writeShortId) => {
-    if (!token?.access_token) {
-      alert('로그인이 필요한 서비스입니다');
-      navigate("/login");
-      return;
-    }
-
-    try {
-      const res = await axios.post(`${url}/my/writeShort-like`, 
-        { writeshortId: writeShortId  },
-      );
-
-      const isLiked = res.data;
-
-      // 상태 반영: answers 배열 내 해당 항목 업데이트
-        setAnswers(prevAnswers =>
-          prevAnswers.map((answer) =>
-            answer.writeshortId === writeShortId
-              ? {
-                  ...answer,
-                  isLiked: isLiked,
-                  likes: answer.likes + (isLiked ? 1 : -1),
-                }
-              : answer
-          )
-        );
-      } catch (err) {
-        console.error('좋아요 토글 실패', err);
-      }
-    };
-
-    // useEffect(() => {
-    // }, [answers]);
 
   return (
     <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
@@ -210,7 +179,7 @@ const WriteShortList = () => {
               content={answer.content}
               likes={answer.likes}
               isLiked={answer.isLiked}
-              onLikeClick={() => handleToggleLike(answer.writeshortId)}
+              onLikeClick={() => toggleLike(answer.writeshortId)}
               onReportClick={() => handleReport(answer.writeshortId)}
             />
           ))}

@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PostItCard from '@components/write/PostItCard';
 import { useAxios } from '../../hooks/useAxios'
+import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
 
 const HomeShort = () => {
   const axios = useAxios();
   const [answers, setAnswers] = useState([]);
+  const { toggleLike } = useListWriteShortLike(setAnswers);
 
   useEffect(() => {
     fetchAnswers();
@@ -13,7 +15,7 @@ const HomeShort = () => {
 
   const fetchAnswers = async () => {
     try {
-      const res = await axios.get('/writeShortList?page=1&size=4');
+      const res = await axios.get('/writeShortList?page=1&size=5');
       const { list: writeShortList } = res.data;
       setAnswers(writeShortList || []);
     } catch (err) {
@@ -25,9 +27,6 @@ const HomeShort = () => {
     alert('신고가 접수되었습니다.');
   };
 
-  const handleLike = (id) => {
-    alert(`id ${id} 좋아요 클릭됨 (연동 예정)`);
-  };
 
   return (
     <div className="w-full bg-gray-50 py-12">
@@ -55,7 +54,7 @@ const HomeShort = () => {
               content={answer.content}
               likes={answer.likes}
               isLiked={answer.isLiked}
-              onLikeClick={() => handleLike(answer.writeshortId)}
+              onLikeClick={() => toggleLike(answer.writeshortId)}
               onReportClick={() => handleReport(answer.writeshortId)}
             />
           ))}
