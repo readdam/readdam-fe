@@ -5,6 +5,7 @@ import { tokenAtom, userAtom, fcmTokenAtom } from "../../atoms";
 import axios from "axios";
 import { url } from '../../config/config';
 import { useNavigate } from "react-router";
+import { jwtDecode } from "jwt-decode";
 
 export default function Token() {
   const params = new URL(window.location.href).searchParams;
@@ -41,8 +42,26 @@ export default function Token() {
           },
         }
       ).then((res) => {
-        setUser(res.data);
-        sessionStorage.setItem("user", JSON.stringify(res.data)); 
+           // accessToken을 decode해서 isAdmin 여부 추출
+           // 추출한 isAdmin을 userAtom에 같이 저장하기 위해 userData에 포함
+          let decoded = null;
+          let isAdmin = false;
+
+          try {
+            decoded = jwtDecode(accessToken);
+            isAdmin = decoded.isAdmin === true;
+          } catch (e) {
+            console.error("토큰 decode 실패", e);
+          }
+
+          const userData = {
+            ...res.data,
+            isAdmin,
+          };
+
+        // useAtom(userAtom)에 저장 (관리자 권한 정보 포함)
+        setUser(userData);
+        sessionStorage.setItem("user", JSON.stringify(userData)); 
         navigate("/");
       }).catch((err) => {
         console.error("❌ 유저 정보 요청 실패:", err);
