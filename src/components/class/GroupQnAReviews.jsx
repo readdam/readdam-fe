@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import QnAList from "./QnAList";
+import ReviewList from "./ReviewList";
 import {
   LockIcon,
   ImageIcon,
