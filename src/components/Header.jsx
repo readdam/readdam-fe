@@ -64,6 +64,9 @@ const Header = () => {
   };
 
   useEffect(() => {
+    if (!token || !user) {
+      return;
+    }
     if (user?.lat && user?.lng) {
       axios
         .get('/user/location-address')
@@ -74,7 +77,7 @@ const Header = () => {
           console.error(err);
         });
     }
-  }, [user?.lat, user?.lng]);
+  }, [user?.lat, user?.lng, token]);
   
   return (
     <header className="w-full py-4 bg-white shadow-sm">
