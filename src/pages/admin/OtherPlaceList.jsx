@@ -1,46 +1,56 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PlusIcon, HeartIcon, SearchIcon, FilterIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAxios } from '@hooks/useAxios';
+import { fetchOtherPlaceList } from '@api/otherPlace';
+import { url } from '../../config/config';
+
+function formatTime(timeString) {
+  if (!timeString) return '';
+  const [hourStr, minuteStr] = timeString.split(':');
+  const hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
+
+  const isAM = hour < 12;
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+
+  return `${isAM ? '오전' : '오후'} ${displayHour}:${minuteStr}`;
+}
 
 export default function OtherPlaceList() {
   const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
+  const [filterField, setFilterField] = useState('name');
+  const [places, setPlaces] = useState([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const places = [
-    {
-      id: 1,
-      name: '북카페 리드미',
-      address: '서울 마포구 연남동 123-45',
-      phone: '02-1234-5678',
-      createdAt: '2023-11-01',
-      status: '운영중단',
-      schedule: {
-        weekday: '10:00 - 22:00',
-        weekend: '11:00 - 20:00',
-      },
-      image: 'https://images.unsplash.com/photo-1600431521340-491eca880813',
-      description:
-        '조용하고 아늑한 분위기의 북카페입니다. 다양한 커피와 디저트를 제공합니다.',
-      likes: 245,
-      keywords: ['조용한', '아늑한', '커피', '디저트'],
-    },
-    {
-      id: 2,
-      name: '책방 오후',
-      address: '서울 서초구 방배동 789-10',
-      phone: '02-9876-5432',
-      createdAt: '2023-10-28',
-      status: '운영중단',
-      schedule: {
-        weekday: '11:00 - 20:00',
-        weekend: '12:00 - 18:00',
-      },
-      image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952',
-      description: '독립출판물과 커피를 함께 즐길 수 있는 감성적인 공간입니다.',
-      likes: 189,
-      keywords: ['독립출판', '커피', '아늑한'],
-    },
-  ];
+  const navigate = useNavigate();
+  const axios = useAxios();
+
+  const getPlaceList = async () => {
+    try {
+      const data = await fetchOtherPlaceList(axios, {
+        page,
+        size: 10,
+        keyword: searchTerm,
+        filterBy: filterField,
+      });
+      setPlaces(data.content);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      console.error('외부 장소 목록 불러오기 실패:', err);
+    }
+  };
+
+  useEffect(() => {
+    getPlaceList();
+  }, [page]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setPage(0); // 검색 시 첫 페이지로 리셋
+    getPlaceList();
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto overflow-x-auto">
@@ -54,22 +64,32 @@ export default function OtherPlaceList() {
         </button>
       </div>
 
-      <div className="flex gap-4 mb-6">
+      <form className="flex gap-4 mb-6" onSubmit={handleSearch}>
+        <select
+          className="px-4 py-2 border rounded-lg text-sm"
+          value={filterField}
+          onChange={(e) => setFilterField(e.target.value)}
+        >
+          <option value="name">장소명</option>
+          <option value="basic_address">주소</option>
+        </select>
         <div className="flex-1 relative">
           <input
             type="text"
             placeholder="장소명 또는 주소로 검색"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
+            className="w-full px-4 py-2 pl-10 border rounded-lg"
           />
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-          <FilterIcon className="w-4 h-4" />
-          필터
+        <button
+          type="submit"
+          className="bg-[#E88D67] text-white w-16 h-10 rounded text-sm"
+        >
+          검색
         </button>
-      </div>
+      </form>
 
       <div className="bg-white rounded-lg shadow min-w-[1000px]">
         <table className="w-full text-sm">
@@ -98,12 +118,13 @@ export default function OtherPlaceList() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {places.map((place) => (
+            {places?.map((place) => (
               <tr key={place.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <div className="flex items-start gap-4">
                     <img
-                      src={place.image}
+                      // src={place.img1}
+                      src={`${url}/image?filename=${place.img1}`}
                       alt={place.name}
                       className="w-16 h-16 rounded-lg object-cover"
                     />
@@ -112,22 +133,28 @@ export default function OtherPlaceList() {
                         {place.name}
                       </div>
                       <div className="text-gray-500 text-sm">
-                        {place.address}
+                        {place.basicAddress} {place.detailAddress}
                       </div>
                       <div className="text-gray-500 text-sm">
-                        {place.description}
+                        {place.introduce}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-gray-500">{place.phone}</td>
                 <td className="px-6 py-4 text-gray-500">
-                  <div>평일: {place.schedule.weekday}</div>
-                  <div>주말: {place.schedule.weekend}</div>
+                  <div>
+                    평일: {formatTime(place.weekdayStime)} -{' '}
+                    {formatTime(place.weekdayEtime)}
+                  </div>
+                  <div>
+                    주말: {formatTime(place.weekendStime)} -{' '}
+                    {formatTime(place.weekendEtime)}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2">
-                    {place.keywords.map((k, i) => (
+                    {place.tags?.map((k, i) => (
                       <span
                         key={i}
                         className="px-2 py-1 bg-[#F3F7EC] text-[#006989] text-xs rounded-full"
@@ -140,13 +167,17 @@ export default function OtherPlaceList() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1 text-pink-500">
                     <HeartIcon className="w-4 h-4" />
-                    <span>{place.likes}</span>
+                    <span>{place.likeCount}</span>
                   </div>
                 </td>
-                {/* <td className="px-6 py-4 text-gray-500">{place.createdAt}</td> */}
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
-                    <button className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
+                    <button
+                      className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer"
+                      onClick={() =>
+                        navigate(`/admin/otherPlaceEdit/${place.otherPlaceId}`)
+                      }
+                    >
                       수정
                     </button>
                     <button className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-600 hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
@@ -156,25 +187,43 @@ export default function OtherPlaceList() {
                 </td>
               </tr>
             ))}
+            {places.length === 0 && (
+              <tr>
+                <td colSpan={7} className="text-center py-4 text-gray-400">
+                  등록된 장소가 없습니다
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
+      {/* ✅ 페이징 */}
       <div className="flex justify-center mt-6">
         <nav className="flex items-center gap-2">
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
+          <button
+            className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+            disabled={page === 0}
+            onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+          >
             이전
           </button>
-          <button className="px-3 py-1 text-sm bg-[#006989] text-white rounded">
-            1
-          </button>
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
-            2
-          </button>
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
-            3
-          </button>
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i}
+              className={`px-3 py-1 text-sm border rounded ${
+                page === i ? 'bg-[#006989] text-white' : 'hover:bg-gray-50'
+              }`}
+              onClick={() => setPage(i)}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((prev) => prev + 1)}
+          >
             다음
           </button>
         </nav>
