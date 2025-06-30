@@ -133,7 +133,7 @@ export default function OtherPlaceList() {
                         {place.name}
                       </div>
                       <div className="text-gray-500 text-sm">
-                        {place.basicAddress}
+                        {place.basicAddress} {place.detailAddress}
                       </div>
                       <div className="text-gray-500 text-sm">
                         {place.introduce}

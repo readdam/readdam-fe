@@ -33,6 +33,19 @@ export default function OtherPlaceEdit() {
   const { placeId } = useParams();
   const axios = useAxios();
 
+  function dataURLtoFile(dataurl, filename) {
+    if (!dataurl || typeof dataurl !== 'string') return null;
+    if (!dataurl.startsWith('data:image/')) return null;
+
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], filename, { type: mime });
+  }
+
   // 데이터 불러오기
   useEffect(() => {
     async function fetchData() {
@@ -149,8 +162,6 @@ export default function OtherPlaceEdit() {
       name: form.name,
       phone: form.phone,
       domain: form.domain,
-      fee: form.fee,
-      facilities: form.facilities,
       introduce: form.introduce,
       lat: form.lat,
       lng: form.lng,
@@ -160,6 +171,9 @@ export default function OtherPlaceEdit() {
       weekendEtime: toHHMMSS(form.weekendEtime),
       basicAddress: form.basicAddress,
       detailAddress: form.detailAddress,
+      fee: form.fee,
+      usageGuide: form.usageGuide,
+      facilities: form.facilities,
       caution: form.caution,
     };
 
@@ -168,18 +182,34 @@ export default function OtherPlaceEdit() {
       new Blob([JSON.stringify(placeDto)], { type: 'application/json' })
     );
 
-    form.images.forEach((file) => {
-      formData.append('images', file);
+    // 신규 이미지
+    imagePreviews.forEach((img, i) => {
+      if (typeof img === 'string' && img.startsWith('data:image/')) {
+        const file = dataURLtoFile(img, `otherPlace_${i}.jpg`);
+        if (file) formData.append('placeImages', file);
+      }
     });
 
+    // 기존 이미지
+    const existingImages = imagePreviews.filter(
+      (img) => typeof img === 'string' && !img.startsWith('data:image/')
+    );
+    formData.append(
+      'existingImages',
+      new Blob([JSON.stringify(existingImages)], {
+        type: 'application/json',
+      })
+    );
+
+    // keywords
     formData.append(
       'keywords',
       new Blob([JSON.stringify(form.keywords)], { type: 'application/json' })
     );
 
     try {
-      const res = await axios.put(
-        `${url}/admin/otherPlace/${placeId}`,
+      const res = await axios.post(
+        `${url}/admin/otherPlaceEdit/${placeId}`,
         formData
       );
       console.log(res);
