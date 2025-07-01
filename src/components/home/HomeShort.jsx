@@ -15,9 +15,10 @@ const HomeShort = () => {
 
   const fetchAnswers = async () => {
     try {
-      const res = await axios.get('/writeShortList?page=1&size=5');
+      const res = await axios.get('/shorts?limit=5');
+          console.log("✅ 받아온 데이터", res.data);
       const { list: writeShortList } = res.data;
-      setAnswers(writeShortList || []);
+      setAnswers(res.data || []);
     } catch (err) {
       console.error('한줄글 목록 불러오기 실패', err);
     }
@@ -45,7 +46,7 @@ const HomeShort = () => {
         </div>
 
         {/* 카드 리스트 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {answers.map((answer) => (
             <PostItCard
               key={answer.writeshortId}
