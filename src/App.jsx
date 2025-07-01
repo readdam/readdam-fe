@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './index.css';
-import { getFcmToken } from './fcmToken';
 import { messaging, onMessage } from './firebase';
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from './atoms';

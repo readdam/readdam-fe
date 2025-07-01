@@ -35,6 +35,7 @@ const WriteDetail = () => {
   const navigate = useNavigate();
   const called = useRef(false); // StrictMode 때문에 useEffect 두 번 실행되지 않도록 방지
   const [reportTargetId, setReportTargetId] = useState(null);
+  const isAdmin = user?.isAdmin === true;
 
   // 글 상세 정보를 가져오는 함수
     const fetchWriteDetail = async (id) => {
@@ -468,7 +469,7 @@ const WriteDetail = () => {
                     </div>
 
                      {/* 댓글 내용 */}
-                      {(comment.isSecret && !(isOwner || isCommentAuthor)) ? (
+                      {(comment.isSecret && !(isOwner || isCommentAuthor || isAdmin)) ? (
                         <p className="text-gray-400 italic">비밀 첨삭 댓글입니다.</p>
                       ) : (
                         <p className="text-gray-600">{comment.content}</p>

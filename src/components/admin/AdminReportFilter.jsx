@@ -32,7 +32,7 @@ export default function AdminReportFilter({
           onChange={e => setFilterType(e.target.value)}
           className="border border-gray-300 rounded px-2 py-2 focus:border-[#006989] focus:outline-none"
         >
-          <option value="reporter">신고자/피신고자</option>
+          <option value="user">신고자/피신고자</option>
           <option value="content">내용 키워드</option>
         </select>
         <div className="relative flex-1">
@@ -87,7 +87,7 @@ export default function AdminReportFilter({
               <button
                 key={opt.label}
                 type="button"
-                onClick={() => onQuick(opt)}
+                onClick={() => onQuick(opt)} 
                 className={`
          px-3 py-1 rounded
          ${isActive
@@ -124,7 +124,6 @@ export default function AdminReportFilter({
       {/* 4행 */}
       <div className="flex justify-end gap-2">
         <button
-          type="button"
           onClick={onSearch}
           className="px-4 py-2 bg-[#006989] text-white rounded hover:bg-[#005C78]"
         >

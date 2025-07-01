@@ -1,63 +1,93 @@
-// src/components/admin/AdminReportPage.jsx
+// src/pages/admin/AdminReportPage.jsx
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { useAxios } from '../../hooks/useAxios'
 import AdminReportFilter from '../../components/admin/AdminReportFilter'
-import AdminReportList from '../../components/admin/AdminReportList'
+import AdminReportList   from '../../components/admin/AdminReportList'
+import AdminReportDetailModal from '../../components/admin/AdminReportDetailModal'
 
 export default function AdminReportPage() {
-  const [reports, setReports] = useState([])
-  const [keyword, setKeyword] = useState('')
-  const [filterType, setFilterType] = useState('reporter')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const axios = useAxios()
+
+  const [reports, setReports]       = useState([])
+  const [pageInfo, setPageInfo]     = useState(null)
+  const [keyword, setKeyword]       = useState('')
+  const [filterType, setFilterType] = useState('user')
+  const [startDate, setStartDate]   = useState('')
+  const [endDate, setEndDate]       = useState('')
   const [selectedQuickDays, setSelectedQuickDays] = useState(null)
-  const [status, setStatus] = useState('전체')
+  const [status, setStatus]         = useState('전체')
+  const [page, setPage]             = useState(1)
+  const size = 20
 
   const [showDetail, setShowDetail] = useState(false)
-  const [selected, setSelected] = useState(null)
-
-  const loadReports = async () => {
-    const { data } = await axios.get('/api/admin/reports', {
-      params: {
-        keyword,
-        filterType,
-        dateType: '접수일',
-        startDate,
-        endDate,
-        status: status === '전체' ? '' : status,
-      },
-    })
-    setReports(data)
-  }
-
-  useEffect(() => { loadReports() }, [])
+  const [detailData, setDetailData] = useState(null)
 
   const fmt = d => d.toISOString().slice(0,10)
+
+  const loadReports = async () => {
+    try {
+      const { data } = await axios.get('/admin/report', {
+        params: {
+          keyword,
+          filterType,
+          dateType: '접수일',
+          startDate,
+          endDate,
+          status: status === '전체' ? '' : status,
+          page,
+          size,
+        },
+      })
+      setReports(data.content)
+      setPageInfo(data.pageInfo)
+    } catch (e) {
+      console.error('신고 목록 조회 실패', e)
+    }
+  }
+
+  useEffect(() => {
+    loadReports()
+  }, [page])
+
+  // 모달로 상세 열기
+  const handleRowClick = async (r) => {
+    try {
+      const { data } = await axios.get(`/admin/report/${r.reportId}`)
+      setDetailData(data)
+      setShowDetail(true)
+    } catch (e) {
+      console.error('상세 정보 로드 실패', e)
+    }
+  }
+
   const onQuick = opt => {
     const today = new Date()
-    if (opt.days === null) {
+    if (opt.days === -1) {
       setStartDate(''); setEndDate('')
     } else {
       const past = new Date(today)
-      past.setDate(past.getDate() - opt.days)
-      setStartDate(fmt(past))
-      setEndDate(fmt(today))
+      past.setDate(today.getDate() - opt.days)
+      setStartDate(fmt(past)); setEndDate(fmt(today))
     }
-    
+    setSelectedQuickDays(opt.days)
   }
 
-  const handleSearch = () => loadReports()
-  const handleReset = () => {
-    setKeyword(''); setFilterType('reporter')
-    setStartDate(''); setEndDate('')
-    setSelectedQuickDays(null); setStatus('전체')
+  const handleSearch = () => {
+    setPage(1)
     loadReports()
   }
-  const handleRowClick = r => { setSelected(r); setShowDetail(true) }
-  const handleClose = () => setShowDetail(false)
+
+  const handleReset = () => {
+    setKeyword(''); setFilterType('user')
+    setStartDate(''); setEndDate('')
+    setSelectedQuickDays(null); setStatus('전체')
+    setPage(1)
+    loadReports()
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      {/* 필터 */}
       <AdminReportFilter
         keyword={keyword} setKeyword={setKeyword}
         filterType={filterType} setFilterType={setFilterType}
@@ -70,13 +100,50 @@ export default function AdminReportPage() {
         onSearch={handleSearch}
         onReset={handleReset}
       />
+
+      {/* 리스트 */}
       <AdminReportList
         reports={reports}
         showDetail={showDetail}
-        selected={selected}
+        selected={detailData?.report}
         onRowClick={handleRowClick}
-        onCloseModal={handleClose}
+        onCloseModal={() => setShowDetail(false)}
       />
+
+      {/* 상세 모달 */}
+      {showDetail && detailData && (
+        <AdminReportDetailModal
+          detail={detailData}
+          onClose={() => setShowDetail(false)}
+          onUpdated={() => {
+            setShowDetail(false)
+            loadReports()
+          }}
+        />
+      )}
+
+      {/* 페이징 */}
+      {pageInfo && (
+        <div className="flex justify-center items-center gap-4 mt-4">
+          <button
+            type="button"
+            disabled={pageInfo.currentPage === 1}
+            onClick={() => setPage(page - 1)}
+            className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+          >
+            이전
+          </button>
+          <span>{pageInfo.currentPage} / {pageInfo.totalPages}</span>
+          <button
+            type="button"
+            disabled={!pageInfo.hasNext}
+            onClick={() => setPage(page + 1)}
+            className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+          >
+            다음
+          </button>
+        </div>
+      )}
     </div>
   )
 }

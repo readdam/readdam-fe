@@ -20,9 +20,11 @@ const STATUS_LABELS = {
 }
 
 export default function AdminReportList({
-  reports,
-  showDetail, selected,
-  onRowClick, onCloseModal
+  reports = [],            // ← undefined 방지: 기본값 빈 배열
+  showDetail = false,      // ← 선택사항: 기본값 false
+  selected = null,         // ← 선택사항: 기본값 null
+  onRowClick,
+  onCloseModal
 }) {
   return (
     <div className="bg-white p-6 rounded-lg shadow overflow-auto">
@@ -32,7 +34,7 @@ export default function AdminReportList({
       <table className="w-full">
         <thead className="bg-gray-50">
           <tr>
-            {['번호','신고일','컨텐츠 유형','내용','신고자','처리일','처리여부'].map(col => (
+            {['번호', '신고일', '컨텐츠 유형', '내용', '신고자', '처리일', '처리여부'].map(col => (
               <th key={col} className="px-4 py-3 text-left text-sm text-gray-700">
                 {col}
               </th>
@@ -48,7 +50,7 @@ export default function AdminReportList({
             >
               <td className="px-4 py-3 text-sm">{r.reportId}</td>
               <td className="px-4 py-3 text-sm">
-                {r.reportedAt ? r.reportedAt.slice(0,10) : '-'}
+                {r.reportedAt ? r.reportedAt.slice(0, 10) : '-'}
               </td>
               <td className="px-4 py-3 text-sm">
                 {CATEGORY_LABELS[r.category] || r.category}
@@ -56,7 +58,7 @@ export default function AdminReportList({
               <td className="px-4 py-3 text-sm">{r.reason}</td>
               <td className="px-4 py-3 text-sm">{r.reporterUsername}</td>
               <td className="px-4 py-3 text-sm">
-                {r.processedAt ? r.processedAt.slice(0,10) : '-'}
+                {r.processedAt ? r.processedAt.slice(0, 10) : '-'}
               </td>
               <td className="px-4 py-3 text-sm">
                 {STATUS_LABELS[r.status] || r.status}
