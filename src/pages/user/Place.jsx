@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchPlaces } from '@api/place';
 import PlaceCard from '@components/place/PlaceCard';
 import {
@@ -17,17 +17,22 @@ const Place = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('latest');
-  const [page, setPage] = useState(0);
   const user = useAtomValue(userAtom);
 
-  console.log(user);
-
   // 핵심: queryKey에 모든 파라미터를 넣는다.
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['places', { selectedCategory, searchQuery, sortBy, page }],
-    queryFn: async () => {
+  const {
+    data,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['places', { selectedCategory, searchQuery, sortBy }],
+    queryFn: async ({ pageParam = 0 }) => {
       const res = await fetchPlaces(axios, {
-        page,
+        page: pageParam,
         size: 12,
         tag: selectedCategory === '읽담' ? null : selectedCategory,
         keyword: searchQuery,
@@ -38,36 +43,50 @@ const Place = () => {
       });
       return res;
     },
+
+    getNextPageParam: (lastPage) => {
+      const { currentPage, totalPages } = lastPage.pageInfo;
+      if (currentPage + 1 >= totalPages) {
+        return undefined;
+      }
+      return currentPage + 1;
+    },
+
     keepPreviousData: true,
   });
 
+  // 모든 페이지 데이터 합치기
   const mapped =
-    data?.content.map((place) => ({
-      id: place.type === 'OTHER' ? `other-${place.id}` : `place-${place.id}`,
-      name: place.name,
-      address: place.basicAddress,
-      image: place.img1,
-      tags: [
-        place.tag1,
-        place.tag2,
-        place.tag3,
-        place.tag4,
-        place.tag5,
-        place.tag6,
-        place.tag7,
-        place.tag8,
-        place.tag9,
-        place.tag10,
-      ].filter(Boolean),
-      likes: place.likeCount,
-      isPromoted: place.type === 'OTHER',
-    })) ?? [];
+    data?.pages.flatMap((page) =>
+      page.content.map((place) => ({
+        id: place.type === 'OTHER' ? `other-${place.id}` : `place-${place.id}`,
+        name: place.name,
+        address: place.basicAddress,
+        image: place.img1,
+        tags: [
+          place.tag1,
+          place.tag2,
+          place.tag3,
+          place.tag4,
+          place.tag5,
+          place.tag6,
+          place.tag7,
+          place.tag8,
+          place.tag9,
+          place.tag10,
+        ].filter(Boolean),
+        likes: place.likeCount,
+        isPromoted: place.type === 'OTHER',
+      }))
+    ) ?? [];
 
   // 검색 시 refetch
   const handleSearch = (e) => {
     e.preventDefault();
     refetch();
   };
+
+  const totalCount = data?.pages[0]?.pageInfo?.totalElements ?? 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -129,7 +148,7 @@ const Place = () => {
 
         {/* 정렬 */}
         <div className="mb-6 flex justify-between items-center">
-          <p className="text-gray-600">총 {mapped.length}개의 장소</p>
+          <p className="text-gray-600">총 {totalCount}개의 장소</p>
           <div className="flex gap-2">
             <button
               onClick={() => setSortBy('latest')}
@@ -172,6 +191,18 @@ const Place = () => {
             </div>
           ))}
         </div>
+        {/* 더보기 버튼 */}
+        {hasNextPage && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="px-6 py-2 bg-[#E88D67] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+            >
+              {isFetchingNextPage ? '로딩중...' : '더보기'}
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );
