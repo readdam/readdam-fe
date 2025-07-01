@@ -1,103 +1,225 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Upload, X, CheckSquare, Plus, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router';
-import { usePrompt } from '@hooks/usePrompt'; // 경로는 맞게 수정
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import BasicInfoSection from '@components/admin/otherPlace/BasicInfoSection';
+import DetailInfoSection from '@components/admin/otherPlace/DetailInfoSection';
+import { ArrowLeft } from 'lucide-react';
+import { url } from '@config/config';
+import { useAxios } from '@hooks/useAxios';
 
 export default function OtherPlaceEdit() {
-  const [keywords, setKeywords] = useState([]);
+  const [form, setForm] = useState({
+    name: '',
+    basicAddress: '',
+    detailAddress: '',
+    phone: '',
+    domain: '',
+    weekdayStime: '',
+    weekdayEtime: '',
+    weekendStime: '',
+    weekendEtime: '',
+    introduce: '',
+    fee: '',
+    usageGuide: '',
+    facilities: '',
+    caution: '',
+    keywords: [],
+    images: [],
+    lat: null,
+    lng: null,
+  });
   const [newKeyword, setNewKeyword] = useState('');
-  const [imagePreview, setImagePreview] = useState(null);
-  const [selectedWeekdaySlots, setSelectedWeekdaySlots] = useState([]);
-  const [selectedWeekendSlots, setSelectedWeekendSlots] = useState([]);
-
-  const generateTimeSlots = () => {
-    const slots = [];
-    for (let i = 0; i < 24; i++) {
-      slots.push(`${String(i).padStart(2, '0')}:00`);
-    }
-    return slots;
-  };
-  const [weekdaySlots] = useState(generateTimeSlots());
-  const [weekendSlots] = useState(generateTimeSlots());
-  const [images, setImages] = useState([]);
-  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const navigate = useNavigate();
+  const { placeId } = useParams();
+  const axios = useAxios();
 
-  //   const handleImageUpload = (e) => {
-  //     const files = e.target.files;
-  //     if (files) {
-  //       Array.from(files).forEach((file) => {
-  //         const reader = new FileReader();
-  //         reader.onloadend = () => {
-  //           setImages((prev) => [...prev, reader.result]);
-  //         };
-  //         reader.readAsDataURL(file);
-  //       });
-  //     }
-  //   };
+  function dataURLtoFile(dataurl, filename) {
+    if (!dataurl || typeof dataurl !== 'string') return null;
+    if (!dataurl.startsWith('data:image/')) return null;
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], filename, { type: mime });
+  }
+
+  // 데이터 불러오기
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await axios.get(`/admin/otherPlace/${placeId}`);
+        const data = res.data;
+        console.log(data);
+
+        setForm({
+          name: data.name || '',
+          basicAddress: data.basicAddress || '',
+          detailAddress: data.detailAddress || '',
+          phone: data.phone || '',
+          domain: data.domain || '',
+          weekdayStime: data.weekdayStime?.slice(0, 5) || '',
+          weekdayEtime: data.weekdayEtime?.slice(0, 5) || '',
+          weekendStime: data.weekendStime?.slice(0, 5) || '',
+          weekendEtime: data.weekendEtime?.slice(0, 5) || '',
+          introduce: data.introduce || '',
+          fee: data.fee || '',
+          usageGuide: data.usageGuide || '',
+          facilities: data.facilities || '',
+          caution: data.caution || '',
+          keywords: data.tags || [],
+          images: [],
+          lat: data.lat,
+          lng: data.lng,
+        });
+
+        setImagePreviews(data.images || []);
+      } catch (err) {
+        console.error(err);
+        alert('데이터를 불러오지 못했습니다.');
+        navigate('/admin/otherPlaceList');
+      }
     }
+
+    fetchData();
+  }, [placeId, navigate]);
+
+  const handleInputChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleAddKeyword = (e) => {
-    if (e.key === 'Enter' && newKeyword.trim() !== '') {
-      setKeywords([...keywords, newKeyword.trim()]);
+    if (e.key === 'Enter' && newKeyword.trim()) {
+      e.preventDefault();
+      setForm((prev) => ({
+        ...prev,
+        keywords: [...prev.keywords, newKeyword.trim()],
+      }));
       setNewKeyword('');
     }
   };
 
-  const handleRemoveKeyword = (indexToRemove) => {
-    setKeywords(keywords.filter((_, index) => index !== indexToRemove));
+  const handleRemoveKeyword = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      keywords: prev.keywords.filter((_, i) => i !== index),
+    }));
   };
 
-  const toggleSlot = (time, type) => {
-    const state =
-      type === 'weekday' ? selectedWeekdaySlots : selectedWeekendSlots;
-    const setState =
-      type === 'weekday' ? setSelectedWeekdaySlots : setSelectedWeekendSlots;
-    setState(
-      state.includes(time) ? state.filter((t) => t !== time) : [...state, time]
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const allowedCount = 5 - imagePreviews.length;
+    const filesToAdd = files.slice(0, allowedCount);
+
+    const readers = filesToAdd.map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        })
     );
+
+    Promise.all(readers).then((results) => {
+      setImagePreviews((prev) => [...prev, ...results]);
+
+      // 반드시 preview 처리 끝나고 나서 form.images 갱신
+      setForm((prev) => ({
+        ...prev,
+        images: [...prev.images, ...filesToAdd],
+      }));
+    });
   };
 
-  const toggleAllSlots = (type) => () => {
-    const slots = type === 'weekday' ? weekdaySlots : weekendSlots;
-    const state =
-      type === 'weekday' ? selectedWeekdaySlots : selectedWeekendSlots;
-    const setState =
-      type === 'weekday' ? setSelectedWeekdaySlots : setSelectedWeekendSlots;
-    setState(state.length === slots.length ? [] : slots);
+  const handleRemoveImage = (index) => {
+    const preview = imagePreviews[index];
+    const isNew = preview.startsWith('data:');
+
+    if (isNew) {
+      // 새로 업로드한 이미지라면 form.images에서도 같이 제거
+      const newImageCount = form.images.length;
+      const newImageIndex = index - (imagePreviews.length - newImageCount);
+
+      setForm((prev) => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== newImageIndex),
+      }));
+    }
+
+    // 프리뷰에서 제거
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleRemoveImage = (indexToRemove) => {
-    setImages((prev) => prev.filter((_, index) => index !== indexToRemove));
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // ✅ 브라우저 새로고침/닫기 방지
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (isFormDirty) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
+    const formData = new FormData();
+    const toHHMMSS = (str) => (str ? str + ':00' : null);
+
+    const placeDto = {
+      name: form.name,
+      phone: form.phone,
+      domain: form.domain,
+      introduce: form.introduce,
+      lat: form.lat,
+      lng: form.lng,
+      weekdayStime: toHHMMSS(form.weekdayStime),
+      weekdayEtime: toHHMMSS(form.weekdayEtime),
+      weekendStime: toHHMMSS(form.weekendStime),
+      weekendEtime: toHHMMSS(form.weekendEtime),
+      basicAddress: form.basicAddress,
+      detailAddress: form.detailAddress,
+      fee: form.fee,
+      usageGuide: form.usageGuide,
+      facilities: form.facilities,
+      caution: form.caution,
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isFormDirty]);
 
-  // ✅ 라우터 이동 방지
-  usePrompt(
-    '이 페이지를 벗어나시겠습니까? 작성하신 내용은 저장되지 않습니다.',
-    isFormDirty
-  );
+    formData.append(
+      'placeDto',
+      new Blob([JSON.stringify(placeDto)], { type: 'application/json' })
+    );
+
+    // 신규 이미지
+    imagePreviews.forEach((img, i) => {
+      if (typeof img === 'string' && img.startsWith('data:image/')) {
+        const file = dataURLtoFile(img, `otherPlace_${i}.jpg`);
+        if (file) formData.append('placeImages', file);
+      }
+    });
+
+    // 기존 이미지
+    const existingImages = imagePreviews.filter(
+      (img) => typeof img === 'string' && !img.startsWith('data:image/')
+    );
+    formData.append(
+      'existingImages',
+      new Blob([JSON.stringify(existingImages)], {
+        type: 'application/json',
+      })
+    );
+
+    // keywords
+    formData.append(
+      'keywords',
+      new Blob([JSON.stringify(form.keywords)], { type: 'application/json' })
+    );
+
+    try {
+      const res = await axios.post(
+        `${url}/admin/otherPlaceEdit/${placeId}`,
+        formData
+      );
+      console.log(res);
+      alert('수정 완료!');
+      navigate('/admin/otherPlaceList');
+    } catch (err) {
+      console.error(err);
+      alert('수정 실패');
+    }
+  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -105,220 +227,42 @@ export default function OtherPlaceEdit() {
         <button className="p-2 hover:bg-gray-100 rounded-lg">
           <ArrowLeft
             className="w-6 h-6"
-            onClick={() => navigate('/otherPlaceList')}
+            onClick={() => navigate('/admin/otherPlaceList')}
           />
         </button>
         <h1 className="text-2xl font-bold">외부 장소 수정</h1>
       </div>
-
-      <form className="space-y-8" onChange={() => setIsFormDirty(true)}>
-        {/* 기본 정보 */}
-        <section className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-6">기본 정보</h2>
-          <div className="grid gap-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">장소명</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="장소명을 입력하세요"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">주소</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="주소를 입력하세요"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">전화번호</label>
-              <input
-                type="tel"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="전화번호를 입력하세요"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">홈페이지</label>
-              <input
-                type="tel"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="홈페이지를 입력하세요"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  평일 운영시간
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="time"
-                    className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                  />
-                  <span className="flex items-center">-</span>
-                  <input
-                    type="time"
-                    className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  주말 운영시간
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="time"
-                    className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                  />
-                  <span className="flex items-center">-</span>
-                  <input
-                    type="time"
-                    className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 상세 정보 */}
-        <section className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-6">상세 정보</h2>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                공간 소개
-              </label>
-              <textarea
-                rows={4}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="공간에 대해 소개해주세요"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">키워드</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {keywords.map((keyword, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-[#F3F7EC] text-[#006989] rounded-full text-sm flex items-center gap-1"
-                  >
-                    {keyword}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveKeyword(index)}
-                      className="hover:text-red-500"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <input
-                type="text"
-                value={newKeyword}
-                onChange={(e) => setNewKeyword(e.target.value)}
-                onKeyPress={handleAddKeyword}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="키워드를 입력하고 Enter를 눌러주세요"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                공간 사진
-              </label>
-              <div className="flex items-center gap-4">
-                {imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-32 h-32 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setImagePreview(null)}
-                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="w-32 h-32 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#006989]">
-                    <Upload className="w-6 h-6 text-gray-400" />
-                    <span className="mt-2 text-sm text-gray-500">
-                      사진 업로드
-                    </span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
-                  </label>
-                )}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                이용 요금
-              </label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="이용 요금을 입력하세요"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                사용 안내
-              </label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="사용 안내를 입력하세요"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                시설 안내
-              </label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="시설 안내를 입력하세요"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">유의사항</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
-                placeholder="유의사항을 입력하세요"
-              />
-            </div>
-          </div>
-        </section>
-
-        <div className="flex gap-4">
+      <div className="space-y-8">
+        <BasicInfoSection form={form} onChange={handleInputChange} />
+        <DetailInfoSection
+          form={form}
+          newKeyword={newKeyword}
+          setNewKeyword={setNewKeyword}
+          onChange={handleInputChange}
+          onAddKeyword={handleAddKeyword}
+          onRemoveKeyword={handleRemoveKeyword}
+          imagePreviews={imagePreviews}
+          setImagePreviews={setImagePreviews}
+          onImageUpload={handleImageUpload}
+          onRemoveImage={handleRemoveImage}
+        />
+        <div className="flex gap-4 mt-8">
           <button
             type="submit"
-            className="flex-1 px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-all duration-200"
+            className="flex-1 bg-[#006989] text-white px-6 py-3 rounded-lg"
+            onClick={handleSubmit}
           >
-            저장하기
+            수정하기
           </button>
           <button
             type="button"
-            className="flex-1 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200"
+            className="flex-1 border px-6 py-3 rounded-lg"
+            onClick={() => navigate('/admin/otherPlaceList')}
           >
             취소
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

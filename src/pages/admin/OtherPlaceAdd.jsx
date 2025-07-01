@@ -12,17 +12,18 @@ import { useAtomValue } from 'jotai';
 export default function OtherPlaceAdd() {
   const [form, setForm] = useState({
     name: '',
-    address: '',
+    basicAddress: '',
+    detailAddress: '',
     phone: '',
     domain: '',
     weekdayStime: '',
     weekdayEtime: '',
     weekendStime: '',
     weekendEtime: '',
-    description: '',
-    price: '',
+    introduce: '',
+    fee: '',
     usageGuide: '',
-    facilityGuide: '',
+    facilities: '',
     caution: '',
     keywords: [],
     images: [],
@@ -91,17 +92,55 @@ export default function OtherPlaceAdd() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
+    // 유효성 검사
+    const requiredFields = [
+      { key: 'name', label: '장소명' },
+      { key: 'basicAddress', label: '기본주소' },
+      { key: 'detailAddress', label: '상세주소' },
+      { key: 'phone', label: '전화번호' },
+      { key: 'domain', label: '홈페이지' },
+      { key: 'weekdayStime', label: '평일 시작시간' },
+      { key: 'weekdayEtime', label: '평일 종료시간' },
+      { key: 'weekendStime', label: '주말 시작시간' },
+      { key: 'weekendEtime', label: '주말 종료시간' },
+      { key: 'introduce', label: '공간 소개' },
+      { key: 'fee', label: '이용 요금' },
+      { key: 'usageGuide', label: '사용 안내' },
+      { key: 'facilities', label: '시설 안내' },
+      { key: 'caution', label: '유의사항' },
+    ];
 
+    for (const field of requiredFields) {
+      if (!form[field.key] || form[field.key].toString().trim() === '') {
+        alert(`${field.label}을(를) 입력해주세요.`);
+        return;
+      }
+    }
+
+    if (form.lat === undefined || form.lng === undefined) {
+      alert('위치(좌표)를 선택해주세요.');
+      return;
+    }
+
+    if (!form.keywords || form.keywords.length === 0) {
+      alert('키워드를 하나 이상 입력해주세요.');
+      return;
+    }
+
+    if (!form.images || form.images.length === 0) {
+      alert('이미지를 한 장 이상 첨부해주세요.');
+      return;
+    }
+
+    const formData = new FormData();
     const toHHMMSS = (str) => (str ? str + ':00' : null);
+
     // 1. placeDto JSON 직렬화해서 넣기
     const placeDto = {
       name: form.name,
       phone: form.phone,
       domain: form.domain,
-      fee: parseInt(form.fee) || 0,
-      facilities: form.facilities,
-      introduce: form.description,
+      introduce: form.introduce,
       lat: form.lat,
       lng: form.lng,
       weekdayStime: toHHMMSS(form.weekdayStime),
@@ -109,7 +148,10 @@ export default function OtherPlaceAdd() {
       weekendStime: toHHMMSS(form.weekendStime),
       weekendEtime: toHHMMSS(form.weekendEtime),
       basicAddress: form.basicAddress,
-      detailAddress: form.detailAddress,
+      detailAddress: form.detailAddress, // 필요시 detailAddress도 검증에 포함
+      fee: form.fee,
+      usageGuide: form.usageGuide,
+      facilities: form.facilities,
       caution: form.caution,
     };
 
@@ -157,7 +199,7 @@ export default function OtherPlaceAdd() {
         </button>
         <h1 className="text-2xl font-bold">외부 장소 추가</h1>
       </div>
-      <form className="space-y-8">
+      <div className="space-y-8">
         <BasicInfoSection form={form} onChange={handleInputChange} />
         <DetailInfoSection
           form={form}
@@ -186,7 +228,7 @@ export default function OtherPlaceAdd() {
             취소
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
