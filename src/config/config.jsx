@@ -29,7 +29,7 @@ export const createAxios = (token, setToken) => {
       const status = error.response?.status;
       if (status === 401 || status === 403) {
         window.location.href = `${reactUrl}/login`;
-        return;
+        return Promise.reject(error); //토큰 만료 시 무한 호출되서 리턴값 줌
       }
       return Promise.reject(error);
     }
