@@ -139,19 +139,19 @@ const ClassList = () => {
                 className={`px-4 py-2 rounded-full ${sortBy === 'deadline' ? 'bg-[#006989] text-white' : 'bg-gray-100 text-gray-700'}`}
                 onClick={() => setSortBy('deadline')}
               >
-                ⏱ 마감 임박 순
+                마감 임박 순
               </button>
               <button
                 className={`px-4 py-2 rounded-full ${sortBy === 'start' ? 'bg-[#006989] text-white' : 'bg-gray-100 text-gray-700'}`}
                 onClick={() => setSortBy('start')}
               >
-                📆 빠른 시작 순
+                빠른 시작 순
               </button>
               <button
                 className={`px-4 py-2 rounded-full ${sortBy === 'likes' ? 'bg-[#006989] text-white' : 'bg-gray-100 text-gray-700'}`}
                 onClick={() => setSortBy('likes')}
               >
-                ❤️ 좋아요 많은 순
+                좋아요 순
               </button>
             </div>
           </div>
