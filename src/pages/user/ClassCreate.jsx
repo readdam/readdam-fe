@@ -119,7 +119,7 @@ const ClassCreate = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Handle form submission
-    console.log("Form submitted:", form);
+    // console.log("Form submitted:", form);
     const submitData = new FormData();
     submitData.append("title", form.title);
     submitData.append("shortIntro", form.shortDescription);

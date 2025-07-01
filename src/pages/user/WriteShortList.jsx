@@ -1,3 +1,4 @@
+// src/pages/write/WriteShortList.jsx
 import { useEffect, useState } from 'react'
 import { HeartIcon, PenIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -9,105 +10,128 @@ import PostcardModal from '@components/write/PostcardModal'
 import TimeRemainingText from '@components/write/TimeRemainingText';
 import PostItCard from '@components/write/PostItCard';
 import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
+import ReportModal from '@components/ReportModal'
+import singoIcon from "@assets/singo.png";
 
 const WriteShortList = () => {
-  const axios = useAxios();
+  const axios = useAxios()
   const navigate = useNavigate()
-  const [showModal, setShowModal] = useState(false)
-  const [answerText, setAnswerText] = useState('')
-  const [selectedColor, setSelectedColor] = useState('mint')
   const [token] = useAtom(tokenAtom)
   const [user] = useAtom(userAtom)
-  const [answers, setAnswers] = useState([])
-  const [pageInfo, setPageInfo] = useState(null)
-  const [page, setPage] = useState(1)
-  const [hasWritten, setHasWritten] = useState(null)  // 로그인한 사용자가 글 썼는지
-  const [event, setEvent] = useState(null)
-  const [totalCount, setTotalCount] = useState(0);
+
+
+  // 글/이벤트 관련
+  const [event, setEvent]         = useState(null)
+  const [answers, setAnswers]     = useState([])
+  const [pageInfo, setPageInfo]   = useState(null)
+  const [page, setPage]           = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+  const [hasWritten, setHasWritten] = useState(null)
+
   const { toggleLike } = useListWriteShortLike(setAnswers);
 
-  const handleReport = (writeshortId) => {
-    alert('신고가 접수되었습니다.')
-  }
-     // 최초 진입 시 (user와 무관)
-      useEffect(() => {
-        fetchEvent()
-        fetchAnswers(1) // 여기도 로그인 관계없이
-      }, [])
+  // 답변 작성 모달
+  const [showModal, setShowModal]       = useState(false)
+  const [answerText, setAnswerText]     = useState('')
+  const [selectedColor, setSelectedColor] = useState('mint')
 
-      useEffect(() => {
-        if (!user?.username || !token?.access_token) return; // session 복구되면 실행
-        fetchAnswers(1)
-      }, [user, token])
+  // 신고 모달 상태
+  const [showReportModal, setShowReportModal]     = useState(false)
+  const [showReportConfirm, setShowReportConfirm] = useState(false)
+  const [reportTarget, setReportTarget]           = useState({ id: null, username: null })
+  const [reportType, setReportType]               = useState('')
+  const [reportContent, setReportContent]         = useState('')
 
-
-      // 로그인 여부 또는 답변 변경 시 작성 여부 확인
-      useEffect(() => {
-        if (user === undefined) return
-        if (user === null) {
-          setHasWritten(false)
-        } else {
-          const alreadyWrote = answers.some((a) => a.username === user.username)
-          setHasWritten(alreadyWrote)
-        }
-      }, [user, answers])
-
-      // 이벤트 정보 불러오기
-      const fetchEvent = async () => {
-        try {
-          const res = await axios.get(`${url}/event`)
-          setEvent(res.data)
-        } catch (err) {
-          console.error('이벤트 데이터 불러오기 실패', err)
-        }
-      }
-
-    // 답변 목록 불러오기
-    const fetchAnswers = async (pageNum) => {
-      try {
-            const res = await axios.get(`${url}/writeShortList?page=${pageNum}&size=10`);
-
-        const { list: writeShortList, pageInfo, totalCount } = res.data;
-
-        setAnswers(prev => pageNum === 1 ? writeShortList : [...prev, ...writeShortList]);
-        setPageInfo(pageInfo);
-        setTotalCount(totalCount || 0);
-
-        // 로그인 사용자만 hasWritten 계산
-          if (user?.username) {
-            const alreadyWrote = writeShortList.some(a => a.username === user.username);
-            setHasWritten(alreadyWrote);
-          } else {
-            setHasWritten(false); // 비로그인 사용자도 버튼이 안 보이도록 처리
-          }
-
-      } catch (err) {
-        console.error('글 목록 불러오기 실패', err);
-      }
+  // 색상 매핑
+  const getPostItColor = (color) => {
+    switch (color) {
+      case 'mint':  return 'bg-[#E8F3F1]'
+      case 'yellow':return 'bg-[#FFF8E7]'
+      case 'pink':  return 'bg-[#FFE8F3]'
+      default:      return 'bg-[#E8F3F1]'
     }
+  }
 
-  // 추가된 데이터 반영 + 버튼 비활성
-  const handleSubmitAnswer = async () => {
-      if (!token?.access_token || !user) {
-        alert('로그인이 필요한 서비스입니다');
-        navigate('/login');
-        return;
-      }
+  // 신고 버튼 클릭 → 폼 모달 열기
+  const handleReportClick = (answer) => {
+    setReportTarget({ id: answer.writeshortId, username: answer.username })
+    setReportType('')
+    setReportContent('')
+    setShowReportModal(true)
+  }
 
-    if (!answerText.trim()) return
+  // 신고 제출 성공 콜백
+  const handleReportSuccess = () => {
+    setShowReportModal(false)
+    setShowReportConfirm(true)
+  }
 
+  // 확인 모달 닫힐 때 알림
+  const handleConfirmClose = () => {
+    setShowReportConfirm(false)
+    window.alert('신고가 완료되었습니다.')
+  }
+
+  // 초기 데이터
+  useEffect(() => {
+    fetchEvent()
+    fetchAnswers(1)
+  }, [])
+
+  // 로그인 복구 후 재조회
+  useEffect(() => {
+    if (user?.username && token?.access_token) {
+      fetchAnswers(1)
+    }
+  }, [user, token])
+
+  // 작성 여부 체크
+  useEffect(() => {
+    if (user == null) {
+      setHasWritten(false)
+    } else {
+      setHasWritten(answers.some(a => a.username === user.username))
+    }
+  }, [user, answers])
+
+  // 이벤트 정보
+  const fetchEvent = async () => {
     try {
-      const res = await axios.post(`${url}/my/writeShort`, {
-        content: answerText,
-        color: selectedColor,
-      })
+      const res = await axios.get(`${url}/event`)
+      setEvent(res.data)
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
+  // 답변 목록
+  const fetchAnswers = async (pageNum) => {
+    try {
+      const res = await axios.get(`${url}/writeShortList?page=${pageNum}&size=10`)
+      const { list, pageInfo, totalCount } = res.data
+      setAnswers(prev => pageNum === 1 ? list : [...prev, ...list])
+      setPageInfo(pageInfo)
+      setTotalCount(totalCount || 0)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  // 답변 작성
+  const handleSubmitAnswer = async () => {
+    if (!user || !token?.access_token) {
+      alert('로그인이 필요한 서비스입니다')
+      return navigate('/login')
+    }
+    if (!answerText.trim()) return
+    try {
+      const res = await axios.post(`${url}/my/writeShort`, { content: answerText, color: selectedColor })
       setAnswers([res.data, ...answers])
       setHasWritten(true)
-      setAnswerText('')
       setShowModal(false)
+      setAnswerText('')
     } catch (err) {
-      console.error('답변 작성 실패', err)
+      console.error(err)
       alert('작성 실패')
     }
   }
@@ -116,53 +140,40 @@ const WriteShortList = () => {
   return (
     <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
       <div className="container mx-auto px-4">
-        {/* 탭 메뉴 */}
+        {/* 탭 & 작성 버튼 */}
         <div className="flex justify-between items-center mb-8">
           <div className="flex gap-6">
+            <button onClick={() => navigate('/writeList')} className="text-xl font-bold text-gray-400">전체 글</button>
+            <button className="text-xl font-bold text-[#006989]">읽담한줄</button>
+          </div>
+          {hasWritten !== null && (
             <button
-              onClick={() => navigate('/writeList')}
-              className="text-xl font-bold text-gray-400"
+              onClick={() => {
+                if (!user || !token?.access_token) {
+                  alert('로그인이 필요한 서비스입니다')
+                  return navigate('/login')
+                }
+                setShowModal(true)
+              }}
+              disabled={hasWritten}
+              className={`flex items-center px-6 py-2.5 rounded-lg transition-colors 
+                ${hasWritten ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#006989] text-white hover:bg-[#005C78]'}`}
             >
-              전체 글
+              <PenIcon className="w-5 h-5 mr-2" />
+              {hasWritten ? '이미 작성함' : '답변작성'}
             </button>
-            <button className="text-xl font-bold text-[#006989]">
-              읽담한줄
-            </button>
-          </div>
-              {hasWritten !== null && (
-                <button
-                  onClick={() => {
-                    if (!token?.access_token || !user) {
-                      alert('로그인이 필요한 서비스입니다');
-                      navigate('/login');
-                      return;
-                    }
-                    setShowModal(true);
-                  }}
-                  disabled={hasWritten}
-                  className={`flex items-center px-6 py-2.5 rounded-lg transition-colors 
-                    ${hasWritten ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#006989] text-white hover:bg-[#005C78]'}`}
-                >
-                  <PenIcon className="w-5 h-5 mr-2" />
-                  {hasWritten ? '이미 작성함' : '답변작성'}
-                </button>
-              )}
-            </div>
-        {/* 질문 영역 */}
-          <div className="bg-white rounded-lg p-6 mb-8 shadow-sm border-2 border-[#E88D67]">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-bold text-[#006989]">
-                {event?.title || '이달의 담소 업데이트 중...'}
-              </h2>
-              <div className="flex items-center text-sm text-gray-500">
-                <span>
-                  <TimeRemainingText endDate={event?.endTime} autoUpdate={true} />
-                </span>
-              </div>
-            </div>
-          </div>
+          )}
+        </div>
 
-        {/* 총 글 수 표시 */}
+        {/* 이벤트 정보 */}
+        <div className="bg-white rounded-lg p-6 mb-8 shadow-sm border-2 border-[#E88D67]">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-2xl font-bold text-[#006989]">{event?.title || '이달의 담소...'}</h2>
+            <TimeRemainingText endDate={event?.endTime} autoUpdate />
+          </div>
+        </div>
+
+        {/* 총 글 수 */}
         {totalCount > 0 && (
             <div className="text-gray-500 text-sm mt-4 mb-8">
               총 {totalCount.toLocaleString()}개의 글
@@ -172,35 +183,46 @@ const WriteShortList = () => {
         {/* Post-it 답변카드들 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {answers.map((answer) => (
+          <div key={answer.writeshortId} className="relative">
             <PostItCard
-              key={answer.writeshortId}
+
               color={answer.color}
               nickname={answer.nickname}
               content={answer.content}
               likes={answer.likes}
               isLiked={answer.isLiked}
               onLikeClick={() => toggleLike(answer.writeshortId)}
-              onReportClick={() => handleReport(answer.writeshortId)}
             />
+
+
+              {/* 신고 버튼 */}
+              <button
+                onClick={() => handleReportClick(answer)}
+                className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600"
+              >
+                <img src={singoIcon} alt="신고" className="w-5 h-5" />
+              </button>
+            </div>
           ))}
         </div>
-        {/* 더보기 버튼 */}
+
+        {/* 더보기 */}
         {pageInfo && page < pageInfo.totalPages && (
           <div className="flex justify-center mt-8">
             <button
               onClick={() => {
-                const nextPage = page + 1
-                fetchAnswers(nextPage)
-                setPage(nextPage)
+                const next = page + 1
+                fetchAnswers(next)
+                setPage(next)
               }}
-              className="px-4 py-2 border border-gray-200 rounded text-sm hover:bg-gray-50"
+              className="px-4 py-2 border rounded hover:bg-gray-50"
             >
               더보기
             </button>
           </div>
         )}
 
-        {/* 모달 컴포넌트 */}
+        {/* 답변 작성 모달 */}
         {showModal && (
           <PostcardModal
             answerText={answerText}
@@ -211,8 +233,24 @@ const WriteShortList = () => {
             onClose={() => setShowModal(false)}
           />
         )}
+
+        {/* 신고 폼 모달 */}
+        {showReportModal && (
+          <ReportModal
+            setShowReportModal={setShowReportModal}
+            reportType={reportType}
+            setReportType={setReportType}
+            reportContent={reportContent}
+            setReportContent={setReportContent}
+            targetCategory="write_short"
+            targetCategoryId={reportTarget.id}
+            reportedUsername={reportTarget.username}
+            handleRefresh={handleReportSuccess}
+          />
+        )}
       </div>
     </section>
   )
 }
+
 export default WriteShortList
