@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchPlaces } from '@api/place';
 import PlaceCard from '@components/place/PlaceCard';
 import {
@@ -9,93 +10,63 @@ import {
   CoffeeIcon,
 } from 'lucide-react';
 import axios from 'axios';
+import { useAtomValue } from 'jotai';
+import { userAtom } from '../../atoms';
 
 const Place = () => {
-  const [places, setPlaces] = useState([]);
-  const [page, setPage] = useState(0);
-  const [pageInfo, setPageInfo] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('latest');
+  const [page, setPage] = useState(0);
+  const user = useAtomValue(userAtom);
 
-  const loadData = async (nextPage = 0) => {
-    setLoading(true);
-    try {
-      const data = await fetchPlaces(axios, {
-        page: nextPage,
+  console.log(user);
+
+  // 핵심: queryKey에 모든 파라미터를 넣는다.
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['places', { selectedCategory, searchQuery, sortBy, page }],
+    queryFn: async () => {
+      const res = await fetchPlaces(axios, {
+        page,
         size: 12,
-        // tag: selectedCategory,
         tag: selectedCategory === '읽담' ? null : selectedCategory,
         keyword: searchQuery,
         placeType: selectedCategory === '읽담' ? 'PLACE' : 'ALL',
-        sortBy: sortBy,
+        sortBy,
+        lat: user.lat,
+        lng: user.lng,
       });
+      return res;
+    },
+    keepPreviousData: true,
+  });
 
-      const mapped = data.content.map((place) => ({
-        // id: place.id,
-        id: place.type === 'OTHER' ? `other-${place.id}` : `place-${place.id}`,
-        name: place.name,
-        address: place.basicAddress,
-        image: place.img1,
-        tags: [
-          place.tag1,
-          place.tag2,
-          place.tag3,
-          place.tag4,
-          place.tag5,
-          place.tag6,
-          place.tag7,
-          place.tag8,
-          place.tag9,
-          place.tag10,
-        ].filter(Boolean),
-        likes: place.likeCount,
-        isPromoted: place.type === 'OTHER',
-      }));
+  const mapped =
+    data?.content.map((place) => ({
+      id: place.type === 'OTHER' ? `other-${place.id}` : `place-${place.id}`,
+      name: place.name,
+      address: place.basicAddress,
+      image: place.img1,
+      tags: [
+        place.tag1,
+        place.tag2,
+        place.tag3,
+        place.tag4,
+        place.tag5,
+        place.tag6,
+        place.tag7,
+        place.tag8,
+        place.tag9,
+        place.tag10,
+      ].filter(Boolean),
+      likes: place.likeCount,
+      isPromoted: place.type === 'OTHER',
+    })) ?? [];
 
-      setPlaces(mapped);
-      console.log(mapped);
-      console.log(selectedCategory);
-      setPageInfo(data.pageInfo);
-    } catch (err) {
-      console.error('장소 목록 조회 실패:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData(0, searchQuery);
-  }, [selectedCategory, sortBy]);
-
-  const filteredPlaces = places
-    .filter((place) => {
-      // selectedCategory가 없으면 전체
-      if (!selectedCategory) return true;
-
-      // 읽담은 태그로 필터하지 않는다
-      if (selectedCategory === '읽담') return true;
-
-      // 나머지 카테고리는 태그 필터
-      return place.tags.includes(selectedCategory);
-    })
-    .filter((place) => {
-      if (!searchQuery) return true;
-      return (
-        place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        place.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        place.tags.some((tag) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    });
-
-  const finalPlaces = filteredPlaces;
-
+  // 검색 시 refetch
   const handleSearch = (e) => {
-    if (e) e.preventDefault();
-    loadData(0);
+    e.preventDefault();
+    refetch();
   };
 
   return (
@@ -108,7 +79,8 @@ const Place = () => {
             다양한 공간을 만나볼 수 있습니다.
           </p>
         </div>
-        {/* 검색 및 필터 */}
+
+        {/* 검색 */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-grow relative">
@@ -134,86 +106,30 @@ const Place = () => {
                 <MapPinIcon className="w-5 h-5 mr-1 text-[#006989]" />
                 <span>내 근처</span>
               </button>
-              <div className="relative">
-                <button className="flex items-center justify-center px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
-                  <FilterIcon className="w-5 h-5 mr-1 text-[#006989]" />
-                  <span>필터</span>
-                </button>
-              </div>
             </div>
           </div>
         </div>
+
         {/* 카테고리 필터 */}
         <div className="mb-8 flex flex-wrap gap-2">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-full text-sm font-medium ${
-              !selectedCategory
-                ? 'bg-[#006989] text-white'
-                : 'bg-white text-gray-700 border border-gray-200'
-            }`}
-          >
-            전체
-          </button>
-          <button
-            onClick={() => setSelectedCategory('읽담')}
-            className={`px-4 py-2 rounded-full text-sm font-medium ${
-              selectedCategory === '읽담'
-                ? 'bg-[#006989] text-white'
-                : 'bg-white text-gray-700 border border-gray-200'
-            }`}
-          >
-            읽담
-          </button>
-          <button
-            onClick={() => setSelectedCategory('카페')}
-            className={`px-4 py-2 rounded-full text-sm font-medium flex items-center ${
-              selectedCategory === '카페'
-                ? 'bg-[#006989] text-white'
-                : 'bg-white text-gray-700 border border-gray-200'
-            }`}
-          >
-            <CoffeeIcon className="w-4 h-4 mr-1" />
-            카페
-          </button>
-          <button
-            onClick={() => setSelectedCategory('북카페')}
-            className={`px-4 py-2 rounded-full text-sm font-medium flex items-center ${
-              selectedCategory === '북카페'
-                ? 'bg-[#006989] text-white'
-                : 'bg-white text-gray-700 border border-gray-200'
-            }`}
-          >
-            <BookOpenIcon className="w-4 h-4 mr-1" />
-            북카페
-          </button>
-          <button
-            onClick={() => setSelectedCategory('서점')}
-            className={`px-4 py-2 rounded-full text-sm font-medium ${
-              selectedCategory === '서점'
-                ? 'bg-[#006989] text-white'
-                : 'bg-white text-gray-700 border border-gray-200'
-            }`}
-          >
-            서점
-          </button>
-          <button
-            onClick={() => setSelectedCategory('독서모임')}
-            className={`px-4 py-2 rounded-full text-sm font-medium ${
-              selectedCategory === '독서모임'
-                ? 'bg-[#006989] text-white'
-                : 'bg-white text-gray-700 border border-gray-200'
-            }`}
-          >
-            독서모임
-          </button>
+          {['전체', '읽담', '카페', '북카페', '서점', '독서모임'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat === '전체' ? null : cat)}
+              className={`px-4 py-2 rounded-full text-sm font-medium ${
+                selectedCategory === (cat === '전체' ? null : cat)
+                  ? 'bg-[#006989] text-white'
+                  : 'bg-white text-gray-700 border border-gray-200'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
-        {/* <div className="mb-8 flex flex-wrap gap-2">
-          <button></button>
-        </div> */}
-        {/* 정렬 옵션 */}
+
+        {/* 정렬 */}
         <div className="mb-6 flex justify-between items-center">
-          <p className="text-gray-600">총 {finalPlaces.length}개의 장소</p>
+          <p className="text-gray-600">총 {mapped.length}개의 장소</p>
           <div className="flex gap-2">
             <button
               onClick={() => setSortBy('latest')}
@@ -237,21 +153,25 @@ const Place = () => {
             </button>
           </div>
         </div>
-        {/* 장소 목록 */}
+
+        {/* 목록 */}
+        {isLoading && <div className="text-center py-16">로딩중...</div>}
+        {isError && (
+          <div className="text-center py-16 text-red-500">데이터 로드 실패</div>
+        )}
+        {!isLoading && !isError && mapped.length === 0 && (
+          <div className="text-center py-16">
+            <BookOpenIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">검색 결과가 없습니다.</p>
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {finalPlaces.map((place) => (
+          {mapped.map((place) => (
             <div key={place.id}>
               <PlaceCard place={place} size="large" />
             </div>
           ))}
         </div>
-        {finalPlaces.length === 0 && !loading && (
-          <div className="text-center py-16">
-            <BookOpenIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">검색 결과가 없습니다.</p>
-            <p className="text-gray-400">다른 키워드로 검색해보세요.</p>
-          </div>
-        )}
       </main>
     </div>
   );

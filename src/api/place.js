@@ -46,12 +46,23 @@ export const updatePlace = async (token, placeId, formData) => {
 
 export async function fetchPlaces(
   axios,
-  { page = 0, size = 12, tag, keyword, placeType = 'ALL', lat, lng, radiusKm }
+  {
+    page = 0,
+    size = 12,
+    tag,
+    keyword,
+    placeType = 'ALL',
+    lat,
+    lng,
+    radiusKm,
+    sortBy = 'latest',
+  }
 ) {
   const params = {
     page,
     size,
     placeType,
+    sortBy,
   };
 
   if (tag) params.tag = tag;
