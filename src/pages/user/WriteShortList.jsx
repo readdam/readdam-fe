@@ -5,18 +5,20 @@ import { useNavigate } from 'react-router-dom'
 import { useAxios } from '../../hooks/useAxios'
 import { useAtom } from 'jotai'
 import { tokenAtom, userAtom } from '../../atoms'
-import { url } from '../../config/config'
-import singoIcon from '@assets/singo.png'
-
+import { url } from '../../config/config';
 import PostcardModal from '@components/write/PostcardModal'
+import TimeRemainingText from '@components/write/TimeRemainingText';
+import PostItCard from '@components/write/PostItCard';
+import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
 import ReportModal from '@components/ReportModal'
-import TimeRemainingText from '@components/write/TimeRemainingText'
+import singoIcon from "@assets/singo.png";
 
 const WriteShortList = () => {
   const axios = useAxios()
   const navigate = useNavigate()
   const [token] = useAtom(tokenAtom)
-  const [user]  = useAtom(userAtom)
+  const [user] = useAtom(userAtom)
+
 
   // 글/이벤트 관련
   const [event, setEvent]         = useState(null)
@@ -25,6 +27,8 @@ const WriteShortList = () => {
   const [page, setPage]           = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const [hasWritten, setHasWritten] = useState(null)
+
+  const { toggleLike } = useListWriteShortLike(setAnswers);
 
   // 답변 작성 모달
   const [showModal, setShowModal]       = useState(false)
@@ -132,26 +136,6 @@ const WriteShortList = () => {
     }
   }
 
-  // 좋아요 토글
-  const handleToggleLike = async (id) => {
-    if (!token?.access_token) {
-      alert('로그인이 필요한 서비스입니다')
-      return navigate('/login')
-    }
-    try {
-      const isLiked = await axios.post(`${url}/my/writeShort-like`, { writeshortId: id })
-        .then(res => res.data)
-      setAnswers(prev =>
-        prev.map(a =>
-          a.writeshortId === id
-            ? { ...a, isLiked, likes: a.likes + (isLiked ? 1 : -1) }
-            : a
-        )
-      )
-    } catch (err) {
-      console.error(err)
-    }
-  }
 
   return (
     <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
@@ -191,31 +175,26 @@ const WriteShortList = () => {
 
         {/* 총 글 수 */}
         {totalCount > 0 && (
-          <div className="text-gray-500 text-sm mt-4 mb-8">
-            총 {totalCount.toLocaleString()}개의 글
-          </div>
-        )}
+            <div className="text-gray-500 text-sm mt-4 mb-8">
+              총 {totalCount.toLocaleString()}개의 글
+            </div>
+          )} 
 
-        {/* 답변 카드 */}
+        {/* Post-it 답변카드들 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {answers.map(answer => (
-            <div
-              key={answer.writeshortId}
-              className={`${getPostItColor(answer.color)} p-4 rounded-sm shadow-md hover:shadow-lg transition-shadow relative transform hover:-rotate-1 hover:translate-y-[-2px]`}
-              style={{ aspectRatio: '1/1', backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)' }}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-semibold text-sm text-[#006989]">{answer.nickname}</span>
-                <button onClick={() => handleToggleLike(answer.writeshortId)} className="flex items-center gap-1">
-                  <HeartIcon className={`w-4 h-4 ${answer.isLiked ? 'fill-[#E88D67] text-[#E88D67]' : 'text-gray-400'}`} />
-                  <span>{answer.likes}</span>
-                </button>
-              </div>
-              <div className="flex items-center justify-center h-[70%] pt-16">
-                <p className="text-center text-lg font-bold text-gray-500 leading-snug break-words" style={{ fontFamily: 'NanumGaram' }}>
-                  {answer.content}
-                </p>
-              </div>
+        {answers.map((answer) => (
+          <div key={answer.writeshortId} className="relative">
+            <PostItCard
+
+              color={answer.color}
+              nickname={answer.nickname}
+              content={answer.content}
+              likes={answer.likes}
+              isLiked={answer.isLiked}
+              onLikeClick={() => toggleLike(answer.writeshortId)}
+            />
+
+
               {/* 신고 버튼 */}
               <button
                 onClick={() => handleReportClick(answer)}
