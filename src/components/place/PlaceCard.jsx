@@ -1,5 +1,6 @@
 import React from 'react';
 import { HeartIcon, MapPinIcon } from 'lucide-react';
+import { url } from '@config/config';
 
 const PlaceCard = ({ place, size = 'large' }) => {
   const isSmall = size === 'small';
@@ -14,7 +15,7 @@ const PlaceCard = ({ place, size = 'large' }) => {
       <div className={`relative ${isSmall ? 'h-32' : 'h-48'} bg-gray-200`}>
         {place.image ? (
           <img
-            src={place.image}
+            src={`${url}/image?filename=${place.image}`}
             alt={place.name}
             className="w-full h-full object-cover"
           />
@@ -46,7 +47,7 @@ const PlaceCard = ({ place, size = 'large' }) => {
           <span className="line-clamp-1">{place.address}</span>
         </div>
         <div className="flex flex-wrap gap-1">
-          {place.tags.slice(0, isSmall ? 2 : 3).map((tag, index) => (
+          {place.tags.map((tag, index) => (
             <span
               key={index}
               className="px-2 py-0.5 bg-[#F3F7EC] text-[#006989] text-xs rounded-full"
