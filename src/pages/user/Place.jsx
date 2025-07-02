@@ -120,12 +120,6 @@ const Place = () => {
             >
               검색
             </button>
-            <div className="flex gap-2">
-              <button className="flex items-center justify-center px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
-                <MapPinIcon className="w-5 h-5 mr-1 text-[#006989]" />
-                <span>내 근처</span>
-              </button>
-            </div>
           </div>
         </div>
 
@@ -169,6 +163,22 @@ const Place = () => {
               }`}
             >
               인기순
+            </button>
+            <button
+              onClick={() => {
+                if (user.lat == null || user.lng == null) {
+                  alert('위치를 설정해주세요.');
+                  return;
+                }
+                setSortBy('distance');
+              }}
+              className={`px-3 py-1 text-sm rounded ${
+                sortBy === 'distance'
+                  ? 'bg-[#006989] text-white'
+                  : 'bg-white text-gray-700 border border-gray-200'
+              }`}
+            >
+              거리순
             </button>
           </div>
         </div>
