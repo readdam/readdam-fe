@@ -1,8 +1,8 @@
 import React from 'react';
 import { XIcon } from 'lucide-react';
-import { useAxios } from '../hooks/useAxios';
 import { useAtomValue } from 'jotai';
 import { userAtom } from '../atoms';
+import { useReport } from '../hooks/useReport';
 
 const ReportModal = ({
   setShowReportModal,
@@ -15,8 +15,8 @@ const ReportModal = ({
   reportedUsername,          // 신고 대상 유저의 PK
   handleRefresh,         // 제출 후 리스트 갱신
 }) => {
-  const axios = useAxios();
   const user = useAtomValue(userAtom);
+  const { submitReport } = useReport();
 
   const handleSubmitReport = async () => {
     if (!reportType) {
@@ -34,13 +34,12 @@ const ReportModal = ({
       reportedUsername: reportedUsername,
     };
 
-    try {
-      await axios.post('/my/report', payload);
+    const success = await submitReport(payload);
+
+    if (success) {
       setShowReportModal(false);
-      alert('신고가 완료되었습니다.');
       handleRefresh && handleRefresh();
-    } catch (err) {
-      console.error(err);
+    } else {
       alert('신고 제출 중 오류가 발생했습니다.');
     }
   };
