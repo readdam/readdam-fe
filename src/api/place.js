@@ -43,3 +43,36 @@ export const updatePlace = async (token, placeId, formData) => {
   });
   return response.data;
 };
+
+export async function fetchPlaces(
+  axios,
+  {
+    page = 0,
+    size = 12,
+    tag,
+    keyword,
+    placeType = 'ALL',
+    lat,
+    lng,
+    radiusKm,
+    sortBy = 'latest',
+  }
+) {
+  const params = {
+    page,
+    size,
+    placeType,
+    sortBy,
+  };
+
+  if (tag) params.tag = tag;
+  if (keyword) params.keyword = keyword;
+  if (lat && lng) {
+    params.lat = lat;
+    params.lng = lng;
+  }
+  if (radiusKm) params.radiusKm = radiusKm;
+
+  const response = await axios.get('/place/search', { params });
+  return response.data;
+}
