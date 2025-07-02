@@ -28,13 +28,13 @@ if (accessToken) {
 
 // → ③ 한 번만 렌더링
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <App />
       </BrowserRouter>
     </QueryClientProvider>
-  </StrictMode>
+
 );
 
 // → FCM Service Worker 등록
