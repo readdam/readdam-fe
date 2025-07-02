@@ -159,7 +159,7 @@ const operatingHoursData = {
     ],
   },
 };
-const PlaceDetail = () => {
+const OtherPlaceDetail = () => {
   const { id } = useParams(); // placeId
   const [placeData, setPlaceData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -237,4 +237,4 @@ const PlaceDetail = () => {
     </div>
   );
 };
-export default PlaceDetail;
+export default OtherPlaceDetail;

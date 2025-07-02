@@ -5,7 +5,7 @@ export const fetchPlaceList = async (
   token,
   { page = 0, size = 10, searchTerm = '', searchField = 'name' }
 ) => {
-  const response = await axios.get(`${url}/placeList`, {
+  const response = await axios.get(`${url}/admin/placeList`, {
     headers: {
       Authorization: token.access_token,
     },
@@ -21,7 +21,7 @@ export const fetchPlaceList = async (
 
 export const getPlace = async (token, placeId) => {
   try {
-    const res = await axios.get(`${url}/place/${placeId}`, {
+    const res = await axios.get(`${url}/admin/place/${placeId}`, {
       headers: {
         Authorization: token.access_token,
       },
@@ -35,12 +35,16 @@ export const getPlace = async (token, placeId) => {
 
 // 장소 수정 API
 export const updatePlace = async (token, placeId, formData) => {
-  const response = await axios.post(`${url}/placeEdit/${placeId}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: token.access_token,
-    },
-  });
+  const response = await axios.post(
+    `${url}/admin/placeEdit/${placeId}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: token.access_token,
+      },
+    }
+  );
   return response.data;
 };
 

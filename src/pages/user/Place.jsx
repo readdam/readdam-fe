@@ -9,15 +9,17 @@ import {
   BookOpenIcon,
   CoffeeIcon,
 } from 'lucide-react';
-import axios from 'axios';
 import { useAtomValue } from 'jotai';
 import { userAtom } from '../../atoms';
+import { useAxios } from '@hooks/useAxios';
+import { useNavigate } from 'react-router';
 
 const Place = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('latest');
   const user = useAtomValue(userAtom);
+  const axios = useAxios();
 
   // 핵심: queryKey에 모든 파라미터를 넣는다.
   const {
@@ -87,6 +89,7 @@ const Place = () => {
   };
 
   const totalCount = data?.pages[0]?.pageInfo?.totalElements ?? 0;
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -196,7 +199,15 @@ const Place = () => {
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {mapped.map((place) => (
-            <div key={place.id}>
+            <div
+              key={place.id}
+              className="cursor-pointer"
+              onClick={() => {
+                const [type, pid] = place.id.split('-');
+                if (type === 'place') navigate(`/placeDetail/${pid}`);
+                if (type === 'other') navigate(`/otherPlaceDetail/${pid}`);
+              }}
+            >
               <PlaceCard place={place} size="large" />
             </div>
           ))}
