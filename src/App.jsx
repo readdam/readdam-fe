@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './index.css';
-import { getFcmToken } from './fcmToken';
 import { messaging, onMessage } from './firebase';
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from './atoms';
@@ -81,6 +80,7 @@ import MyInquiry from '@pages/my/MyInquiry';
 import MyInquiryWrite from '@pages/my/MyInquiryWrite';
 import Success from '@pages/my/Success';
 import Fail from '@pages/my/Fail';
+import OtherPlaceDetail from '@pages/user/OtherPlaceDetail';
 
 function App() {
   useEffect(() => {
@@ -163,7 +163,8 @@ function App() {
 
         <Route element={<UserRoutes />}>
           <Route path="/join" element={<Join />} />
-          <Route path="/placeDetail" element={<PlaceDetail />} />
+          <Route path="/placeDetail/:id" element={<PlaceDetail />} />
+          <Route path="/otherPlaceDetail/:id" element={<OtherPlaceDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/oauth-redirect" element={<OAuthRedirect />} />
           <Route path="/" element={<Home />} />
