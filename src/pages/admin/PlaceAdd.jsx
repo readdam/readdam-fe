@@ -207,7 +207,7 @@ export default function PlaceAdd() {
       tag9: keywords[8] || null,
       tag10: keywords[9] || null,
       lat: lat,
-      log: lng,
+      lng: lng,
     };
     formData.append(
       'placeDto',
