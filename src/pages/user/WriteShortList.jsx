@@ -12,6 +12,8 @@ import PostItCard from '@components/write/PostItCard';
 import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
 import ReportModal from '@components/ReportModal'
 import singoIcon from "@assets/singo.png";
+import { useReport } from '../../hooks/useReport'; 
+import { useReportModal } from '../../hooks/useReportModal.jsx';
 
 const WriteShortList = () => {
   const axios = useAxios()
@@ -35,12 +37,7 @@ const WriteShortList = () => {
   const [answerText, setAnswerText]     = useState('')
   const [selectedColor, setSelectedColor] = useState('mint')
 
-  // 신고 모달 상태
-  const [showReportModal, setShowReportModal]     = useState(false)
-  const [showReportConfirm, setShowReportConfirm] = useState(false)
-  const [reportTarget, setReportTarget]           = useState({ id: null, username: null })
-  const [reportType, setReportType]               = useState('')
-  const [reportContent, setReportContent]         = useState('')
+  const { submitReport } = useReport();
 
   // 색상 매핑
   const getPostItColor = (color) => {
@@ -50,26 +47,6 @@ const WriteShortList = () => {
       case 'pink':  return 'bg-[#FFE8F3]'
       default:      return 'bg-[#E8F3F1]'
     }
-  }
-
-  // 신고 버튼 클릭 → 폼 모달 열기
-  const handleReportClick = (answer) => {
-    setReportTarget({ id: answer.writeshortId, username: answer.username })
-    setReportType('')
-    setReportContent('')
-    setShowReportModal(true)
-  }
-
-  // 신고 제출 성공 콜백
-  const handleReportSuccess = () => {
-    setShowReportModal(false)
-    setShowReportConfirm(true)
-  }
-
-  // 확인 모달 닫힐 때 알림
-  const handleConfirmClose = () => {
-    setShowReportConfirm(false)
-    window.alert('신고가 완료되었습니다.')
   }
 
   // 초기 데이터
@@ -136,6 +113,12 @@ const WriteShortList = () => {
     }
   }
 
+    const { openReportModal, ReportModalComponent } = useReportModal({
+    defaultCategory: 'write_short',
+    onSuccess: () => {
+      alert('신고가 완료되었습니다!');
+    },
+  });
 
   return (
     <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
@@ -197,7 +180,7 @@ const WriteShortList = () => {
 
               {/* 신고 버튼 */}
               <button
-                onClick={() => handleReportClick(answer)}
+                onClick={() => openReportModal(answer)}
                 className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600"
               >
                 <img src={singoIcon} alt="신고" className="w-5 h-5" />
@@ -234,20 +217,8 @@ const WriteShortList = () => {
           />
         )}
 
-        {/* 신고 폼 모달 */}
-        {showReportModal && (
-          <ReportModal
-            setShowReportModal={setShowReportModal}
-            reportType={reportType}
-            setReportType={setReportType}
-            reportContent={reportContent}
-            setReportContent={setReportContent}
-            targetCategory="write_short"
-            targetCategoryId={reportTarget.id}
-            reportedUsername={reportTarget.username}
-            handleRefresh={handleReportSuccess}
-          />
-        )}
+        {ReportModalComponent}
+
       </div>
     </section>
   )
