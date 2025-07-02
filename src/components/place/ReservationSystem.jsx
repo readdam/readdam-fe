@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarIcon, ClockIcon, UsersIcon, CheckIcon } from 'lucide-react';
 import { url } from '@config/config';
+import { userAtom } from '../../atoms';
+import { useAtomValue } from 'jotai';
 
 const ReservationSystem = ({
   placeId,
@@ -38,6 +40,12 @@ const ReservationSystem = ({
   const [request, setRequest] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const user = useAtomValue(userAtom);
+
+  useEffect(() => {
+    setPhone(user.phone);
+    setName(user.name);
+  }, [user]);
 
   // 임시 예약된 시간 (실제로는 API에서 받아와야 함)
   const [bookedSlots] = useState({

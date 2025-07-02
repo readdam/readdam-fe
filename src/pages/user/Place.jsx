@@ -208,7 +208,6 @@ const Place = () => {
                 if (type === 'other') navigate(`/otherPlaceDetail/${pid}`);
               }}
             >
-              {place.id}
               <PlaceCard place={place} size="large" />
             </div>
           ))}
