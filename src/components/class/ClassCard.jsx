@@ -34,6 +34,9 @@ const ClassCard = ({group}) => {
                         {/* <span>{group.likeCount}</span> */}
                     </button>
                 </div>
+                <div className="flex items-center text-gray-600 mb-2">
+                    <span className="text-sm">{group.shortIntro}</span>
+                </div>
                 <div className="flex flex-wrap gap-2 mb-3">
                     {tagArray.map((tag, index) => (
                         <span

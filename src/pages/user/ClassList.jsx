@@ -31,17 +31,18 @@ const ClassList = () => {
   
   const navigate = useNavigate();
   
-  const fetchClassList = async () => {
+  const fetchClassList = async (pageNum) => {
     try{
       const res = await axios.get(`${url}/api/classList`, {
         params: {
-          page,
+          page: pageNum,
           size: pageSize,
           keyword: keyword || '',
           tag: tags || '',
           place: place || '',
         },
       });
+      console.log(res)
       const classes = res?.data?.content || [];
       // console.log('res.data 전체: ',res.data);
       // console.log('res.data.content: ', res.data?.content);
@@ -54,8 +55,9 @@ const ClassList = () => {
   };
 
   useEffect(() => {
-    fetchClassList();
-  }, [keyword]);
+    fetchClassList(0);
+    // setPage(1)
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -141,13 +143,16 @@ const ClassList = () => {
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {classList.map((group) => (
-            <ClassCard group={group}/>
+            <ClassCard key={group.classId} group={group}/>
           ))}
         </div>
         {hasNext && (
           <div className='text-center mt-6'>
             <button
-            onClick={fetchClassList}
+            onClick={() =>{
+              fetchClassList(page);
+            // setPage(prev => prev +1);
+          }}
             className="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600"
             >
               더보기
