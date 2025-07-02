@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPinIcon, CalendarIcon, UsersIcon } from 'lucide-react'
 import { useAxios } from '../../hooks/useAxios';
+import { url } from '../../config/config';
+
 
 const HomeClass = () => {
   const axios = useAxios();
@@ -47,11 +49,17 @@ const HomeClass = () => {
               className="bg-white rounded-lg overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-shadow"
             >
               <div className="h-48 overflow-hidden">
-                <img
-                  src={group.mainImg}
-                  alt={group.title}
-                  className="w-full h-full object-cover"
-                />
+                {group.mainImg ? (
+                  <img
+                    src={`${url}/image?filename=${group.mainImg}`}
+                    alt={group.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <p className="text-gray-400 text-sm">이미지가 없습니다</p>
+                  </div>
+                )}
               </div>
               <div className="p-4">
                 <span className="inline-block px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm font-medium rounded-full mb-2">
@@ -68,10 +76,13 @@ const HomeClass = () => {
                   <MapPinIcon className="w-4 h-4 mr-1" />
                   <span className="text-sm">{group.round1PlaceName}</span>
                 </div>
-                <button className="w-full px-4 py-2 bg-[#005C78] text-white rounded-lg hover:bg-[#004a61] transition-colors flex items-center justify-center">
+                <Link
+                  to={`/classDetail/${group.classId}`}
+                  className="w-full px-4 py-2 bg-[#005C78] text-white rounded-lg hover:bg-[#004a61] transition-colors flex items-center justify-center"
+                >
                   <UsersIcon className="w-4 h-4 mr-1" />
                   <span>참여하기</span>
-                </button>
+                </Link>
               </div>
             </div>
           ))}

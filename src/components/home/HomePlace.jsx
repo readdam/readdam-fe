@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { HeartIcon, MapPinIcon } from 'lucide-react';
 import { useAxios } from '../../hooks/useAxios';
 import { Link } from 'react-router-dom';
+import { url } from '../../config/config';
 
 const HomePlace = () => {
   const [places, setPlaces] = useState([]);
@@ -78,7 +79,7 @@ const HomePlace = () => {
         {/* 제목 */}
         <div className="text-center mb-10">
           <h2 className="text-2xl font-bold mb-2">
-            <span role="img" aria-label="map">📍</span> 
+            <span role="img" aria-label="map">📍 </span> 
             최근 등록된 장소를 찾아보세요!
             {/* 
             추후 거리순 적용 시 사용
@@ -109,8 +110,7 @@ const HomePlace = () => {
               >
                 <div className="relative h-48 bg-gray-200">
                   {place.image ? (
-                    <img
-                      src={place.image}
+                    <img src={`${url}/image?filename=${place.image}`} 
                       alt={place.name}
                       className="w-full h-full object-cover"
                     />
