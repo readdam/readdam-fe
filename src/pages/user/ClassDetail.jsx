@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import GroupHeader from "@components/class/GroupHeader";
 import GroupDescription from "@components/class/GroupDescription";
 import GroupLeader from "@components/class/GroupLeader";
-import GroupMembers from "@components/class/GroupMembers";
 import GroupQnAReviews from "@components/class/GroupQnAReviews";
 import axios from "axios";
 import { url } from "../../config/config";
