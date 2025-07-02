@@ -162,7 +162,7 @@ function App() {
 
         <Route element={<UserRoutes />}>
           <Route path="/join" element={<Join />} />
-          <Route path="/placeDetail" element={<PlaceDetail />} />
+          <Route path="/placeDetail/:id" element={<PlaceDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/oauth-redirect" element={<OAuthRedirect />} />
           <Route path="/" element={<Home />} />

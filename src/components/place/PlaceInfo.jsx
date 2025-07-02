@@ -1,5 +1,27 @@
 import React, { useState } from 'react';
 import { HeartIcon, ClockIcon, PhoneIcon, MapPinIcon } from 'lucide-react';
+import { url } from '@config/config';
+
+function formatTimeRanges(times) {
+  if (!times || times.length === 0) return '';
+  const sorted = [...new Set(times)].sort();
+  const ranges = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const curr = sorted[i];
+    const prevHour = parseInt(prev.split(':')[0], 10);
+    const currHour = parseInt(curr.split(':')[0], 10);
+    if (currHour !== prevHour + 1) {
+      ranges.push(`${start}-${prev}`);
+      start = curr;
+    }
+    prev = curr;
+  }
+  ranges.push(`${start}-${prev}`);
+  return ranges.join(', ');
+}
 
 const PlaceInfo = ({ place }) => {
   const [liked, setLiked] = useState(false);
@@ -18,7 +40,7 @@ const PlaceInfo = ({ place }) => {
       <div className="relative h-80 bg-gray-200">
         {place.images && place.images.length > 0 ? (
           <img
-            src={place.images[0]}
+            src={`${url}/image?filename=${place.images[0]}`}
             alt={place.name}
             className="w-full h-full object-cover"
           />
@@ -38,31 +60,36 @@ const PlaceInfo = ({ place }) => {
           >
             <HeartIcon
               className={`w-6 h-6 ${
-                liked ? 'fill-[#E88D67] text-[#E88D67]' : 'text-gray-400'
+                place.liked ? 'fill-[#E88D67] text-[#E88D67]' : 'text-gray-400'
               }`}
             />
-            <span className="text-sm font-medium">{likeCount}</span>
+            <span className="text-sm font-medium">{place.likeCount}</span>
           </button>
         </div>
         <div className="space-y-4 mb-6">
           <div className="flex items-start">
             <MapPinIcon className="w-5 h-5 text-[#006989] mr-2 mt-0.5" />
-            <span className="text-gray-700">{place.address}</span>
+            <span className="text-gray-700">
+              {place.basicAddress} {place.detailAddress}
+            </span>
           </div>
           <div className="flex items-start">
             <PhoneIcon className="w-5 h-5 text-[#006989] mr-2 mt-0.5" />
-            <span className="text-gray-700">{place.contact}</span>
+            <span className="text-gray-700">{place.phone}</span>
           </div>
           <div className="flex items-start">
             <ClockIcon className="w-5 h-5 text-[#006989] mr-2 mt-0.5" />
-            <span className="text-gray-700">{place.hours}</span>
+            <span className="text-gray-700">
+              평일: {formatTimeRanges(place.weekdayTimes)} | 주말:{' '}
+              {formatTimeRanges(place.weekendTimes)}
+            </span>
           </div>
         </div>
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-2">
             공간 소개
           </h2>
-          <p className="text-gray-600 leading-relaxed">{place.description}</p>
+          <p className="text-gray-600 leading-relaxed">{place.introduce}</p>
         </div>
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-2">키워드</h2>
