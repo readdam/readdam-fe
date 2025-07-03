@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { StarIcon, HeartIcon, LockIcon } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,13 +21,6 @@ export default function BookDetail() {
         query: param.isbn.split(' ')[0],
       }),
     enabled: !!param.isbn,
-  });
-
-  const { data: stats, isError } = useQuery({
-    queryKey: ['reviewStats', param.isbn],
-    queryFn: async () => await getReviewStats(param.isbn),
-    enabled: !!param.isbn,
-    staleTime: 1000 * 60 * 5,
   });
 
   const isbnParam = decodeURIComponent(param.isbn); // 공백 포함된 ISBN 복원
@@ -124,7 +117,7 @@ export default function BookDetail() {
             <div className="flex items-center gap-2">
               <span className="text-sm">책 리뷰</span>
               <span className="text-sm text-[#006989] font-bold">
-                {stats?.reviewCount?.toLocaleString()}
+                {book.reviewCnt}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -133,16 +126,14 @@ export default function BookDetail() {
                   <StarIcon
                     key={i}
                     className={`w-4 h-4 ${
-                      i < Math.round(stats?.averageRating)
+                      i < Math.round(book.rating)
                         ? 'fill-[#E88D67] text-[#E88D67]'
                         : 'text-gray-300'
                     }`}
                   />
                 ))}
               </div>
-              <span className="font-semibold text-sm">
-                {stats?.averageRating?.toFixed(1)}
-              </span>
+              <span className="font-semibold text-sm">{book.rating}</span>
             </div>
           </div>
 
@@ -173,7 +164,7 @@ export default function BookDetail() {
                 ?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
-            리뷰({stats?.reviewCount?.toLocaleString()}){/* 리뷰(0) */}
+            리뷰({book.reviewCnt}){/* 리뷰(0) */}
           </button>
 
           <button

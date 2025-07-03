@@ -1,37 +1,71 @@
-// src/components/LibraryModal.jsx
-import React, { useEffect, useState } from 'react';
-import { XIcon, BookmarkIcon } from 'lucide-react';
-import { useAxios } from '../../hooks/useAxios';
+// src/components/book/LibraryModal.jsx
+import React, { useEffect, useState } from 'react'
+import PropTypes from 'prop-types'
+import { XIcon, BookmarkIcon } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useAxios } from '../../hooks/useAxios'
 
-const LibraryModal = ({ isOpen, onClose, book }) => {
-  const axios = useAxios();
-  const [libraries, setLibraries] = useState([]);
+export default function LibraryModal({ isOpen, onClose, book }) {
+  const axios = useAxios()
+  const navigate = useNavigate()
+  const [libraries, setLibraries] = useState([])
 
-  // 모달 열릴 때만 서재 목록 로드
+  // 모달이 열릴 때만 서재 목록 불러오기
   useEffect(() => {
-    if (!isOpen) return;
-    axios.get('/api/libraries')
-      .then(res => setLibraries(res.data))
-      .catch(() => setLibraries([]));
-  }, [isOpen, axios]);
+    if (!isOpen) return
 
-  const handleAdd = async libraryId => {
-    await axios.post(`/api/libraries/${libraryId}/books`, {
-      isbn:      book.isbn,
-      title:     book.title,
-      authors:   book.author,
-      thumbnail: book.imageName,
-      publisher: book.publisher,
-      datetime:  book.pubDate,
-    });
-    onClose();
-  };
+    const fetchLibraries = async () => {
+      try {
+        const { data } = await axios.get('/my/myLibraryList')
+        // data 가 배열인지, { content: [...] } 형태인지 커버
+        setLibraries(Array.isArray(data) ? data : data.content ?? [])
+      } catch (err) {
+        if (err.response?.status === 401) {
+          alert('로그인이 필요한 서비스입니다.')
+          onClose()
+          navigate('/login')
+        } else {
+          console.error('서재 목록 로드 오류', err)
+          setLibraries([])
+        }
+      }
+    }
 
-  if (!isOpen) return null;
+    fetchLibraries()
+  }, [isOpen, axios, navigate, onClose])
+
+  const handleAdd = async (libraryId) => {
+    if (!book?.isbn) return
+    try {
+      await axios.post(`/my/${libraryId}/books`, {
+        isbn:      book.isbn,
+        title:     book.title,
+        authors:   book.author ? [book.author] : [],
+        thumbnail: book.imageName,
+        publisher: book.publisher,
+        datetime:  book.pubDate,
+      })
+      alert('서재에 추가되었습니다.')
+      onClose()
+    } catch (err) {
+      if (err.response?.status === 409) {
+        alert(err.response.data.message || '이미 추가된 책입니다.')
+      } else if (err.response?.status === 401) {
+        alert('로그인이 필요한 서비스입니다.')
+        onClose()
+        navigate('/login')
+      } else {
+        console.error('서재 추가 오류', err)
+        alert('책 추가 중 오류가 발생했습니다.')
+      }
+    }
+  }
+
+  if (!isOpen) return null
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 px-4 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
       onClick={onClose}
     >
       <div
@@ -41,7 +75,8 @@ const LibraryModal = ({ isOpen, onClose, book }) => {
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 hover:text-gray-800"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+          aria-label="Close"
         >
           <XIcon className="w-5 h-5" />
         </button>
@@ -57,15 +92,28 @@ const LibraryModal = ({ isOpen, onClose, book }) => {
             >
               <div className="flex items-center gap-2">
                 <BookmarkIcon className="w-5 h-5 text-[#E88D67]" />
-                <span>{lib.name}</span>
+                <span className="font-medium">{lib.name}</span>
               </div>
-              <span className="text-sm text-gray-500">{lib.bookCount}권</span>
+              <span className="text-sm text-gray-500">
+                {lib.bookCount ?? lib.books?.length ?? 0}권
+              </span>
             </li>
           ))}
         </ul>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LibraryModal;
+LibraryModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  book: PropTypes.shape({
+    isbn: PropTypes.string,
+    title: PropTypes.string,
+    author: PropTypes.string,
+    imageName: PropTypes.string,
+    publisher: PropTypes.string,
+    pubDate: PropTypes.string,
+  }),
+}
