@@ -19,35 +19,46 @@ const ClassList = () => {
   const [keyword, setKeyword] = useState("");
   const [tags, setTags] = useState("");
   const [place, setPlace] = useState("");
-  const [sortBy, setSortBy] = useState("deadline");
+  const [sortBy, setSortBy] = useState("latest");
 
   const navigate = useNavigate();
 
-  const fetchClassList = async () => {
+  const fetchClassList = async (customPage = page) => {
     try {
       const res = await axios.get(`${url}/api/classList`, {
         params: {
-          page,
+          page: customPage,
           size: pageSize,
           keyword: keyword || "",
           tag: tags || "",
           place: place || "",
+          sort: sortBy || 'latest',
         },
       });
       const classes = res?.data?.content || [];
-      // console.log('res.data 전체: ',res.data);
-      // console.log('res.data.content: ', res.data?.content);
-      setClassList((prev) => [...prev, ...classes]);
+      
+      if(customPage === 0) {
+        // 첫 페이지이면 새로 설정
+        setClassList(classes);
+      }else {
+        // 이후 페이지는 누적
+        setClassList((prev) => [...prev, ...classes]);
+      }
+      
       setHasNext(!res.data.last); // Slice 리턴 구조 기준
-      setPage((prev) => prev + 1);
+      setPage(customPage + 1);
     } catch (err) {
       console.error("리스트 불러오기에 실패했습니다: ", err);
     }
   };
 
   useEffect(() => {
+    // 정렬이나 검색어가 바뀌었을 때 리스트를 초기화하고 다시 가져오기
+    setClassList([]);
+    setPage(0);
+    setHasNext(true);
     fetchClassList();
-  }, [keyword]);
+  }, [keyword, sortBy]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -56,6 +67,16 @@ const ClassList = () => {
     setPage(0);
     setHasSearched(true);
     setKeyword(searchTerm); // 검색어 상태 업데이트
+  };
+
+  const handleSortChange = (newSort) => {
+    if(sortBy !== newSort) {
+      setSortBy(newSort);
+      setClassList([]);
+      setPage(0);
+      setHasSearched(false);
+      fetchClassList(0);
+    }
   };
 
   return (
@@ -90,17 +111,27 @@ const ClassList = () => {
               <option value="타 장소">타 장소 모임</option>
             </select>
             <div className="flex gap-2">
+               <button
+                className={`px-4 py-2 rounded-full ${
+                  sortBy === "latest"
+                    ? "bg-[#006989] text-white"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+                onClick={() => handleSortChange("latest")}
+              >
+                최신순
+              </button>
               <button
                 className={`px-4 py-2 rounded-full ${
                   sortBy === "deadline"
                     ? "bg-[#006989] text-white"
                     : "bg-gray-100 text-gray-700"
                 }`}
-                onClick={() => setSortBy("deadline")}
+                onClick={() => handleSortChange("deadline")}
               >
                 마감 임박 순
               </button>
-              <button
+              {/* <button
                 className={`px-4 py-2 rounded-full ${
                   sortBy === "start"
                     ? "bg-[#006989] text-white"
@@ -109,14 +140,14 @@ const ClassList = () => {
                 onClick={() => setSortBy("start")}
               >
                 빠른 시작 순
-              </button>
+              </button> */}
               <button
                 className={`px-4 py-2 rounded-full ${
                   sortBy === "likes"
                     ? "bg-[#006989] text-white"
                     : "bg-gray-100 text-gray-700"
                 }`}
-                onClick={() => setSortBy("likes")}
+                onClick={() => handleSortChange("likes")}
               >
                 좋아요 순
               </button>
@@ -153,7 +184,6 @@ const ClassList = () => {
             <button
               onClick={() => {
                 fetchClassList(page);
-                // setPage(prev => prev +1);
               }}
               className="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600"
             >
