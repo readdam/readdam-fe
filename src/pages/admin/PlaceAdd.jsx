@@ -6,8 +6,9 @@ import PlaceDetailForm from '@components/admin/place/PlaceDetailForm';
 import { RoomList } from '@components/admin/place/RoomList';
 import RoomForm from '@components/admin/place/RoomForm';
 import { ArrowLeft } from 'lucide-react';
-import axios from 'axios';
-import { url } from '../../config/config';
+import { useAxios } from '@hooks/useAxios';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../../atoms';
 
 const facilityOptions = {
   airConditioner: { label: '에어컨', emoji: '❄️' },
@@ -42,6 +43,8 @@ export default function PlaceAdd() {
   const [currentRoom, setCurrentRoom] = useState(createInitialRoom());
   const [editingRoom, setEditingRoom] = useState(null);
   const [images, setImages] = useState([]);
+  const token = useAtomValue(tokenAtom);
+  const axios = useAxios();
 
   function createInitialRoom() {
     return {
@@ -207,7 +210,7 @@ export default function PlaceAdd() {
       tag9: keywords[8] || null,
       tag10: keywords[9] || null,
       lat: lat,
-      log: lng,
+      lng: lng,
     };
     formData.append(
       'placeDto',
@@ -275,9 +278,9 @@ export default function PlaceAdd() {
     });
 
     try {
-      await axios.post(`${url}/placeAdd`, formData, {
+      await axios.post(`/admin/placeAdd`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          Authorization: token.access_token,
         },
       });
       alert('장소 등록 완료!');

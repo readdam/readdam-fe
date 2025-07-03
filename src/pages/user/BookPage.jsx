@@ -12,26 +12,30 @@ import { useAxios } from '../../hooks/useAxios';
 import LibraryModal from '../../components/book/LibraryModal';
 
 const BookPage = () => {
-  const axios = useAxios();
+  const axios    = useAxios();
   const navigate = useNavigate();
 
+  /* ───────── 검색 & 베스트셀러 기간 ───────── */
   const [period, setPeriod] = useState('DAILY');
   const periods = [
-    { label: '일간', value: 'DAILY' },
-    { label: '주간', value: 'WEEKLY' },
-    { label: '월간', value: 'MONTHLY' },
+    { label: '일간',  value: 'DAILY'  },
+    { label: '주간',  value: 'WEEKLY' },
+    { label: '월간',  value: 'MONTHLY' },
   ];
   const selectedLabel = periods.find(p => p.value === period)?.label;
 
+  /* ───────── 목록/페이징 상태 ───────── */
   const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const size = 20;
+  const [page, setPage]   = useState(1);
+  const size              = 20;
   const [pageInfo, setPageInfo] = useState(null);
-  const [books, setBooks] = useState([]);
+  const [books,    setBooks]    = useState([]);
 
-  const [modalOpen, setModalOpen] = useState(false);
+  /* ───────── 서재 추가 모달 ───────── */
+  const [modalOpen,   setModalOpen]   = useState(false);
   const [currentBook, setCurrentBook] = useState(null);
 
+  /* ───────── 데이터 로드 ───────── */
   useEffect(() => {
     const fetchBestsellers = async () => {
       try {
@@ -48,18 +52,22 @@ const BookPage = () => {
     fetchBestsellers();
   }, [period, page, size, axios]);
 
-  const maxBtn = 5;
-  const total    = pageInfo?.totalPages ?? 0;
-  const start    = Math.floor((page - 1) / maxBtn) * maxBtn + 1;
+  /* ───────── 페이지네이션 계산 ───────── */
+  const maxBtn   = 5;                                 // 한 그룹에 표시할 버튼 개수
+  const total    = pageInfo?.totalPages ?? 0;         // 전체 페이지 수
+  const curGroup = Math.floor((page - 1) / maxBtn);   // 현재 그룹 번호(0,1,2…)
+  const start    = curGroup * maxBtn + 1;             // 그룹의 첫 페이지
   const end      = Math.min(start + maxBtn - 1, total);
   const numbers  = Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  const canPrevGroup = start > 1;
+
+  const canPrevGroup = curGroup > 0;
   const canNextGroup = end < total;
 
+  /* ───────── UI 렌더 ───────── */
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <main className="flex-grow container mx-auto px-4 py-8">
-        {/* 상단 */}
+        {/* ── 상단 타이틀 & 검색 ── */}
         <div className="rounded-lg py-8 mb-8">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div>
@@ -70,7 +78,9 @@ const BookPage = () => {
               className="mt-4 md:mt-0"
               onSubmit={e => {
                 e.preventDefault();
-                navigate(`/bookSearch?query=${encodeURIComponent(searchQuery)}&page=1`);
+                navigate(
+                  `/bookSearch?query=${encodeURIComponent(searchQuery)}&page=1`,
+                );
               }}
             >
               <div className="flex gap-2">
@@ -92,7 +102,7 @@ const BookPage = () => {
           </div>
         </div>
 
-        {/* 목록 헤더 */}
+        {/* ── 목록 헤더 ── */}
         <div className="mb-6 flex items-center gap-4">
           <TrendingUpIcon className="w-5 h-5 text-[#E88D67]" />
           <h2 className="text-xl font-bold">{selectedLabel} 베스트셀러</h2>
@@ -118,7 +128,7 @@ const BookPage = () => {
           </div>
         </div>
 
-        {/* 도서 카드 */}
+        {/* ── 도서 카드 목록 ── */}
         {books.length === 0 ? (
           <p className="text-center text-gray-500 py-12">표시할 도서가 없습니다.</p>
         ) : (
@@ -140,7 +150,9 @@ const BookPage = () => {
                   </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-lg mb-1 line-clamp-1">{book.title}</h3>
+                  <h3 className="font-bold text-lg mb-1 line-clamp-1">
+                    {book.title}
+                  </h3>
                   <p className="text-gray-600 text-sm mb-2">
                     {book.author} | {book.publisher}
                   </p>
@@ -181,22 +193,24 @@ const BookPage = () => {
           </div>
         )}
 
-        {/* 페이지 네비게이션 */}
+        {/* ── 페이지 네비게이션 ── */}
         {pageInfo && (
           <div className="flex justify-center items-center gap-2 mt-8">
+            {/* 이전 그룹 */}
             <button
               disabled={!canPrevGroup}
               onClick={() => {
                 if (canPrevGroup) {
-                  const ng = group - 1;
-                  setGroup(ng);
-                  setPage(ng * maxBtn + 1);
+                  const newPage = (curGroup - 1) * maxBtn + 1;
+                  setPage(newPage);
                 }
               }}
               className="w-14 h-8 flex items-center justify-center bg-white text-gray-700 border border-gray-300 rounded disabled:opacity-50"
             >
               이전
             </button>
+
+            {/* 숫자 버튼 */}
             {numbers.map(num => (
               <button
                 key={num}
@@ -210,13 +224,14 @@ const BookPage = () => {
                 {num}
               </button>
             ))}
+
+            {/* 다음 그룹 */}
             <button
               disabled={!canNextGroup}
               onClick={() => {
                 if (canNextGroup) {
-                  const ng = group + 1;
-                  setGroup(ng);
-                  setPage(ng * maxBtn + 1);
+                  const newPage = (curGroup + 1) * maxBtn + 1;
+                  setPage(newPage);
                 }
               }}
               className="w-14 h-8 flex items-center justify-center bg-white text-gray-700 border border-gray-300 rounded disabled:opacity-50"
@@ -226,7 +241,7 @@ const BookPage = () => {
           </div>
         )}
 
-        {/* 서재 추가 모달 */}
+        {/* ── 서재 추가 모달 ── */}
         <LibraryModal
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}

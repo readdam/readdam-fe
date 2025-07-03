@@ -4,6 +4,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import axios from 'axios';
 import './index.css';
 import App from './App.jsx';
@@ -28,13 +29,14 @@ if (accessToken) {
 
 // → ③ 한 번만 렌더링
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <App />
+        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
       </BrowserRouter>
     </QueryClientProvider>
-  </StrictMode>
+
 );
 
 // → FCM Service Worker 등록
@@ -42,7 +44,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/firebase-messaging-sw.js')
-      .then(reg => console.log('✅ FCM SW 등록 성공:', reg))
-      .catch(err => console.error('❌ FCM SW 등록 실패:', err));
+      .then((reg) => console.log('✅ FCM SW 등록 성공:', reg))
+      .catch((err) => console.error('❌ FCM SW 등록 실패:', err));
   });
 }

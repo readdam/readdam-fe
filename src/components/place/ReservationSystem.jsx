@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarIcon, ClockIcon, UsersIcon, CheckIcon } from 'lucide-react';
+import { url } from '@config/config';
+import { userAtom } from '../../atoms';
+import { useAtomValue } from 'jotai';
 
 const ReservationSystem = ({
   placeId,
@@ -37,6 +40,12 @@ const ReservationSystem = ({
   const [request, setRequest] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const user = useAtomValue(userAtom);
+
+  useEffect(() => {
+    setPhone(user.phone);
+    setName(user.name);
+  }, [user]);
 
   // 임시 예약된 시간 (실제로는 API에서 받아와야 함)
   const [bookedSlots] = useState({
@@ -88,6 +97,7 @@ const ReservationSystem = ({
       setSelectedTime([time]);
     }
   };
+
   if (isSubmitted) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6 mt-8">
@@ -116,21 +126,7 @@ const ReservationSystem = ({
       </div>
     );
   }
-  if (!isLoggedIn) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6 mt-8">
-        <div className="text-center py-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">예약하기</h2>
-          <p className="text-gray-600 mb-6">
-            예약을 위해서는 로그인이 필요합니다.
-          </p>
-          <button className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78]">
-            로그인하기
-          </button>
-        </div>
-      </div>
-    );
-  }
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mt-8">
       <h2 className="text-xl font-bold text-gray-800 mb-6">예약하기</h2>
@@ -144,33 +140,75 @@ const ReservationSystem = ({
                 key={room.id}
                 onClick={() => setSelectedRoom(room)}
                 className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                  selectedRoom?.id === room.id
+                  selectedRoom === null
+                    ? 'border-gray-200 bg-white hover:border-[#006989]'
+                    : selectedRoom?.id === room.id
                     ? 'border-[#006989] bg-[#F3F7EC]'
-                    : 'border-gray-200 hover:border-[#006989]'
+                    : 'border-gray-200 bg-white hover:border-[#006989]'
                 }`}
               >
                 <div className="flex gap-4">
-                  {room.image ? (
+                  {room.images.length > 0 ? (
                     <img
-                      src={room.image}
+                      src={`${url}/image?filename=${room.images[0]}`}
                       alt={room.name}
-                      className="w-24 h-24 object-cover rounded-lg"
+                      className="w-24 h-24 object-cover rounded-md flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-24 h-24 bg-gray-100 rounded-lg" />
+                    <div className="w-24 h-24 bg-gray-100 rounded-md" />
                   )}
-                  <div>
-                    <h3 className="font-medium text-gray-800 mb-1">
-                      {room.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-2">
-                      {room.description}
-                    </p>
-                    <div className="text-sm text-gray-600">
-                      <p>크기: {room.size}</p>
-                      <p>
-                        수용 인원: {room.minPerson}~{room.maxPerson}명
+                  <div className="flex flex-col justify-between flex-1">
+                    <div>
+                      <h3 className="font-medium text-gray-800 mb-1">
+                        {room.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {room.description}
                       </p>
+                      <div className="text-sm text-gray-600 flex gap-4">
+                        <span>크기: {room.size}</span>
+                        <span>
+                          수용 인원: {room.minPerson}~{room.maxPerson}명
+                        </span>
+                      </div>
+                    </div>
+                    {/* 시설 아이콘 */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {room.facilities?.airConditioner && (
+                        <div className="flex items-center px-2 py-1 border border-gray-200 rounded text-xs text-gray-600">
+                          ❄️ 에어컨
+                        </div>
+                      )}
+                      {room.facilities?.heater && (
+                        <div className="flex items-center px-2 py-1 border border-gray-200 rounded text-xs text-gray-600">
+                          🔥 난방
+                        </div>
+                      )}
+                      {room.facilities?.whiteboard && (
+                        <div className="flex items-center px-2 py-1 border border-gray-200 rounded text-xs text-gray-600">
+                          📝 화이트보드
+                        </div>
+                      )}
+                      {room.facilities?.wifi && (
+                        <div className="flex items-center px-2 py-1 border border-gray-200 rounded text-xs text-gray-600">
+                          📶 와이파이
+                        </div>
+                      )}
+                      {room.facilities?.projector && (
+                        <div className="flex items-center px-2 py-1 border border-gray-200 rounded text-xs text-gray-600">
+                          📽️ 프로젝터
+                        </div>
+                      )}
+                      {room.facilities?.powerOutlet && (
+                        <div className="flex items-center px-2 py-1 border border-gray-200 rounded text-xs text-gray-600">
+                          🔌 콘센트
+                        </div>
+                      )}
+                      {room.facilities?.window && (
+                        <div className="flex items-center px-2 py-1 border border-gray-200 rounded text-xs text-gray-600">
+                          🪟 창문
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -245,11 +283,18 @@ const ReservationSystem = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#006989]"
                 required
               >
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                  <option key={num} value={num}>
-                    {num}명
-                  </option>
-                ))}
+                {selectedRoom &&
+                  Array.from(
+                    {
+                      length:
+                        selectedRoom.maxPerson - selectedRoom.minPerson + 1,
+                    },
+                    (_, i) => selectedRoom.minPerson + i
+                  ).map((num) => (
+                    <option key={num} value={num}>
+                      {num}명
+                    </option>
+                  ))}
               </select>
             </div>
             {/* 예약자 이름 */}

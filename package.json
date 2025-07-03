@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.2.0",
     "@tailwindcss/vite": "^4.1.8",
     "@tanstack/react-query": "^5.80.6",
+    "@tanstack/react-query-devtools": "^5.81.5",
     "@tosspayments/payment-sdk": "^1.9.1",
     "@tosspayments/payment-widget-sdk": "^0.12.0",
     "autoprefixer": "^10.4.21",
