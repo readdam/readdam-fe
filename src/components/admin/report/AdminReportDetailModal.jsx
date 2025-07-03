@@ -45,7 +45,7 @@ export default function AdminReportDetailModal({ detail, onClose, onUpdated }) {
 
   const action = async (type) => {
     await axios.post('/admin/report/bulk-' + type, null, {
-      params: { category, categoryId: contentPk }
+      params: { category, categoryId: detail.categoryId }
     })
     onUpdated()
   }

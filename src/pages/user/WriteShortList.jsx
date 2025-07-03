@@ -10,10 +10,9 @@ import PostcardModal from '@components/write/PostcardModal'
 import TimeRemainingText from '@components/write/TimeRemainingText';
 import PostItCard from '@components/write/PostItCard';
 import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
-import ReportModal from '@components/ReportModal'
 import singoIcon from "@assets/singo.png";
-import { useReport } from '../../hooks/useReport'; 
-import { useReportModal } from '../../hooks/useReportModal.jsx';
+import { useReportModal } from '../../hooks/useReportModal';
+import { REPORT_CATEGORY } from '@constants/reportCategory';
 
 const WriteShortList = () => {
   const axios = useAxios()
@@ -36,8 +35,6 @@ const WriteShortList = () => {
   const [showModal, setShowModal]       = useState(false)
   const [answerText, setAnswerText]     = useState('')
   const [selectedColor, setSelectedColor] = useState('mint')
-
-  const { submitReport } = useReport();
 
   // 색상 매핑
   const getPostItColor = (color) => {
@@ -114,9 +111,8 @@ const WriteShortList = () => {
   }
 
     const { openReportModal, ReportModalComponent } = useReportModal({
-    defaultCategory: 'write_short',
+    defaultCategory: REPORT_CATEGORY.WRITE_SHORT,
     onSuccess: () => {
-      alert('신고가 완료되었습니다!');
     },
   });
 
@@ -180,7 +176,11 @@ const WriteShortList = () => {
 
               {/* 신고 버튼 */}
               <button
-                onClick={() => openReportModal(answer)}
+                onClick={() => openReportModal({
+                    id: answer.writeshortId,
+                    username: answer.username,
+                  })
+                }
                 className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600"
               >
                 <img src={singoIcon} alt="신고" className="w-5 h-5" />
