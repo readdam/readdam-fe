@@ -7,11 +7,8 @@ import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
 import { url } from '../../config/config';
 import TimeRemainingText from '@components/write/TimeRemainingText';
-
-
-// 모달 컴포넌트들을 별도로 분리
-import ReportModal from '@components/ReportModal';
-import ReportConfirmModal from '@components/ReportConfirmModal';
+import { useReportModal } from '@hooks/useReportModal';
+import { REPORT_CATEGORY } from '@constants/reportCategory';
 
 const WriteDetail = () => {
   const axios = useAxios();
@@ -24,17 +21,12 @@ const WriteDetail = () => {
   const [isAuthor, setIsAuthor] = useState(true); // 작성자 여부
   const [liked, setLiked] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [showReportConfirm, setShowReportConfirm] = useState(false);
-  const [reportType, setReportType] = useState('');
-  const [reportContent, setReportContent] = useState('');
   const [isSecret, setIsSecret] = useState(false);
   const tags = post ? [post.tag1, post.tag2, post.tag3, post.tag4, post.tag5].filter(Boolean) : [];
   const [user] = useAtom(userAtom); // ← comment 작성자 확인용도
   const { id } = useParams();
   const navigate = useNavigate();
   const called = useRef(false); // StrictMode 때문에 useEffect 두 번 실행되지 않도록 방지
-  const [reportTargetId, setReportTargetId] = useState(null);
   const isAdmin = user?.isAdmin === true;
 
   // 글 상세 정보를 가져오는 함수
@@ -164,32 +156,16 @@ const WriteDetail = () => {
   (c) => c.adopted
   );
 
-  // 신고 처리
-  const handleReport = (type, targetId) => {
-    if (type !== 'post' && type !== 'comment') return;
-    setReportType(type);
-    setReportTargetId(targetId);
-    setShowReportModal(true);
-  };
+  // 신고 처리 훅 호출
+    const {
+      openReportModal,
+      ReportModalComponent,
+    } = useReportModal({
+      defaultCategory: REPORT_CATEGORY.WRITE,
+      onSuccess: () => {
+      },
+    });
 
-  // 신고 제출
-    const handleSubmitReport = async () => {
-      try {
-        await axios.post(`${url}/my/writeShortReport`, {
-          type: reportType, // 'post' or 'comment'
-          targetId: reportType === 'post' ? post.writeId : reportTargetId,
-          content: reportContent,
-        });
-
-        setShowReportModal(false);
-        setShowReportConfirm(true);
-        setReportType('');
-        setReportContent('');
-      } catch (err) {
-        console.error("신고 실패", err);
-        alert("신고 처리 중 오류가 발생했습니다.");
-      }
-    };
 
     const handleAdopt = async (commentId) => {
       if (!window.confirm("이 댓글을 채택하시겠습니까?")) return;
@@ -274,7 +250,12 @@ const WriteDetail = () => {
                       <ShareIcon className="w-5 h-5" />
                       <span>공유하기</span>
                     </button>
-                    <button onClick={() => handleReport('post', post.writeId)} className="flex items-center gap-2 px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <button onClick={() => 
+                    openReportModal({
+                        id: post.writeId,
+                        username: post.username,
+                      })
+                       } className="flex items-center gap-2 px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
                       <img src={singoIcon} alt="신고" className="w-5 h-5" />
                       <span>신고하기</span>
                     </button>
@@ -460,7 +441,13 @@ const WriteDetail = () => {
                           </button>
                         )}
                         <button
-                          onClick={() => handleReport('comment', comment.writeCommentId)}
+                          onClick={() => openReportModal({
+                                id: comment.writeCommentId,
+                                username: comment.username,
+                              },
+                              REPORT_CATEGORY.WRITE_COMMENT
+                            )
+                            }
                           className="text-gray-500 hover:text-gray-700"
                         >
                           <img src={singoIcon} alt="신고" className="w-4 h-4" />
@@ -484,8 +471,7 @@ const WriteDetail = () => {
         )}
          
         {/* 모달 */}
-        {showReportModal && <ReportModal />}
-        {showReportConfirm && <ReportConfirmModal />}
+        {ReportModalComponent}
       </div>
     </div>
   );
