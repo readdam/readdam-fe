@@ -199,30 +199,44 @@ export default function BookSearch() {
                   alt={book.title}
                   className="object-cover w-[120px] h-[174px]"
                 />
-                <div className="flex flex-col text-sm text-gray-800 flex-grow">
-                  <Link to={`/bookDetail/${encodeURIComponent(book.isbn)}`}>
-                    <div className="font-bold text-base mb-1">{book.title}</div>
-                  </Link>
-                  <div className="mb-1">저자 | {book.authors.join(', ')}</div>
-                  <div className="mb-1">출판 | {book.publisher}</div>
-                  <div className="mb-8">
-                    발행 | {book.datetime.split('T')[0].split('-').join('.')}
+                <div className="flex flex-col justify-between h-full text-sm text-gray-800">
+                  <div>
+                    <Link to={`/bookDetail/${encodeURIComponent(book.isbn)}`}>
+                      <div className="font-bold text-base mb-1">
+                        {book.title}
+                      </div>
+                    </Link>
+                    <div className="mb-1">저자 | {book.authors.join(', ')}</div>
+                    <div className="mb-1">출판 | {book.publisher}</div>
+                    <div className="mb-1">
+                      발행 | {book.datetime.split('T')[0].split('-').join('.')}
+                    </div>
                   </div>
-
-                  <HeartIcon
-                    className={`w-6 h-6 ${
-                      isLiked
-                        ? 'fill-[#E88D67] text-[#E88D67]'
-                        : 'text-gray-400'
-                    } absolute top-8 right-8`}
-                    onClick={() => handleToggleLike(book)}
-                  />
-                  <button
-                    className="bg-[#006989] text-white w-24 h-10 rounded-lg text-xs font-bold cursor-pointer"
-                    onClick={() => setIsModalOpen(true)}
-                  >
-                    서재에 담기
-                  </button>
+                  <div className="flex items-center text-[#E88D67] mb-2 text-sm">
+                    <StarIcon
+                      className={`w-4 h-4 ${'text-[#E88D67] fill-[#E88D67]'} mr-2`}
+                    />
+                    <span className="text-black">{book.rating}</span>
+                    <span className="text-gray-600 ml-1">
+                      ({book.reviewCnt})
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <HeartIcon
+                      className={`w-6 h-6 ${
+                        isLiked
+                          ? 'fill-[#E88D67] text-[#E88D67]'
+                          : 'text-gray-400'
+                      } absolute top-8 right-8`}
+                      onClick={() => handleToggleLike(book)}
+                    />
+                    <button
+                      className="bg-[#006989] text-white w-24 h-10 rounded-lg text-xs font-bold cursor-pointer"
+                      onClick={() => setIsModalOpen(true)}
+                    >
+                      서재에 담기
+                    </button>
+                  </div>
                 </div>
               </div>
             );
