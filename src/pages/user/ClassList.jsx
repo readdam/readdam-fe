@@ -14,7 +14,6 @@ const ClassList = () => {
   const [hasNext, setHasNext] = useState(true);
   const pageSize = 8;
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [venueFilter, setVenueFilter] = useState("전체");
   const [keyword, setKeyword] = useState("");
@@ -141,8 +140,7 @@ const ClassList = () => {
         </div>
         {hasSearched && (
           <p className="text-gray-600 mb-4">
-            모임 카테고리에서 '{searchTerm}' 검색 결과입니다. (검색결과{" "}
-            {searchResults.length}건)
+            모임 카테고리에서 '{searchTerm}' 검색 결과입니다. (검색결과 {classList.length}건)
           </p>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
