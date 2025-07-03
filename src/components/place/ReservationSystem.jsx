@@ -3,35 +3,10 @@ import { CalendarIcon, ClockIcon, UsersIcon, CheckIcon } from 'lucide-react';
 import { url } from '@config/config';
 import { userAtom } from '../../atoms';
 import { useAtomValue } from 'jotai';
+import { useAxios } from '@hooks/useAxios';
+import dayjs from 'dayjs';
 
-const ReservationSystem = ({
-  placeId,
-  isLoggedIn = true,
-  rooms = [],
-  // rooms prop을 빈 배열로 기본값 설정
-  operatingHours = {
-    weekday: {
-      start: '10:00',
-      end: '22:00',
-      slots: Array.from(
-        {
-          length: 13,
-        },
-        (_, i) => `${String(i + 10).padStart(2, '0')}:00`
-      ),
-    },
-    weekend: {
-      start: '11:00',
-      end: '20:00',
-      slots: Array.from(
-        {
-          length: 10,
-        },
-        (_, i) => `${String(i + 11).padStart(2, '0')}:00`
-      ),
-    },
-  },
-}) => {
+const ReservationSystem = ({ rooms = [] }) => {
   const [date, setDate] = useState('');
   const [selectedTime, setSelectedTime] = useState([]);
   const [people, setPeople] = useState(1);
@@ -42,16 +17,53 @@ const ReservationSystem = ({
   const [selectedRoom, setSelectedRoom] = useState(null);
   const user = useAtomValue(userAtom);
 
+  const axios = useAxios();
+
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [timeData, setTimeData] = useState({
+    allTimes: [],
+    reservedTimes: [],
+    availableTimes: [],
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [selectedRanges, setSelectedRanges] = useState([]);
+
+  useEffect(() => {
+    console.log(selectedRanges);
+  }, [selectedRanges]);
+
+  const handleDateChange = async () => {
+    // if (!selectedRoomId || !date) return;
+    if (!date) return;
+    try {
+      setIsLoading(true);
+      const response = await axios.get('/my/reservations/availableTimes', {
+        params: {
+          placeRoomId: selectedRoomId,
+          date: dayjs(date).format('YYYY-MM-DD'),
+        },
+      });
+      console.log('예약 가능 시간 응답:', response.data);
+      setTimeData(response.data);
+    } catch (error) {
+      console.error('예약 가능 시간 조회 실패', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     setPhone(user.phone);
     setName(user.name);
   }, [user]);
 
-  // 임시 예약된 시간 (실제로는 API에서 받아와야 함)
-  const [bookedSlots] = useState({
-    '2024-01-20': ['10:00', '10:30', '14:00', '14:30'],
-    '2024-01-21': ['11:00', '11:30', '15:00', '15:30'],
-  });
+  useEffect(() => {
+    if (selectedRoomId && date) {
+      handleDateChange();
+    }
+  }, [selectedRoomId, date]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedTime.length === 0) {
@@ -65,35 +77,29 @@ const ReservationSystem = ({
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];
   };
-  const isWeekend = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.getDay() === 0 || date.getDay() === 6;
-  };
-  const getAvailableSlots = () => {
-    if (!date) return [];
-    const isWeekendDay = isWeekend(date);
-    const slots = isWeekendDay
-      ? operatingHours.weekend.slots
-      : operatingHours.weekday.slots;
-    const bookedSlotsForDate = bookedSlots[date] || [];
-    return slots.filter((slot) => !bookedSlotsForDate.includes(slot));
-  };
+
   const handleTimeSelection = (time) => {
     if (selectedTime.length === 0) {
       // 첫 선택
       setSelectedTime([time]);
     } else if (selectedTime.length === 1) {
-      // 두 번째 선택 (범위 선택)
-      const slots = isWeekend(date)
-        ? operatingHours.weekend.slots
-        : operatingHours.weekday.slots;
-      const startIdx = slots.indexOf(selectedTime[0]);
-      const endIdx = slots.indexOf(time);
-      const start = Math.min(startIdx, endIdx);
-      const end = Math.max(startIdx, endIdx);
-      setSelectedTime(slots.slice(start, end + 1));
+      if (selectedTime[0] === time) {
+        // 같은 시간 클릭 = 해제
+        setSelectedTime([]);
+      } else {
+        // 두 번째 선택 (범위 선택)
+        const allTimes = timeData.allTimes.filter(
+          (t) => !timeData.reservedTimes.includes(t)
+        );
+        const startIdx = allTimes.indexOf(selectedTime[0]);
+        const endIdx = allTimes.indexOf(time);
+        const start = Math.min(startIdx, endIdx);
+        const end = Math.max(startIdx, endIdx);
+        const range = allTimes.slice(start, end + 1);
+        setSelectedTime(range);
+      }
     } else {
-      // 새로운 선택 시작
+      // 이미 여러 개 선택됨 = 새로운 선택 시작
       setSelectedTime([time]);
     }
   };
@@ -138,11 +144,16 @@ const ReservationSystem = ({
             {rooms.map((room) => (
               <div
                 key={room.id}
-                onClick={() => setSelectedRoom(room)}
+                onClick={() => {
+                  console.log(room.roomId);
+                  console.log(room);
+                  setSelectedRoom(room);
+                  setSelectedRoomId(room.roomId);
+                }}
                 className={`border rounded-lg p-4 cursor-pointer transition-all ${
                   selectedRoom === null
                     ? 'border-gray-200 bg-white hover:border-[#006989]'
-                    : selectedRoom?.id === room.id
+                    : selectedRoom?.roomId === room.roomId
                     ? 'border-[#006989] bg-[#F3F7EC]'
                     : 'border-gray-200 bg-white hover:border-[#006989]'
                 }`}
@@ -230,6 +241,7 @@ const ReservationSystem = ({
                 onChange={(e) => {
                   setDate(e.target.value);
                   setSelectedTime([]);
+                  // handleDateChange(e.target.value);
                 }}
                 min={getTomorrow()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#006989]"
@@ -244,30 +256,124 @@ const ReservationSystem = ({
                   시간 선택
                 </label>
                 <div className="grid grid-cols-6 gap-2">
-                  {(isWeekend(date)
-                    ? operatingHours.weekend.slots
-                    : operatingHours.weekday.slots
-                  ).map((time) => (
-                    <button
-                      key={time}
-                      type="button"
-                      onClick={() => handleTimeSelection(time)}
-                      className={`py-2 px-4 rounded-md text-sm font-medium border transition-colors
+                  {timeData.allTimes.map((time) => {
+                    const isReserved = timeData.reservedTimes.includes(time);
+                    const isSelected = selectedTime.includes(time);
+
+                    return (
+                      <button
+                        key={time}
+                        type="button"
+                        disabled={isReserved}
+                        onClick={() => handleTimeSelection(time)}
+                        className={`py-2 px-4 rounded-md text-sm font-medium border transition-colors
                         ${
                           selectedTime.includes(time)
                             ? 'bg-[#006989] text-white border-[#006989]'
+                            : isReserved
+                            ? 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed'
                             : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'
                         }`}
-                    >
-                      {time}
-                    </button>
-                  ))}
+                      >
+                        {time}
+                      </button>
+                    );
+                  })}
                 </div>
+
                 {selectedTime.length > 0 && (
-                  <p className="mt-2 text-sm text-gray-600">
-                    선택된 시간: {selectedTime[0]} ~{' '}
-                    {selectedTime[selectedTime.length - 1]}
-                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <p className="text-sm text-gray-600">
+                      선택된 시간: {selectedTime[0]} ~{' '}
+                      {selectedTime[selectedTime.length - 1]}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!selectedRoom || !date || selectedTime.length === 0)
+                          return;
+
+                        const exists = selectedRanges.some(
+                          (r) =>
+                            r.date === date && r.roomId === selectedRoom.roomId
+                        );
+
+                        if (exists) {
+                          // 같은 날짜에 이미 등록됨
+                          return;
+                        }
+
+                        setSelectedRanges((prev) => [
+                          ...prev,
+                          {
+                            date: date,
+                            start: selectedTime[0],
+                            end: selectedTime[selectedTime.length - 1],
+                            times: [...selectedTime],
+                            roomId: selectedRoom.roomId,
+                            roomName: selectedRoom.name,
+                          },
+                        ]);
+                        setSelectedTime([]);
+                      }}
+                      className="ml-2 px-3 py-1 bg-[#006989] text-white text-sm rounded hover:bg-[#005C78]"
+                    >
+                      추가
+                    </button>
+                  </div>
+                )}
+
+                {selectedRanges.length > 0 && (
+                  <div className="mt-6 space-y-2">
+                    {selectedRanges.map((range, idx) => (
+                      <div
+                        key={`${range.roomId}-${range.date}-${range.start}-${range.end}`}
+                        className="flex items-center justify-between border border-gray-200 bg-gray-50 rounded-lg p-3 shadow-sm hover:shadow transition"
+                      >
+                        <div className="flex flex-col text-sm text-gray-700">
+                          <div className="font-medium text-gray-800">
+                            {idx + 1}회차 - {range.roomName}
+                          </div>
+                          <div className="text-xs text-gray-600 mt-0.5">
+                            📅 {range.date} | 🕒 {range.start} ~ {range.end}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedRanges((prev) =>
+                              prev.filter(
+                                (r) =>
+                                  !(
+                                    r.date === range.date &&
+                                    r.start === range.start &&
+                                    r.end === range.end &&
+                                    r.roomId === range.roomId
+                                  )
+                              )
+                            );
+                          }}
+                          className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                          삭제
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
