@@ -38,7 +38,7 @@ export default function PlaceEdit() {
         setPhoneNumber(data.phone);
         setIntroduceText(data.introduce);
         setLat(data.lat);
-        setLng(data.log);
+        setLng(data.lng);
 
         setKeywords(data.tags || []);
         setImagePreviews(data.images || []);
@@ -242,7 +242,7 @@ export default function PlaceEdit() {
       tag9: keywords[8] || null,
       tag10: keywords[9] || null,
       lat,
-      log: lng,
+      lng: lng,
     };
     formData.append(
       'placeDto',
