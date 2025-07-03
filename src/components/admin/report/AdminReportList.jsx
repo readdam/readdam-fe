@@ -1,6 +1,6 @@
 // src/components/admin/AdminReportList.jsx
 import React from 'react'
-import AdminReportDetailModal from '@components/admin/AdminReportDetailModal'
+import AdminReportDetailModal from '@components/admin/report/AdminReportDetailModal'
 
 const CATEGORY_LABELS = {
   write_short: '읽담한줄',
@@ -13,16 +13,22 @@ const CATEGORY_LABELS = {
   place_review: '장소 후기',
 }
 
+const STATUS_STYLES = {
+  PENDING:   'bg-yellow-100 text-yellow-800',
+  RESOLVED:  'bg-green-100  text-green-800',
+  REJECTED:  'bg-red-100    text-red-800',
+}
+
 const STATUS_LABELS = {
-  PENDING: '미처리',
+  PENDING:  '미처리',
   RESOLVED: '처리',
   REJECTED: '반려',
 }
 
 export default function AdminReportList({
-  reports = [],            // ← undefined 방지: 기본값 빈 배열
-  showDetail = false,      // ← 선택사항: 기본값 false
-  selected = null,         // ← 선택사항: 기본값 null
+  reports = [],
+  showDetail = false,
+  selected = null,
   onRowClick,
   onCloseModal
 }) {
@@ -34,8 +40,11 @@ export default function AdminReportList({
       <table className="w-full">
         <thead className="bg-gray-50">
           <tr>
-            {['번호', '신고일', '컨텐츠 유형', '내용', '신고자', '처리일', '처리여부'].map(col => (
-              <th key={col} className="px-4 py-3 text-left text-sm text-gray-700">
+            {['번호','신고일','컨텐츠 유형','내용','신고자','처리일','처리여부'].map(col => (
+              <th
+                key={col}
+                className="px-4 py-3 text-left text-sm text-gray-700"
+              >
                 {col}
               </th>
             ))}
@@ -50,18 +59,24 @@ export default function AdminReportList({
             >
               <td className="px-4 py-3 text-sm">{r.reportId}</td>
               <td className="px-4 py-3 text-sm">
-                {r.reportedAt ? r.reportedAt.slice(0, 10) : '-'}
+                {r.reportedAt?.slice(0,10) ?? '-'}
               </td>
               <td className="px-4 py-3 text-sm">
-                {CATEGORY_LABELS[r.category] || r.category}
+                {CATEGORY_LABELS[r.category] ?? r.category}
               </td>
               <td className="px-4 py-3 text-sm">{r.reason}</td>
               <td className="px-4 py-3 text-sm">{r.reporterUsername}</td>
               <td className="px-4 py-3 text-sm">
-                {r.processedAt ? r.processedAt.slice(0, 10) : '-'}
+                {r.processedAt?.slice(0,10) ?? '-'}
               </td>
               <td className="px-4 py-3 text-sm">
-                {STATUS_LABELS[r.status] || r.status}
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${
+                    STATUS_STYLES[r.status] ?? 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  {STATUS_LABELS[r.status] ?? r.status}
+                </span>
               </td>
             </tr>
           ))}

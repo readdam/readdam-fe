@@ -2,7 +2,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X, ExternalLink } from 'lucide-react'
-import { useAxios } from '../../hooks/useAxios'
+import { useAxios } from '../../../hooks/useAxios'
 import PropTypes from 'prop-types'
 
 const ROUTES = {

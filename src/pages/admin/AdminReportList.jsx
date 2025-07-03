@@ -1,9 +1,9 @@
 // src/pages/admin/AdminReportPage.jsx
 import React, { useState, useEffect } from 'react'
 import { useAxios } from '../../hooks/useAxios'
-import AdminReportFilter from '../../components/admin/AdminReportFilter'
-import AdminReportList   from '../../components/admin/AdminReportList'
-import AdminReportDetailModal from '../../components/admin/AdminReportDetailModal'
+import AdminReportFilter from '../../components/admin/report/AdminReportFilter'
+import AdminReportList   from '../../components/admin/report/AdminReportList'
+import AdminReportDetailModal from '../../components/admin/report/AdminReportDetailModal'
 
 export default function AdminReportPage() {
   const axios = useAxios()
