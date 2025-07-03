@@ -87,7 +87,14 @@ export default function AdminReportFilter({
               <button
                 key={opt.label}
                 type="button"
-                onClick={() => onQuick(opt)} 
+                onClick={() => {
+                  if (opt.days === null) {
+                    onReset()
+                    setSelectedQuickDays(null)
+                  } else {
+                    onQuick(opt)
+                  }
+                }}
                 className={`
          px-3 py-1 rounded
          ${isActive
