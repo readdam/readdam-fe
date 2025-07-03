@@ -18,6 +18,7 @@ export default defineConfig({
       { find: '@routes', replacement: '/src/routes' },
       { find: '@utils', replacement: '/src/utils' },
       { find: '@config', replacement: '/src/config' },
+      { find: '@constants', replacement: '/src/constants' },
     ],
   },
 });

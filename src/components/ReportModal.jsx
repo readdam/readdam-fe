@@ -10,7 +10,7 @@ const ReportModal = ({
   setReportType,
   reportContent,         // 상세 사유 입력값
   setReportContent,
-  targetCategory,        // e.g. "place_review", "write" 등
+  targetCategory,        // REPORT_CATEGORY 
   targetCategoryId,      // 해당 콘텐츠 PK
   reportedUsername,          // 신고 대상 유저의 PK
   handleRefresh,         // 제출 후 리스트 갱신
@@ -19,29 +19,7 @@ const ReportModal = ({
   const { submitReport } = useReport();
 
   const handleSubmitReport = async () => {
-    if (!reportType) {
-      return alert('신고 유형을 선택해주세요');
-    }
-    if (!reportContent.trim()) {
-      return alert('신고 사유를 입력해주세요');
-    }
-
-    const payload = {
-      category: targetCategory,
-      categoryId: String(targetCategoryId),
-      reason: reportType,
-      content: reportContent,
-      reportedUsername: reportedUsername,
-    };
-
-    const success = await submitReport(payload);
-
-    if (success) {
-      setShowReportModal(false);
-      handleRefresh && handleRefresh();
-    } else {
-      alert('신고 제출 중 오류가 발생했습니다.');
-    }
+    handleRefresh && handleRefresh();
   };
 
   return (
