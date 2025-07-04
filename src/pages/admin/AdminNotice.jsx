@@ -1,72 +1,88 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useAtom } from "jotai";
+import { tokenAtom, userAtom } from "../../atoms";
+import axios from "axios";
+import { url } from "@config/config";
 import {
-  SearchIcon,
-  BellIcon,
-  UserIcon,
-  LogOutIcon,
   HomeIcon,
-  UsersIcon,
-  BookOpenIcon,
-  MessageSquareIcon,
-  SettingsIcon,
-  BarChart3Icon,
-  CalendarIcon,
-  FileTextIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
   PlusIcon,
   TrashIcon,
 } from "lucide-react";
 const AdminNotice = () => {
+  const [token] = useAtom(tokenAtom);
   const [activePage, setActivePage] = useState("공지사항");
-  const [isEventMenuOpen, setIsEventMenuOpen] = useState(true);
+
   // 공지사항 관련 상태
   const [noticeForm, setNoticeForm] = useState({
     title: "",
     content: "",
-    isPinned: false,
+    topFix: false,
   });
-  // 이벤트 관련 상태
-  const [eventForm, setEventForm] = useState({
-    month: "",
-    title: "",
-    description: "",
-  });
-  const [eventFilter, setEventFilter] = useState({
-    month: "",
-    startDate: "",
-    endDate: "",
-  });
-  // 더미 공지사항 데이터
-  const notices = [
-    {
-      id: 1,
-      title: "시스템 점검 안내",
-      createdAt: "2025-01-15",
-      isPinned: true,
-    },
-    {
-      id: 2,
-      title: "개인정보 처리방침 변경 안내",
-      createdAt: "2025-01-10",
-      isPinned: false,
-    },
-    {
-      id: 3,
-      title: "새로운 첨삭 서비스 오픈",
-      createdAt: "2025-01-03",
-      isPinned: false,
-    },
-  ];
-  const handleNoticeSubmit = (e) => {
-    e.preventDefault();
-    console.log("공지사항 등록:", noticeForm);
-    setNoticeForm({
-      title: "",
-      content: "",
-      isPinned: false,
-    });
+
+  // 공지사항 목록 상태
+  const [notices, setNotices] = useState([]);
+
+  // 공지사항 목록 가져오기
+  const fetchNotices = async () => {
+    try{
+      const response = await axios.get(`${url}/admin/notices`, {
+        headers: {
+            Authorization: token.access_token,
+          },
+      });
+      console.log("공지사항 목록 가져오기 성공: ", response.data);
+      setNotices(response.data);  // 공지사항 리스트 저장
+    }catch(error) {
+      console.error("공지사항 목록 가져오기 실패: ", error);
+    }
   };
+
+  useEffect(()=>{
+    fetchNotices(); // 페이지 처음 로드 시 목록 불러오기
+  }, []);
+
+  // 공지사항 등록
+  const handleNoticeSubmit = async (e) => {
+    e.preventDefault();
+
+    const submitData = new FormData();
+    submitData.append("title", noticeForm.title);
+    submitData.append("content", noticeForm.content);
+    submitData.append("topFix", noticeForm.topFix);
+
+    console.log("공지사항 등록:", {...noticeForm,});
+
+    try{
+      const res = await axios.post(`${url}/admin/createNotice`, submitData,{
+          headers: {
+            Authorization: token.access_token,
+            "Content-Type": "multipart/form-data",
+          },
+      });
+      console.log("공지사항 등록 성공: ", res.data);
+      fetchNotices(); // 목록 새로고침
+      setNoticeForm({ // Form 초기화
+        title: "",
+        content: "",
+        topFix: false,
+      });
+    }catch(error){
+      console.error("공지사항 등록 실패: ", error.response || error);
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date
+      .toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\. /g, ".")
+      .replace("-", ".");
+  };
+  
   const renderNoticePage = () => (
     <div className="space-y-8">
       {/* 공지사항 등록 영역 */}
@@ -112,29 +128,30 @@ const AdminNotice = () => {
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
-              id="isPinned"
-              checked={noticeForm.isPinned}
+              id="topFix"
+              checked={noticeForm.topFix}
               onChange={(e) =>
                 setNoticeForm({
                   ...noticeForm,
-                  isPinned: e.target.checked,
+                  topFix: e.target.checked,
                 })
               }
               className="w-4 h-4 text-[#2C5F5F] border-gray-300 rounded focus:ring-[#2C5F5F]"
             />
-            <label htmlFor="isPinned" className="text-sm text-gray-700">
+            <label htmlFor="topFix" className="text-sm text-gray-700">
               상단 고정
             </label>
           </div>
           <button
             type="submit"
-            className="px-6 py-2 bg-[#2C5F5F] text-white rounded-lg hover:bg-[#1E4A4A] flex items-center"
+            className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#E88D67] flex items-center"
           >
             <PlusIcon className="w-4 h-4 mr-2" />
             등록
           </button>
         </form>
       </div>
+
       {/* 공지사항 목록 */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-6 border-b">
@@ -162,18 +179,18 @@ const AdminNotice = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {notices.map((notice) => (
-              <tr key={notice.id} className="hover:bg-gray-50">
+              <tr key={notice.noticeId} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {notice.id}
+                  {notice.noticeId}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {notice.title}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {notice.createdAt}
+                  {formatDate(notice.regDate)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {notice.isPinned && (
+                  {notice.topFix && (
                     <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
                       고정
                     </span>
@@ -200,7 +217,7 @@ const AdminNotice = () => {
           {/* breadcrumb */}
           <div className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
             <HomeIcon className="w-4 h-4" />
-            <span>공지사항</span>
+            <span>〉&nbsp;공지사항</span>
           </div>
           {/* 페이지 제목 */}
           <div className="mb-6">
