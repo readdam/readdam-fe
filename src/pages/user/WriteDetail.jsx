@@ -262,7 +262,10 @@ const WriteDetail = () => {
                   </div>
                   {isAuthor && (
                     <div className="flex justify-end mt-2">
-                      <button className="flex items-center gap-2 px-4 py-2 text-[#006989] rounded-lg hover:bg-gray-100 transition-colors">
+                      <button 
+                        onClick={() => navigate(`/writeModify/${post.writeId}`)}
+                        className="flex items-center gap-2 px-4 py-2 text-[#006989] rounded-lg hover:bg-gray-100 transition-colors"
+                      >
                         <PencilIcon className="w-5 h-5" />
                         <span>수정하기</span>
                       </button>
