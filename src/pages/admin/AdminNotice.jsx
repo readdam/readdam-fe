@@ -41,6 +41,20 @@ const AdminNotice = () => {
     fetchNotices(); // 페이지 처음 로드 시 목록 불러오기
   }, []);
 
+  // 공지사항 상세모달 상태
+  const [selectedNotice, setSelectedNotice] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 공지사항 목록에서 행 클릭시
+  const handleRowClick = async (noticeId) => {
+    try{
+      const response = await axios.get(`${url}/admin/notice/${noticeId}`);
+    }catch(error) {
+      console.log("공지 상세 불러오기 실패: ", error);
+      alert("공지사항 내용을 불러오지 못했습니다.");
+    }
+  };
+
   // 공지사항 등록
   const handleNoticeSubmit = async (e) => {
     e.preventDefault();
@@ -179,7 +193,8 @@ const AdminNotice = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {notices.map((notice) => (
-              <tr key={notice.noticeId} className="hover:bg-gray-50">
+              <tr key={notice.noticeId} className="hover:bg-gray-50 cursor-pointer"
+              onClick={() => handleRowClick(notice.noticeId)}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {notice.noticeId}
                 </td>
@@ -225,6 +240,23 @@ const AdminNotice = () => {
           </div>
           {/* 페이지별 콘텐츠 */}
           {activePage === "공지사항" && renderNoticePage()}
+          {isModalOpen && selectedNotice && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-lg w-[500px] p-6 relative">
+                    <button
+                      className="absolute top-3 right-3 text-gray-500 hover:text-red-500"
+                      onClick={() => setIsModalOpen(false)}
+                    >
+                      ✖
+                    </button>
+                    <h3 className="text-xl font-bold mb-2">{selectedNotice.title}</h3>
+                    <p className="text-sm text-gray-500 mb-4">{selectedNotice.regDate}</p>
+                    <div className="text-gray-800 whitespace-pre-line">
+                      {selectedNotice.content}
+                    </div>
+                  </div>
+                </div>
+              )}
         </main>
       </div>
     </div>
