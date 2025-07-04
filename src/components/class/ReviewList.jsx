@@ -43,10 +43,6 @@ const ReviewList = ({ classDetail }) => {
     fetchReviews();
   }, [classDetail.classId, currentPage]);
 
-  // useEffect(() => {
-  //   console.log("📌 reviews 상태 업데이트됨:", reviews);
-  // }, [reviews]);
-
   const handleRating = (value) => {
     setRating(value);
   };
@@ -102,7 +98,7 @@ const ReviewList = ({ classDetail }) => {
         day: "2-digit",
       })
       .replace(/\. /g, ".")
-      .replace(".", "");
+      .replace("-", ".");
   };
 
   return (
