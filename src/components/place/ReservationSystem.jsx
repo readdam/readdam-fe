@@ -131,10 +131,30 @@ const ReservationSystem = ({ rooms = [] }) => {
         const allTimes = timeData.allTimes.filter(
           (t) => !timeData.reservedTimes.includes(t)
         );
+
         const startIdx = allTimes.indexOf(selectedTime[0]);
         const endIdx = allTimes.indexOf(time);
+
         const start = Math.min(startIdx, endIdx);
         const end = Math.max(startIdx, endIdx);
+
+        // 선택된 범위 (예약 여부 무시)
+        const fullRange = timeData.allTimes.slice(
+          timeData.allTimes.indexOf(selectedTime[0]),
+          timeData.allTimes.indexOf(time) + 1
+        );
+
+        // 중간에 예약된 시간 있는지 확인
+        const hasReserved = fullRange.some((t) =>
+          timeData.reservedTimes.includes(t)
+        );
+
+        if (hasReserved) {
+          alert('선택한 범위에 예약된 시간이 포함되어 있습니다.');
+          return;
+        }
+
+        // 선택된 범위(예약 없는 시간만)
         const range = allTimes.slice(start, end + 1);
         setSelectedTime(range);
       }
@@ -154,15 +174,15 @@ const ReservationSystem = ({ rooms = [] }) => {
           <h2 className="text-xl font-bold text-gray-800 mb-2">
             예약이 완료되었습니다
           </h2>
-          <p className="text-gray-600 mb-1">날짜: {date}</p>
-          <p className="text-gray-600 mb-1">방: {selectedRoom?.name}</p>
-          <p className="text-gray-600 mb-1">시간: {selectedTime.join(', ')}</p>
-          <p className="text-gray-600 mb-6">인원: {people}명</p>
+
           <button
             onClick={() => {
               setIsSubmitted(false);
               setSelectedRoom(null);
               setSelectedTime([]);
+              setName('');
+              setPhone('');
+              setRequest('');
             }}
             className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78]"
           >
@@ -325,7 +345,11 @@ const ReservationSystem = ({ rooms = [] }) => {
                   <div className="mt-3 flex items-center gap-2">
                     <p className="text-sm text-gray-600">
                       선택된 시간: {selectedTime[0]} ~{' '}
-                      {selectedTime[selectedTime.length - 1]}
+                      {String(
+                        parseInt(
+                          selectedTime[selectedTime.length - 1].split(':')[0]
+                        ) + 1
+                      ).padStart(2, '0') + ':00'}
                     </p>
                     <button
                       type="button"
