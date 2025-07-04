@@ -54,8 +54,8 @@ const ReservationSystem = ({ rooms = [] }) => {
   };
 
   useEffect(() => {
-    setPhone(user.phone);
-    setName(user.name);
+    setPhone(user?.phone || '');
+    setName(user?.name || '');
   }, [user]);
 
   useEffect(() => {
@@ -64,14 +64,54 @@ const ReservationSystem = ({ rooms = [] }) => {
     }
   }, [selectedRoomId, date]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedTime.length === 0) {
-      alert('예약 시간을 선택해주세요.');
+
+    if (selectedRanges.length === 0) {
+      alert('예약할 시간을 추가해주세요.');
       return;
     }
-    setIsSubmitted(true);
+
+    // 방별로 묶기
+    const groupedByRoom = {};
+    selectedRanges.forEach((range) => {
+      if (!groupedByRoom[range.roomId]) {
+        groupedByRoom[range.roomId] = [];
+      }
+      groupedByRoom[range.roomId].push(range);
+    });
+
+    const payload = Object.keys(groupedByRoom).map((roomId) => ({
+      roomId: parseInt(roomId),
+      participantCount: people,
+      reserverName: name,
+      reserverPhone: phone,
+      requestMessage: request,
+      ranges: groupedByRoom[roomId].map((r) => ({
+        date: r.date,
+        start: r.start,
+        end: r.end,
+        times: r.times,
+      })),
+    }));
+
+    console.log(name, phone);
+    console.log('예약 데이터:', payload);
+
+    try {
+      await axios.post('/my/reservations', payload);
+      alert('예약이 완료되었습니다.');
+      // 상태 초기화
+      setIsSubmitted(true);
+      setSelectedRanges([]);
+      setSelectedRoom(null);
+      setSelectedTime([]);
+    } catch (error) {
+      console.error('예약 실패', error);
+      alert('예약 중 오류가 발생했습니다.');
+    }
   };
+
   const getTomorrow = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -308,7 +348,15 @@ const ReservationSystem = ({ rooms = [] }) => {
                           {
                             date: date,
                             start: selectedTime[0],
-                            end: selectedTime[selectedTime.length - 1],
+                            end:
+                              String(
+                                parseInt(
+                                  selectedTime[selectedTime.length - 1].split(
+                                    ':'
+                                  )[0]
+                                ) + 1
+                              ).padStart(2, '0') + ':00',
+
                             times: [...selectedTime],
                             roomId: selectedRoom.roomId,
                             roomName: selectedRoom.name,
@@ -332,7 +380,7 @@ const ReservationSystem = ({ rooms = [] }) => {
                       >
                         <div className="flex flex-col text-sm text-gray-700">
                           <div className="font-medium text-gray-800">
-                            {idx + 1}회차 - {range.roomName}
+                            {idx + 1}) {range.roomName}
                           </div>
                           <div className="text-xs text-gray-600 mt-0.5">
                             📅 {range.date} | 🕒 {range.start} ~ {range.end}
@@ -440,7 +488,7 @@ const ReservationSystem = ({ rooms = [] }) => {
             </div>
             <button
               type="submit"
-              disabled={!selectedRoom || !date || selectedTime.length === 0}
+              disabled={!selectedRoom || !date || selectedRanges.length === 0}
               className="w-full py-3 bg-[#E88D67] text-white font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               예약하기
