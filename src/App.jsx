@@ -2,9 +2,11 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './index.css';
-import { messaging, onMessage } from './firebase';
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from './atoms';
+import { initForegroundNotifications } from './firebaseMessaging';
+import { useNavigate } from 'react-router-dom';
+
 
 // 🔹 스크롤탑 설정
 import ScrollToTop from '@components/ScrollToTop';
@@ -28,7 +30,6 @@ import AdminClassDetail from '@pages/admin/AdminClassDetail';
 import PlaceReservationList from '@pages/admin/PlaceReservationList';
 import AdminPointStats from '@pages/admin/AdminPointStats';
 import AdminReportList from '@pages/admin/AdminReportList';
-import AdminAlertList from '@pages/admin/AdminAlertList';
 import AdminAlertCreate from '@pages/admin/AdminAlertCreate';
 import AdminNotice from '@pages/admin/AdminNotice';
 import AdminEventReg from '@pages/admin/AdminEventReg';
@@ -83,22 +84,23 @@ import Fail from '@pages/my/Fail';
 import OtherPlaceDetail from '@pages/user/OtherPlaceDetail';
 
 function App() {
+  const navigate = useNavigate();
+  
   useEffect(() => {
-    const unsubscribe = onMessage(messaging, (payload) => {
-      console.log('🔔 Foreground 알림 수신:', payload);
-
-      const { title, body, icon } = payload.notification;
-
-      new Notification(title, {
-        body,
-        icon: icon || '/favicon.ico',
-      });
-    });
-
-    return () => {
-      unsubscribe();
-    };
+    const unsubscribe = initForegroundNotifications();
+    return () => unsubscribe && unsubscribe();
   }, []);
+
+    useEffect(() => {
+    const bc = new BroadcastChannel("sw-to-page");
+    bc.addEventListener("message", event => {
+      const { type, url } = event.data || {};
+      if (type === "NAVIGATE" && url) {
+        navigate(url);
+      }
+    });
+    return () => bc.close();
+  }, [navigate]);
 
   const [, setToken] = useAtom(tokenAtom);
   const [, setUser] = useAtom(userAtom);
@@ -115,6 +117,18 @@ function App() {
     }
     setReady(true);
   }, [setToken, setUser]);
+
+  useEffect(() => {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.addEventListener("message", event => {
+      const { type, url } = event.data || {};
+      if (type === "NAVIGATE" && url) {
+        // 현재 탭에서 페이지 이동
+        window.location.href = url;
+      }
+    });
+  }
+}, []);
 
   if (!ready) return null;
 
@@ -149,7 +163,6 @@ function App() {
           />
           <Route path="/admin/pointStats" element={<AdminPointStats />} />
           <Route path="/admin/reportList" element={<AdminReportList />} />
-          <Route path="/admin/alertList" element={<AdminAlertList />} />
           <Route path="/admin/alertCreate" element={<AdminAlertCreate />} />
           <Route path="/admin/notice" element={<AdminNotice />} />
           <Route path="/admin/eventReg" element={<AdminEventReg />} />
