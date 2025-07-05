@@ -11,15 +11,15 @@ import {
 } from 'lucide-react';
 import { useAtomValue } from 'jotai';
 import { userAtom } from '../../atoms';
-import { useAxios } from '@hooks/useAxios';
 import { useNavigate } from 'react-router';
+import { createAxios } from '@config/config';
 
 const Place = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('latest');
   const user = useAtomValue(userAtom);
-  const axios = useAxios();
+  const axios = createAxios();
 
   // 핵심: queryKey에 모든 파라미터를 넣는다.
   const {
