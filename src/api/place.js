@@ -108,3 +108,23 @@ export const getPlaceReviews = async ({ placeId, page, size, axios }) => {
   return res.data;
   // { content: [...], pageInfo: {...} }
 };
+
+export const updatePlaceReview = async ({
+  reviewId,
+  content,
+  rating,
+  isHide,
+  axios,
+}) => {
+  const res = await axios.put(`/place/reviews/${reviewId}`, {
+    content,
+    rating,
+    isHide,
+  });
+  return res.data; // 수정된 리뷰 DTO 반환
+};
+
+export const deletePlaceReview = async ({ reviewId, axios }) => {
+  const res = await axios.delete(`/place/reviews/${reviewId}`);
+  return res.data;
+};

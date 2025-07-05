@@ -5,13 +5,17 @@ import StarRatingSvg from '@components/book/StarRatingSvg';
 import { useAtomValue } from 'jotai';
 import { userAtom } from '../../atoms';
 import { useAxios } from '@hooks/useAxios';
-import { getPlaceReviews, writePlaceReview } from '@api/place';
+import {
+  deletePlaceReview,
+  getPlaceReviews,
+  updatePlaceReview,
+  writePlaceReview,
+} from '@api/place';
 import { useParams } from 'react-router';
 import { createAxios } from '@config/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const ReviewSection = () => {
-  // const [reviews, setReviews] = useState(initialReviews);
   const [newReview, setNewReview] = useState({
     rating: 0,
     content: '',
@@ -24,6 +28,10 @@ const ReviewSection = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const reviewsPerPage = 3;
   const queryClient = useQueryClient();
+  const [editingId, setEditingId] = useState(null);
+  const [editContent, setEditContent] = useState('');
+  const [editRating, setEditRating] = useState(0);
+  const [editIsHide, setEditIsHide] = useState(false);
 
   const { data: reviewPage, isLoading: isReviewLoading } = useQuery({
     queryKey: ['placeReviews', id, currentPage],
@@ -87,6 +95,53 @@ const ReviewSection = () => {
     }
     alert('리뷰가 등록되었습니다!');
     queryClient.invalidateQueries(['placeReviews']);
+  };
+
+  // 리뷰 수정 핸들러
+  const handleEdit = (review) => {
+    setEditingId(review.placeReviewId);
+    setEditContent(review.content);
+    setEditRating(review.rating);
+    setEditIsHide(review.isHide);
+  };
+
+  const handleUpdateReview = async () => {
+    if (!editContent.trim()) {
+      alert('리뷰 내용을 입력해주세요.');
+      return;
+    }
+
+    try {
+      await updatePlaceReview({
+        reviewId: editingId,
+        content: editContent,
+        rating: editRating,
+        isHide: editIsHide,
+        axios,
+      });
+      alert('리뷰가 수정되었습니다.');
+      setEditingId(null);
+      queryClient.invalidateQueries(['placeReviews']);
+    } catch (err) {
+      console.error(err);
+      alert('리뷰 수정에 실패했습니다.');
+    }
+  };
+
+  const handleDelete = async (reviewId) => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+
+    try {
+      await deletePlaceReview({
+        reviewId,
+        axios,
+      });
+      alert('리뷰가 삭제되었습니다.');
+      queryClient.invalidateQueries(['placeReviews']);
+    } catch (err) {
+      console.error(err);
+      alert('리뷰 삭제에 실패했습니다.');
+    }
   };
 
   // 기존 renderStars는 그대로 사용 가능
@@ -172,36 +227,84 @@ const ReviewSection = () => {
               key={review.placeReviewId}
               className="border-b border-gray-100 pb-6 last:border-0"
             >
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="flex">{renderStars(review.rating)}</div>
+              {editingId === review.placeReviewId ? (
+                <div className="space-y-3 w-full">
+                  {/* 수정모드: 별점 */}
+                  <h3 className="font-bold">리뷰 수정하기</h3>
+                  <label className="block text-gray-700 mb-1">평점</label>
+                  <StarRatingSvg
+                    rating={editRating}
+                    setRating={setEditRating}
+                  />
+
+                  {/* 수정모드: 텍스트 */}
+                  <label className="block text-gray-700 mb-1">내용</label>
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#006989]"
+                    rows={4}
+                  />
+
+                  {/* 수정모드: 비공개 */}
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={editIsHide}
+                      onChange={(e) => setEditIsHide(e.target.checked)}
+                    />
+                    비공개
+                  </label>
+
+                  {/* 저장/취소 */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleUpdateReview}
+                      className="px-3 py-1 bg-[#006989] text-white rounded-md text-sm hover:bg-[#005C78]"
+                    >
+                      저장
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-sm hover:bg-gray-300"
+                    >
+                      취소
+                    </button>
                   </div>
-                  <p className="font-bold text-gray-800 flex items-center text-sm gap-2">
-                    {review.nickname}
-                    <span className="font-medium text-xs text-gray-500">
-                      {review.regTime.split('T')[0].replace(/-/g, '.')}
-                    </span>
-                  </p>
                 </div>
-                {user.username === review.username && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(review)}
-                      className="text-gray-500 hover:text-[#006989]"
-                    >
-                      <EditIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(review.placeReviewId)}
-                      className="text-gray-500 hover:text-red-500"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+              ) : (
+                <>
+                  {/* 평소 모드 */}
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex">{renderStars(review.rating)}</div>
+                      <p className="font-bold text-gray-800 flex items-center text-sm gap-2">
+                        {review.nickname}
+                        <span className="font-medium text-xs text-gray-500">
+                          {review.regTime.split('T')[0].replace(/-/g, '.')}
+                        </span>
+                      </p>
+                    </div>
+                    {user.username === review.username && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(review)}
+                          className="text-gray-500 hover:text-[#006989]"
+                        >
+                          <EditIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(review.placeReviewId)}
+                          className="text-gray-500 hover:text-red-500"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <p className="text-gray-600 text-base">{review.content}</p>
+                  <p className="text-gray-600 text-base">{review.content}</p>
+                </>
+              )}
             </div>
           ))
         )}
