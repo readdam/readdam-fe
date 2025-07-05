@@ -80,3 +80,31 @@ export async function fetchPlaces(
   const response = await axios.get('/place/search', { params });
   return response.data;
 }
+
+export const writePlaceReview = async ({
+  content,
+  rating,
+  isHide,
+  placeId,
+  axios,
+}) => {
+  const res = await axios.post(`/place/reviews`, {
+    content,
+    rating,
+    isHide,
+    placeId,
+  });
+  return res.data;
+};
+
+export const getPlaceReviews = async ({ placeId, page, size, axios }) => {
+  const res = await axios.get(`/place/reviews`, {
+    params: {
+      placeId,
+      page,
+      size,
+    },
+  });
+  return res.data;
+  // { content: [...], pageInfo: {...} }
+};
