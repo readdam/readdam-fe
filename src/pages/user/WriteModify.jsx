@@ -93,12 +93,7 @@ const WriteModify = () => {
       payload.append('type', formData.type);
       payload.append('visibility', formData.visibility);
       payload.append('needReview', formData.needReview ? 'true' : 'false');
-      payload.append(
-        'endDate',
-        formData.needReview && !isReviewDeadlinePassed
-          ? formData.reviewDeadline
-          : ''
-      );
+      payload.append('endDate', formData.reviewDeadline || '');
       payload.append('title', formData.title);
       payload.append('content', formData.content);
 
