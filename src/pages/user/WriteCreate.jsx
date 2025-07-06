@@ -4,16 +4,11 @@ import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
 import { useAxios } from '../../hooks/useAxios';
 import { url } from '../../config/config';
+import WriteTagSection from "@components/write/WriteTagSection";
 import {
   BookIcon,
-  ClockIcon,
-  GlobeIcon,
   SaveIcon,
-  EyeIcon,
   CheckCircleIcon,
-  HashIcon,
-  AlertCircleIcon,
-  ImageIcon,
   SearchIcon,
   UploadIcon,
 } from 'lucide-react'
@@ -25,7 +20,6 @@ const WriteCreate = () => {
     needReview: false,
     reviewDeadline: '',
     title: '',
-    tags: '',
     content: '',
     image: null
   });
@@ -33,9 +27,9 @@ const WriteCreate = () => {
   const [isSpellchecking, setIsSpellchecking] = useState(false)
   const [token] = useAtom(tokenAtom);
   const [user] = useAtom(userAtom);
-  const [write, setWrite]  = useState({num:'',title:'',content:''});
   const [ifile, setIfile] = useState(null);
   const navigate = useNavigate();
+  const [tags, setTags] = useState([]);
   const submit = (e) => {
     e.preventDefault();
     //일반필드
@@ -51,16 +45,15 @@ const WriteCreate = () => {
         : formData.reviewDeadline;
       submitData.append("endDate", formattedDeadline);
     }
-    //태그 파싱
-    const tagArray = formData.tags 
-    .split('#')
-    .map(tag => tag.trim())
-    .filter(tag => tag); // 공백 제거 + 빈 문자열 제거
-    submitData.append("tag1", tagArray[0] || "");
-    submitData.append("tag2", tagArray[1] || "");
-    submitData.append("tag3", tagArray[2] || "");
-    submitData.append("tag4", tagArray[3] || "");
-    submitData.append("tag5", tagArray[4] || "");
+ 
+    // TAG 배열 → FormData 로 전송
+    tags.forEach((tag, i) => {
+      submitData.append(`tag${i + 1}`, tag);
+    });
+    for (let i = tags.length + 1; i <= 5; i++) {
+      submitData.append(`tag${i}`, "");
+    }
+
     //이미지
     if (ifile) submitData.append("ifile", ifile); 
 
@@ -101,9 +94,6 @@ const WriteCreate = () => {
       reader.readAsDataURL(file);
       setIfile(file); 
     };
-    const edit = (e) => {
-        setWrite({...write, [e.target.name]:e.target.value});
-    }
 
   const handleSearchCover = () => {
     // 북커버 검색 로직 구현 필요
@@ -287,24 +277,7 @@ const WriteCreate = () => {
               />
             </div>
             {/* 태그 */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                태그{' '}
-                <span className="text-sm text-gray-500 ml-2">(최대 5개)</span>
-              </label>
-              <input
-                type="text"
-                placeholder="#자기계발 #자소서 #추천도서"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-                value={formData.tags}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    tags: e.target.value,
-                  })
-                }
-              />
-            </div>
+            <WriteTagSection tags={tags} setTags={setTags} />
             {/* 본문 작성 */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
