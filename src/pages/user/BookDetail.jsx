@@ -1,19 +1,12 @@
 import { useRef, useState } from 'react';
 import { StarIcon, HeartIcon, LockIcon } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { searchBook } from '@api/kakaoApi';
-import { getReviews, getReviewStats, writeReview } from '@api/book';
-import { useAtomValue } from 'jotai';
-import { tokenAtom, userAtom } from '../../atoms'; // 로그인 사용자 정보
-import StarRatingSvg from '@components/book/StarRatingSvg';
+import BookReviewSection from '@components/book/BookReviewSection';
 
 export default function BookDetail() {
-  const token = useAtomValue(tokenAtom);
   const param = useParams();
-
-  const queryClient = useQueryClient();
-
   const { data, isLoading } = useQuery({
     queryKey: ['bookDetail', param.isbn],
     queryFn: () =>
@@ -27,64 +20,10 @@ export default function BookDetail() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(0);
-  const reviewsPerPage = 3;
-
-  // 로그인 유저 정보 (예: username)
-  const user = useAtomValue(userAtom);
-  const username = user?.username; // 또는 토큰 decode해서 꺼내기
-
-  const { data: reviewPage, isLoading: isReviewLoading } = useQuery({
-    queryKey: ['bookReviews', isbnParam, username, currentPage],
-    queryFn: () =>
-      getReviews({
-        isbn: isbnParam,
-        username,
-        page: currentPage,
-        size: reviewsPerPage,
-      }),
-    enabled: !!isbnParam && !!username,
-  });
-
-  const indexOfLast = currentPage * reviewsPerPage;
-  const indexOfFirst = indexOfLast - reviewsPerPage;
-  // const currentReviews = allReviews.slice(indexOfFirst, indexOfLast);
-
-  const handlePageChange = (page) => setCurrentPage(page);
-  const [rating, setRating] = useState(0);
-
-  const [comment, setComment] = useState('');
-  const [isHide, setIsHide] = useState(false);
   const [activeTab, setActiveTab] = useState('review');
   const reviewRef = useRef(null);
   const meetingRef = useRef(null);
   const lifeBookRef = useRef(null);
-
-  const handleSubmitReview = async () => {
-    if (!comment.trim()) {
-      alert('리뷰 내용을 입력하세요!');
-      return;
-    }
-
-    try {
-      await writeReview({
-        comment,
-        rating,
-        isHide,
-        bookIsbn: isbnParam,
-        token,
-      });
-      alert('리뷰가 등록되었습니다!');
-      setComment('');
-      setRating(0);
-      setIsHide(false);
-      setCurrentPage(0); // 첫 페이지로 이동
-      queryClient.invalidateQueries(['bookReviews']); // 목록 다시 불러오기
-    } catch (err) {
-      console.error(err);
-      alert('리뷰 등록에 실패했습니다.');
-    }
-  };
 
   if (isLoading || !data?.documents?.[0]) {
     return (
@@ -199,109 +138,7 @@ export default function BookDetail() {
             인생책
           </button>
         </div>
-
-        <div className="mb-4">
-          <span className="text-sm">평점 </span>
-          <StarRatingSvg rating={rating} setRating={setRating} />
-          <span className="text-sm">내용</span>
-          <textarea
-            className="w-full border rounded-md p-3 text-sm resize-none h-24"
-            placeholder="리뷰를 입력해주세요"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />{' '}
-          <label className="text-sm flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={isHide}
-              onChange={(e) => setIsHide(e.target.checked)}
-            />
-            비공개
-          </label>
-          <button
-            className="mt-2 bg-[#006989] text-white px-4 py-2 rounded-md text-sm font-semibold"
-            onClick={handleSubmitReview}
-          >
-            리뷰 작성
-          </button>
-        </div>
-
-        {/* 리뷰 목록 */}
-
-        <div className="space-y-6">
-          {isReviewLoading ? (
-            <div className="text-center text-gray-400">리뷰 불러오는 중...</div>
-          ) : (
-            reviewPage?.content?.map((review) => (
-              <div key={review.bookReviewId} className="flex gap-4">
-                <img
-                  src={
-                    review.profileImg
-                      ? `http://localhost:8080/image?filename=${review.profileImg}`
-                      : 'https://i.ibb.co/X8xG7VG/dog1.png'
-                  } // 임시 아바타
-                  alt="avatar"
-                  className="w-14 h-14 rounded-full object-cover"
-                />
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    {review.nickname}
-                    <span className="text-xs font-normal text-gray-500">
-                      | {review.regTime.split('T')[0].replace(/-/g, '.')}
-                    </span>
-                  </div>
-                  <div className="flex gap-1 my-1">
-                    {[...Array(5)].map((_, i) => (
-                      <StarIcon
-                        key={i}
-                        className={`w-4 h-4 ${
-                          i < review.rating
-                            ? 'text-[#E88D67] fill-[#E88D67]'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-700 whitespace-pre-line">
-                    {review.comment}
-                  </p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-        {/* Pagination */}
-        <div className="flex justify-center mt-6">
-          <nav className="flex items-center gap-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={reviewPage?.first}
-              className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
-            >
-              이전
-            </button>
-            {[...Array(reviewPage?.totalPages || 0)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => handlePageChange(i)}
-                className={`px-3 py-1 text-sm rounded border ${
-                  currentPage === i
-                    ? 'bg-[#006989] text-white'
-                    : 'hover:bg-gray-50'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={reviewPage?.last}
-              className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
-            >
-              다음
-            </button>
-          </nav>
-        </div>
+        <BookReviewSection isbn={isbnParam} />
       </div>
 
       {/* 추천 도서 */}
