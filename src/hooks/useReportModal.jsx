@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import ReportModal from '../components/ReportModal';
 import { useReport } from './useReport';
+import { useAtom } from 'jotai';
+import { tokenAtom } from '../atoms';
+import { useNavigate } from 'react-router-dom';
 
 export const useReportModal = ({ defaultCategory, onSuccess }) => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [category, setCategory] = useState(defaultCategory);
   const [reportType, setReportType] = useState('');
   const [reportContent, setReportContent] = useState('');
+  const [token] = useAtom(tokenAtom);
+  const navigate = useNavigate();
   const [target, setTarget] = useState({
     id: null,
     username: null,
@@ -16,6 +21,12 @@ export const useReportModal = ({ defaultCategory, onSuccess }) => {
   const { submitReport } = useReport();
 
   const openReportModal = (targetInfo, categoryOverride) => {
+    if (!token?.access_token) {
+      alert('로그인이 필요한 서비스입니다.');
+      navigate('/login');
+      return;
+    }
+    
     setTarget({
       id: targetInfo.id,
       username: targetInfo.username,

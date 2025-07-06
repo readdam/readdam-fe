@@ -10,7 +10,6 @@ import PostcardModal from '@components/write/PostcardModal'
 import TimeRemainingText from '@components/write/TimeRemainingText';
 import PostItCard from '@components/write/PostItCard';
 import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
-import singoIcon from "@assets/singo.png";
 import { useReportModal } from '../../hooks/useReportModal';
 import { REPORT_CATEGORY } from '@constants/reportCategory';
 
@@ -162,30 +161,19 @@ const WriteShortList = () => {
         {/* Post-it 답변카드들 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {answers.map((answer) => (
-          <div key={answer.writeshortId} className="relative">
             <PostItCard
-
               color={answer.color}
               nickname={answer.nickname}
               content={answer.content}
               likes={answer.likes}
               isLiked={answer.isLiked}
               onLikeClick={() => toggleLike(answer.writeshortId)}
+              onReportClick={() => openReportModal({
+              id: answer.writeshortId,
+              username: answer.username,
+              })}
             />
 
-
-              {/* 신고 버튼 */}
-              <button
-                onClick={() => openReportModal({
-                    id: answer.writeshortId,
-                    username: answer.username,
-                  })
-                }
-                className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600"
-              >
-                <img src={singoIcon} alt="신고" className="w-5 h-5" />
-              </button>
-            </div>
           ))}
         </div>
 
