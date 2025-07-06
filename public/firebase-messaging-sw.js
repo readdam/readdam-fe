@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 /* global importScripts firebase self BroadcastChannel */
 
+// Firebase v10 compat 스크립트 로드
 importScripts(
   "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"
 );
@@ -20,56 +21,88 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// ── 백그라운드 메시지 처리 ──
-messaging.onBackgroundMessage(async payload => {
-  const { title, body, icon } = payload.notification || {};
-  const url = payload.data?.url || "/myAlert";
+// ── push 이벤트 처리: data-only 메시지도 강제 알림 ──
+self.addEventListener('push', event => {
+  const payload = event.data?.json() || {};
+  const data    = payload.data || {};
+  const title   = data.title             ||
+                  payload.notification?.title ||
+                  "새 알림";
+  const body    = data.body              ||
+                  payload.notification?.body  ||
+                  "";
+  const icon    = data.iconUrl           ||
+                  payload.notification?.icon ||
+                  "/favicon.ico";
+  const badge   = data.badgeUrl;
+  const url     = data.url               ||
+                  payload.notification?.click_action ||
+                  "/myAlert";
 
-  self.registration.showNotification(title || "새 알림", {
+  const options = {
     body,
-    icon: icon || "/favicon.ico",
+    icon,
+    badge,
     data: { url },
     tag: "readdam-alert",
     renotify: true
-  });
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
 });
 
-// ── 클릭 이벤트 ──
-self.addEventListener("notificationclick", event => {
+// ── 백그라운드 메시지 처리 (data-only + notification 모두 커버) ──
+messaging.onBackgroundMessage(async payload => {
+  console.log('[SW] background payload', payload);
+
+  const data  = payload.data || {};
+  const title = data.title             ||
+                payload.notification?.title ||
+                "새 알림";
+  const body  = data.body              ||
+                payload.notification?.body  ||
+                "";
+  const icon  = data.iconUrl           ||
+                payload.notification?.icon ||
+                "/favicon.ico";
+  const badge = data.badgeUrl;
+  const url   = data.url               ||
+                payload.notification?.click_action ||
+                "/myAlert";
+
+  const options = {
+    body,
+    icon,
+    badge,
+    data: { url },
+    tag: "readdam-alert",
+    renotify: true
+  };
+
+  self.registration.showNotification(title, options);
+});
+
+// ── 알림 클릭 이벤트 ──
+self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = event.notification.data?.url || "/";
+  const targetUrl = event.notification.data?.url || "/myAlert";
 
   event.waitUntil((async () => {
-    try {
-      // 1) 현재 열린 창들 가져오기
-      const windowClients = await self.clients.matchAll({
-        type: "window",
-        includeUncontrolled: true
-      });
+    const clientsList = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    });
 
-      if (windowClients.length > 0) {
-        const client = windowClients[0];
-        // 2) 클라이언트 포커스(잡혀있지 않으면 예외)
-        await client.focus();
-
-        // 3) 페이지 내 라우팅 지시: BroadcastChannel 사용
-        const bc = new BroadcastChannel("sw-to-page");
-        bc.postMessage({ type: "NAVIGATE", url });
-        bc.close();
-        return;
-      }
-
-      // 4) 열린 창이 없으면 새로 열기
-      await self.clients.openWindow(url);
-
-    } catch (err) {
-      console.error("notificationclick error:", err);
-      // 폴백: 새 창 열기
-      try {
-        await self.clients.openWindow(url);
-      } catch (e) {
-        console.error("openWindow 폴백 실패:", e);
-      }
+    if (clientsList.length > 0) {
+      const client = clientsList[0];
+      await client.focus();
+      const bc = new BroadcastChannel('sw-to-page');
+      bc.postMessage({ type: 'NAVIGATE', url: targetUrl });
+      bc.close();
+    } else {
+      await self.clients.openWindow(targetUrl);
     }
   })());
 });

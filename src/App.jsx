@@ -87,6 +87,7 @@ function App() {
   const navigate = useNavigate();
   
   useEffect(() => {
+    console.log('✅ App.useEffect: foreground 알림 리스너 등록');
     const unsubscribe = initForegroundNotifications();
     return () => unsubscribe && unsubscribe();
   }, []);
