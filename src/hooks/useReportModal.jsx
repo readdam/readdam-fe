@@ -29,6 +29,14 @@ export const useReportModal = ({ defaultCategory, onSuccess }) => {
   };
 
   const handleReportSubmit = async () => {
+    if (!reportType) {
+      alert('신고 유형을 선택해주세요');
+      return;
+    }
+    if (!reportContent.trim()) {
+      alert('신고 사유를 입력해주세요');
+      return;
+    }
     const success = await submitReport({
       category: target.category,   
       categoryId: String(target.id),
