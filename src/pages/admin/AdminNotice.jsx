@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useAtom } from "jotai";
-import { tokenAtom, userAtom } from "../../atoms";
+import { tokenAtom } from "../../atoms";
 import axios from "axios";
 import { url } from "@config/config";
-import {
-  HomeIcon,
-  PlusIcon,
-  TrashIcon,
-} from "lucide-react";
+import { HomeIcon, PlusIcon, TrashIcon, EditIcon } from "lucide-react";
+import NoticeModal from "@components/admin/notice/NoticeModal";
 const AdminNotice = () => {
   const [token] = useAtom(tokenAtom);
   const [activePage, setActivePage] = useState("공지사항");
@@ -24,20 +21,20 @@ const AdminNotice = () => {
 
   // 공지사항 목록 가져오기
   const fetchNotices = async () => {
-    try{
+    try {
       const response = await axios.get(`${url}/admin/notices`, {
         headers: {
-            Authorization: token.access_token,
-          },
+          Authorization: token.access_token,
+        },
       });
       console.log("공지사항 목록 가져오기 성공: ", response.data);
-      setNotices(response.data);  // 공지사항 리스트 저장
-    }catch(error) {
+      setNotices(response.data); // 공지사항 리스트 저장
+    } catch (error) {
       console.error("공지사항 목록 가져오기 실패: ", error);
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchNotices(); // 페이지 처음 로드 시 목록 불러오기
   }, []);
 
@@ -47,9 +44,11 @@ const AdminNotice = () => {
 
   // 공지사항 목록에서 행 클릭시
   const handleRowClick = async (noticeId) => {
-    try{
+    try {
       const response = await axios.get(`${url}/admin/notice/${noticeId}`);
-    }catch(error) {
+      setSelectedNotice(response.data);
+      setIsModalOpen(true);
+    } catch (error) {
       console.log("공지 상세 불러오기 실패: ", error);
       alert("공지사항 내용을 불러오지 못했습니다.");
     }
@@ -64,23 +63,24 @@ const AdminNotice = () => {
     submitData.append("content", noticeForm.content);
     submitData.append("topFix", noticeForm.topFix);
 
-    console.log("공지사항 등록:", {...noticeForm,});
+    console.log("공지사항 등록:", { ...noticeForm });
 
-    try{
-      const res = await axios.post(`${url}/admin/createNotice`, submitData,{
-          headers: {
-            Authorization: token.access_token,
-            "Content-Type": "multipart/form-data",
-          },
+    try {
+      const res = await axios.post(`${url}/admin/createNotice`, submitData, {
+        headers: {
+          Authorization: token.access_token,
+          "Content-Type": "multipart/form-data",
+        },
       });
       console.log("공지사항 등록 성공: ", res.data);
       fetchNotices(); // 목록 새로고침
-      setNoticeForm({ // Form 초기화
+      setNoticeForm({
+        // Form 초기화
         title: "",
         content: "",
         topFix: false,
       });
-    }catch(error){
+    } catch (error) {
       console.error("공지사항 등록 실패: ", error.response || error);
     }
   };
@@ -96,7 +96,26 @@ const AdminNotice = () => {
       .replace(/\. /g, ".")
       .replace("-", ".");
   };
-  
+
+  const handleDelete = async (noticeId) => {
+    const confirm = window.confirm("정말 삭제하시겠습니까?");
+    if (!confirm) return;
+
+    try {
+      await axios.delete(`${url}/admin/notice/${selectedNotice.noticeId}`, {
+        headers: { Authorization: token.access_token },
+      });
+
+      alert("삭제 완료됐습니다.");
+      setIsModalOpen(false); // 모달 닫기
+      setSelectedNotice(null); //선택 해제
+      fetchNotices();
+    } catch (error) {
+      console.error("삭제 실패", error);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
+  };
+
   const renderNoticePage = () => (
     <div className="space-y-8">
       {/* 공지사항 등록 영역 */}
@@ -193,8 +212,11 @@ const AdminNotice = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {notices.map((notice) => (
-              <tr key={notice.noticeId} className="hover:bg-gray-50 cursor-pointer"
-              onClick={() => handleRowClick(notice.noticeId)}>
+              <tr
+                key={notice.noticeId}
+                className="hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleRowClick(notice.noticeId)}
+              >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {notice.noticeId}
                 </td>
@@ -212,8 +234,14 @@ const AdminNotice = () => {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="text-red-600 hover:text-red-800">
-                    <TrashIcon className="w-4 h-4" />
+                  <button
+                    className="text-red-600 hover:text-red-800"
+                    onClick={(e) => {
+                      e.stopPropagation(); //행 클릭 이벤트 전파 방지
+                      handleDelete(notice.noticeId); //선택된 ID로 삭제 실행
+                    }}
+                  >
+                    <TrashIcon className="w-4 h-4 cursor-pointer" />
                   </button>
                 </td>
               </tr>
@@ -241,22 +269,16 @@ const AdminNotice = () => {
           {/* 페이지별 콘텐츠 */}
           {activePage === "공지사항" && renderNoticePage()}
           {isModalOpen && selectedNotice && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg shadow-lg w-[500px] p-6 relative">
-                    <button
-                      className="absolute top-3 right-3 text-gray-500 hover:text-red-500"
-                      onClick={() => setIsModalOpen(false)}
-                    >
-                      ✖
-                    </button>
-                    <h3 className="text-xl font-bold mb-2">{selectedNotice.title}</h3>
-                    <p className="text-sm text-gray-500 mb-4">{selectedNotice.regDate}</p>
-                    <div className="text-gray-800 whitespace-pre-line">
-                      {selectedNotice.content}
-                    </div>
-                  </div>
-                </div>
-              )}
+            <NoticeModal
+              notice={selectedNotice}
+              onClose={() => setIsModalOpen(false)}
+              onUpdate={(updated) => setSelectedNotice(updated)}
+              onDelete={handleDelete}
+              onFormatDate={formatDate}
+              token={token}
+              url={url}
+            />
+          )}
         </main>
       </div>
     </div>
