@@ -34,3 +34,5 @@ export function BookSection({ title, books, onAdd, onShowAll, onBookClick }) {
     </div>
   )
 }
+
+export default BookSection

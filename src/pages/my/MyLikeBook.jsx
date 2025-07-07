@@ -1,74 +1,91 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
-import { url } from '../../config/config';
-import { tokenAtom, userAtom } from '../../atoms';
-import { toggleBookLike } from '../../api/kakaoApi';
-import axios from 'axios';
+// src/pages/my/MyLikeBook.jsx
+import React, { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAtomValue } from 'jotai'
+import { useAxios } from '../../hooks/useAxios'
+import { tokenAtom, userAtom } from '../../atoms'
+import { StarIcon, HeartIcon, MessageSquareIcon } from 'lucide-react'
 
 const tabs = [
-  { label: '모임', path: '/myLikeClass' },
-  { label: '장소', path: '/myLikePlace' },
+  { label: '모임',   path: '/myLikeClass' },
+  { label: '장소',   path: '/myLikePlace' },
   { label: '글쓰기', path: '/myLikeWrite' },
-  { label: '책', path: '/myLikeBook' },
-];
+  { label: '책',     path: '/myLikeBook' },
+]
+
+const ITEMS_PER_PAGE = 16
 
 export default function MyLikeBook() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const token = useAtomValue(tokenAtom);
-  const user = useAtomValue(userAtom);
-  const [books, setBooks] = useState([]);
-  const [likedMap, setLikedMap] = useState({});
-  const [showAll, setShowAll] = useState(false);
-  const ITEMS_PER_PAGE = 16;
+  const location = useLocation()
+  const navigate = useNavigate()
+  const token    = useAtomValue(tokenAtom)
+  const user     = useAtomValue(userAtom)
+  const axios    = useAxios()
 
+  const [books,    setBooks]    = useState([])  // BookDto[]
+  const [showAll,  setShowAll]  = useState(false)
+
+  // 1) 좋아요한 책 목록 불러오기
   useEffect(() => {
-    if (!token?.access_token) return;
-    axios
-      .get(`${url}/my/likeBook`, {
-        headers: { Authorization: `Bearer ${token.access_token}` },
-        withCredentials: true,
-      })
+    if (!token?.access_token) return
+
+    axios.get('/my/likeBook', { withCredentials: true })
       .then(res => {
-        setBooks(res.data);
-        // 초기 좋아요 상태 세팅
-        const map = {};
-        res.data.forEach(b => { map[b.bookIsbn] = true; });
-        setLikedMap(map);
+        setBooks(res.data)
       })
-      .catch(err => console.error('좋아요 도서 목록 조회 실패:', err));
-  }, [token, user.username]);
+      .catch(() => setBooks([]))
+  }, [token, user.username, axios])
 
-  const handleToggleLike = async (isbn) => {
-    try {
-      const msg = await toggleBookLike(token, isbn);
-      const isNowLiked = !msg.includes('취소');
-      setLikedMap(prev => ({ ...prev, [isbn]: isNowLiked }));
-      if (!isNowLiked) {
-        alert('좋아요가 취소되었습니다');
-      }
-    } catch (e) {
-      console.error('[handleToggleLike]', e);
+  // 2) 토글 처리: /book-like?bookIsbn=xxx
+  const toggleLike = (book) => {
+    if (!token?.access_token) {
+      alert('로그인이 필요합니다.')
+      return navigate('/login')
     }
-  };
 
-  const displayBooks = showAll ? books : books.slice(0, ITEMS_PER_PAGE);
+    // 즉시 UI에서 제거
+    setBooks(prev => prev.filter(b => b.bookIsbn !== book.bookIsbn))
+
+    axios.post('/book-like', null, {
+      params: { bookIsbn: book.bookIsbn },
+      withCredentials: true
+    })
+    .then(res => {
+      const msg = res.data // "좋아요 완료" or "좋아요 취소"
+      if (msg.includes('취소')) {
+        alert('책 좋아요가 취소되었습니다.')
+      } else {
+        // 혹시 다시 좋아요 처리되었다면 복원
+        setBooks(prev => [book, ...prev])
+      }
+    })
+    .catch(() => {
+      alert('좋아요 처리 중 오류가 발생했습니다.')
+      // 오류 시 복원
+      setBooks(prev => [book, ...prev])
+    })
+  }
+
+  const display = showAll ? books : books.slice(0, ITEMS_PER_PAGE)
 
   return (
-    <div className="px-4 py-6 max-w-screen-xl mx-auto">
-      <h2 className="text-xl font-bold mb-6">좋아요한 책</h2>
+    <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
+      {/* 헤더 */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-[#006989]">좋아요</h1>
+        <p className="text-gray-600">좋아요한 책을 확인하세요</p>
+      </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-6 border-b mb-8">
+      {/* 탭 */}
+      <div className="flex space-x-6 border-b mb-8 text-sm">
         {tabs.map(tab => (
           <Link
             key={tab.label}
             to={tab.path}
             className={`pb-2 transition-all ${
               location.pathname === tab.path
-                ? 'text-black border-b-2 border-blue-500 font-semibold'
-                : 'text-gray-500 hover:text-blue-600'
+                ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
+                : 'text-gray-500 hover:text-[#006989]'
             }`}
           >
             {tab.label}
@@ -76,81 +93,79 @@ export default function MyLikeBook() {
         ))}
       </div>
 
-      {/* Book Grid or Empty State */}
-      {books.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-gray-500 mb-4">좋아요한 책이 없습니다</p>
-          <button
-            onClick={() => navigate('/book')}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md"
-          >
-            책 보러가기
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {displayBooks.map(book => (
-              <div
-                key={book.bookIsbn}
-                className="relative bg-white border rounded-md shadow-sm overflow-hidden"
-              >
-                {/* 좋아요 버튼 */}
-                <button
-                  onClick={() => handleToggleLike(book.bookIsbn)}
-                  className="absolute top-2 right-2 bg-white p-1 rounded-full shadow"
+      {/* 콘텐츠 */}
+      {books.length === 0
+        ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <p className="text-gray-500 mb-4">좋아요한 책이 없습니다</p>
+            <button
+              onClick={() => navigate('/book')}
+              className="px-6 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] transition"
+            >
+              책 보러가기
+            </button>
+          </div>
+        )
+        : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {display.map(book => (
+                <div
+                  key={book.bookIsbn}
+                  className="relative bg-white border border-[#006989] rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
                 >
-                  <svg
-                    className={`w-5 h-5 fill-current ${
-                      likedMap[book.bookIsbn] ? 'text-red-400' : 'text-gray-400'
-                    }`}
-                    viewBox="0 0 24 24"
+                  {/* 좋아요 토글 버튼 */}
+                  <button
+                    onClick={() => toggleLike(book)}
+                    className="absolute top-2 right-2 bg-white p-1 rounded-full shadow z-10"
                   >
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 
-                      6.5 3.5 5 5.5 5c1.54 0 3.04.99 
-                      3.57 2.36h1.87C13.46 5.99 14.96 
-                      5 16.5 5 18.5 5 20 6.5 20 
-                      8.5c0 3.78-3.4 6.86-8.55 
-                      11.54L12 21.35z" />
-                  </svg>
-                </button>
+                    <HeartIcon
+                      fill="#E88D67"
+                      stroke="#E88D67"
+                      className="w-5 h-5"
+                    />
+                  </button>
 
-                <Link to={`/bookDetail/${book.bookIsbn}`} className="block">
-                  {book.bookImg ? (
+                  <Link to={`/bookDetail/${book.bookIsbn}`} className="block">
                     <img
                       src={book.bookImg}
                       alt={book.title}
-                      className="w-full h-44 object-cover"
+                      className="w-full h-52 object-cover"
                     />
-                  ) : (
-                    <div className="w-full h-44 bg-gray-100 flex items-center justify-center">
-                      <div className="w-10 h-14 border-2 rounded-md" />
+                    <div className="p-3 space-y-1">
+                      <div className="text-base font-semibold truncate">
+                        {book.title}
+                      </div>
+                      <div className="text-sm text-gray-500 truncate">
+                        {book.writer} · {book.publisher}
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-gray-700 mt-1">
+                        <StarIcon className="w-4 h-4 text-[#E88D67]" />
+                        <span>{book.rating?.toFixed(1) ?? '0.0'}</span>
+                        <span className="ml-4">
+                          <MessageSquareIcon className="w-4 h-4 inline-block" />{' '}
+                          {book.reviewCnt ?? 0}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  <div className="p-3">
-                    <div className="text-sm font-semibold truncate">{book.title}</div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {book.writer} · {book.publisher}
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          {/* 더보기 버튼 */}
-          {!showAll && books.length > ITEMS_PER_PAGE && (
-            <div className="text-center mt-10">
-              <button
-                onClick={() => setShowAll(true)}
-                className="px-6 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
-              >
-                더보기
-              </button>
+                  </Link>
+                </div>
+              ))}
             </div>
-          )}
-        </>
-      )}
+
+            {!showAll && books.length > ITEMS_PER_PAGE && (
+              <div className="text-center mt-10">
+                <button
+                  onClick={() => setShowAll(true)}
+                  className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+                >
+                  더보기
+                </button>
+              </div>
+            )}
+          </>
+        )
+      }
     </div>
-  );
+  )
 }

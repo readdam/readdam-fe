@@ -36,7 +36,7 @@ const MyLibraryEdit = ({ shelf, onClose, onSave, onDelete }) => {
   }
 
   const handleSubmit = async () => {
-    if (!title || books.length === 0) return
+    if (!title) return
     try {
       const { data: updated } = await axios.post('/my/myLibraryUpdate', {
         libraryId: shelf.libraryId,
@@ -167,13 +167,13 @@ const MyLibraryEdit = ({ shelf, onClose, onSave, onDelete }) => {
             >
               취소
             </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!title || books.length === 0}
-              className="px-4 py-2 bg-[#E88D67] text-white rounded hover:bg-[#D07D5D] disabled:opacity-50"
-            >
-              저장하기
-            </button>
+      <button
+        onClick={handleSubmit}
+        disabled={!title}
+        className="px-4 py-2 bg-[#E88D67] text-white rounded hover:bg-[#D07D5D] disabled:opacity-50"
+      >
+        저장하기
+      </button>
           </div>
         ) : (
           <div className="flex justify-between items-center mt-4">
@@ -190,14 +190,14 @@ const MyLibraryEdit = ({ shelf, onClose, onSave, onDelete }) => {
               >
                 취소
               </button>
-              <button
-                onClick={handleSubmit}
-                disabled={!title || books.length === 0}
-                className="px-4 py-2 bg-[#E88D67] text-white rounded hover:bg-[#D07D5D] disabled:opacity-50"
-              >
-                저장하기
-              </button>
-            </div>
+                     <button
+          onClick={handleSubmit}
+          disabled={!title}
+          className="px-4 py-2 bg-[#E88D67] text-white rounded hover:bg-[#D07D5D] disabled:opacity-50"
+        >
+          저장하기
+        </button>
+           </div>
           </div>
         )}
       </div>

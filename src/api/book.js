@@ -1,46 +1,59 @@
-import axios from 'axios';
-import { url } from '../config/config';
+// 책 리뷰 조회
+export const getReviews = async ({
+  isbn,
+  username,
+  page = 0,
+  size = 5,
+  axios,
+}) => {
+  const params = {
+    bookIsbn: isbn,
+    page,
+    size,
+  };
+  if (username) {
+    params.username = username;
+  }
 
-export const getReviews = async ({ isbn, username, page = 0, size = 5 }) => {
-  const res = await axios.get(`${url}/book/reviews`, {
-    params: {
-      bookIsbn: isbn,
-      username,
-      page,
-      size,
-    },
-  });
-  return res.data; // Page<BookReviewDto>
+  const { data } = await axios.get('/book/reviews', { params });
+  return data;
 };
 
+// 책 리뷰 작성
 export const writeReview = async ({
   comment,
   rating,
   isHide,
   bookIsbn,
-  token,
+  axios,
 }) => {
-  const res = await axios.post(
-    `${url}/book/reviews`,
-    {
-      comment,
-      rating,
-      isHide,
-      bookIsbn,
-    },
-    {
-      headers: {
-        Authorization: token.access_token,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-  return res.data;
+  const { data } = await axios.post('/book/reviews', {
+    comment,
+    rating,
+    isHide,
+    bookIsbn,
+  });
+  return data;
 };
 
-export const getReviewStats = async (isbn) => {
-  const response = await axios.get(`${url}/book/reviews/stats`, {
-    params: { bookIsbn: isbn },
+// 책 리뷰 수정
+export const updateReview = async ({
+  reviewId,
+  comment,
+  rating,
+  isHide,
+  axios,
+}) => {
+  const { data } = await axios.put(`/book/reviews/${reviewId}`, {
+    comment,
+    rating,
+    isHide,
   });
-  return response.data; // { bookIsbn, reviewCount, averageRating }
+  return data;
+};
+
+// 책 리뷰 삭제
+export const deleteReview = async ({ reviewId, axios }) => {
+  const { data } = await axios.delete(`/book/reviews/${reviewId}`);
+  return data;
 };

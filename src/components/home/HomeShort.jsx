@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import PostItCard from '@components/write/PostItCard';
 import { useAxios } from '../../hooks/useAxios'
 import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
+import { useReportModal } from '../../hooks/useReportModal';
+import { REPORT_CATEGORY } from '@constants/reportCategory';
 
 const HomeShort = () => {
   const axios = useAxios();
@@ -24,10 +26,18 @@ const HomeShort = () => {
     }
   };
 
-  const handleReport = (id) => {
-    alert('신고가 접수되었습니다.');
-  };
+  const { openReportModal, ReportModalComponent } = useReportModal({
+    defaultCategory: REPORT_CATEGORY.WRITE_SHORT,
+    onSuccess: () => {
+    },
+  });
 
+  const handleReport = (id, username) => {
+    openReportModal({
+      id,
+      username,
+    });
+  };
 
   return (
     <div className="w-full bg-gray-50 py-12">
@@ -46,6 +56,11 @@ const HomeShort = () => {
         </div>
 
         {/* 카드 리스트 */}
+        {answers.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">
+            등록된 글이 없습니다. 이달의 첫 문장을 작성해보세요.
+          </div>
+        ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {answers.map((answer) => (
             <PostItCard
@@ -56,10 +71,12 @@ const HomeShort = () => {
               likes={answer.likes}
               isLiked={answer.isLiked}
               onLikeClick={() => toggleLike(answer.writeshortId)}
-              onReportClick={() => handleReport(answer.writeshortId)}
+              onReportClick={() => handleReport(answer.writeshortId, answer.username)}
             />
           ))}
         </div>
+        )}
+        {ReportModalComponent}
       </div>
     </div>
   );

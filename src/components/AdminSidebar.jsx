@@ -58,11 +58,8 @@ const sidebarMenus = [
   {
     title: "알림",
     icon: <LucideBell className="w-4 h-4 mr-2" />,
-    path: "#",
-    submenus: [
-      { name: "알림 목록", path: "/admin/alertList" },
-      { name: "알림 보내기", path: "/admin/alertCreate" },
-    ],
+    path: "/admin/alertCreate",
+    submenus: [],
   },
   {
     title: "공지사항",

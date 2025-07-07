@@ -5,22 +5,11 @@ import ReservationSystem from '@components/place/ReservationSystem';
 import RelatedGroups from '@components/place/RelatedGroups';
 import { useParams } from 'react-router';
 import { useAxios } from '@hooks/useAxios';
+import PlaceMapCard from '@components/place/PlaceMapCard';
+import OtherPlaceInfo from '@components/otherPlace/OtherPlaceInfo';
+import OtherPlaceReviewSection from '@components/otherPlace/OtherPlaceReviewSection';
 
 // 임시 데이터
-const placeData = {
-  id: 1,
-  name: '북카페 읽담',
-  address: '서울시 강남구 테헤란로 123',
-  contact: '02-1234-5678',
-  hours: '평일 10:00 - 22:00, 주말 11:00 - 21:00',
-  description:
-    '책과 함께하는 편안한 시간을 위한 공간, 북카페 읽담입니다. 다양한 장르의 책과 함께 맛있는 커피와 디저트를 즐기실 수 있습니다. 독서모임을 위한 공간 대여도 가능합니다.',
-  images: [
-    'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Ym9vayUyMGNhZmV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60',
-  ],
-  tags: ['카페', '북카페', '독서모임', '스터디', '강남'],
-  likes: 124,
-};
 const reviewsData = [
   {
     id: 1,
@@ -170,7 +159,7 @@ const OtherPlaceDetail = () => {
     const fetchPlaceDetail = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(`/place/${id}`);
+        const response = await axios.get(`/otherPlace/${id}`);
         setPlaceData(response.data);
         console.log(response.data);
       } catch (error) {
@@ -216,21 +205,22 @@ const OtherPlaceDetail = () => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <PlaceInfo place={placeData} />
-            <ReviewSection
+            <OtherPlaceInfo place={placeData} />
+            <OtherPlaceReviewSection
               placeId={placeData.id}
               initialReviews={reviewsData}
               isLoggedIn={isLoggedIn}
             />
           </div>
           <div className="space-y-8">
-            <ReservationSystem
-              placeId={placeData.id}
-              isLoggedIn={isLoggedIn}
-              rooms={placeData.rooms}
-              operatingHours={operatingHoursData}
+            <PlaceMapCard
+              name={placeData.name}
+              address={placeData.basicAddress}
+              detailAddress={placeData.detailAddress}
+              lat={placeData.lat}
+              lng={placeData.lng}
             />
-            <RelatedGroups tags={placeData.tags} groups={groupsData} />
+            {/* <RelatedGroups tags={placeData.tags} groups={groupsData} /> */}
           </div>
         </div>
       </main>

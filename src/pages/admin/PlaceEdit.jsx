@@ -342,8 +342,6 @@ export default function PlaceEdit() {
       console.log('🟡 updatePlace 호출');
       await updatePlace(token, placeId, formData);
       console.log('🟢 updatePlace 성공');
-      alert('장소 수정 완료!');
-      navigate('/admin/placeList');
     } catch (err) {
       console.error('🔴 updatePlace 실패', err);
 
