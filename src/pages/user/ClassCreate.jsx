@@ -37,9 +37,12 @@ const ClassCreate = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handlePlaceSelect = (place) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       venueAddress: place.address_name,
+      venueName: place.place_name,
+      lat: place.y,
+      lng: place.x,
     }));
   };
 
@@ -91,7 +94,6 @@ const ClassCreate = () => {
     }
   };
   
-
   const removeMainImgF = (e) => {
     e.preventDefault();
     setMainImgF("");

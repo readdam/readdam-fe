@@ -8,6 +8,7 @@ const AddrSearchModal = ({ onSelect, onClose }) => {
   const [places, setPlaces] = useState([]);
 
   const handleSearch = () => {
+     e.preventDefault();
     if (!loaded || !window.kakao) {
         alert('Kakao 지도 API가 아직 로딩되지 않았습니다.');
         return;
@@ -27,10 +28,10 @@ const AddrSearchModal = ({ onSelect, onClose }) => {
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="장소 키워드 입력"
+            placeholder="장소명 입력"
             className="flex-1 border px-2 py-1 rounded"
           />
-          <button onClick={handleSearch} className="bg-blue-500 text-white px-3 py-1 rounded">
+          <button type='button' onClick={handleSearch} className="bg-blue-500 text-white px-3 py-1 rounded">
             검색
           </button>
         </div>
