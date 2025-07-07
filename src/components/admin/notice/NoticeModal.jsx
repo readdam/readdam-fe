@@ -57,7 +57,7 @@ const NoticeModal = ({
 
         {isEditing ? (
           <>
-            <h3 className="text-xl font-bold mb-4">공지 수정</h3>
+            <h3 className="text-xl font-bold mb-4">공지사항 수정</h3>
             <input
               className="w-full border px-3 py-2 rounded mb-2"
               value={form.title}
