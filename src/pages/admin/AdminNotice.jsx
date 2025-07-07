@@ -86,7 +86,12 @@ const AdminNotice = () => {
   };
 
   const formatDate = (dateStr) => {
+
+    if(!dateStr) return "";
+
     const date = new Date(dateStr);
+    if(isNaN(date.getTime())) return "날짜 오류";
+    
     return date
       .toLocaleDateString("ko-KR", {
         year: "numeric",

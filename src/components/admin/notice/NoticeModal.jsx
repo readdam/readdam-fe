@@ -95,7 +95,7 @@ const NoticeModal = ({
           <>
             <h3 className="text-xl font-bold mb-2">{notice.title}</h3>
             <p className="text-sm text-gray-500 mb-4">
-              {onFormatDate(notice.regDate)}
+              {notice.regDate && onFormatDate(notice.regDate)}
             </p>
             <div className="text-gray-800 whitespace-pre-line">
               {notice.content}
