@@ -190,9 +190,8 @@ function App() {
           <Route path="/bookSearch" element={<BookSearch />} />
           <Route path="/bookDetail/:isbn" element={<BookDetail />} />
           <Route path="/notice" element={<Notice />} />
-          <Route path="/writeDetail" element={<WriteDetail />} />
           <Route path="/writeCreate" element={<WriteCreate />} />
-          <Route path="/writeModify" element={<WriteModify />} />
+          <Route path="/writeModify/:id" element={<WriteModify />} />
           <Route path="/classList" element={<ClassList />} />
           <Route path="/classCreate" element={<ClassCreate />} />
           <Route path="/classDetail/:classId" element={<ClassDetail />} />

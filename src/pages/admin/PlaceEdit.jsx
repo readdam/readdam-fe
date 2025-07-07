@@ -38,7 +38,7 @@ export default function PlaceEdit() {
         setPhoneNumber(data.phone);
         setIntroduceText(data.introduce);
         setLat(data.lat);
-        setLng(data.log);
+        setLng(data.lng);
 
         setKeywords(data.tags || []);
         setImagePreviews(data.images || []);
@@ -242,7 +242,7 @@ export default function PlaceEdit() {
       tag9: keywords[8] || null,
       tag10: keywords[9] || null,
       lat,
-      log: lng,
+      lng: lng,
     };
     formData.append(
       'placeDto',
@@ -339,13 +339,33 @@ export default function PlaceEdit() {
     );
 
     try {
+      console.log('🟡 updatePlace 호출');
       await updatePlace(token, placeId, formData);
+      console.log('🟢 updatePlace 성공');
       alert('장소 수정 완료!');
       navigate('/admin/placeList');
     } catch (err) {
-      console.error(err);
-      alert('수정 실패!');
+      console.error('🔴 updatePlace 실패', err);
+
+      if (err.response) {
+        const { status, data } = err.response;
+        if (status === 409 && data?.error === 'room_has_reservation') {
+          alert(data.message || '해당 방에 예약이 있어 삭제할 수 없습니다.');
+          return;
+        }
+
+        alert(data.message || '요청 처리 중 오류가 발생했습니다.');
+        return;
+      } else {
+        alert(err?.message || '서버에 연결할 수 없습니다.');
+        return;
+      }
     }
+
+    // 이 부분은 성공했을 때만 실행됩니다.
+
+    alert('장소 수정 완료!');
+    navigate('/admin/placeList');
   };
 
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -476,7 +496,7 @@ export default function PlaceEdit() {
       </section>
       <div className="flex gap-4">
         <button
-          type="submit"
+          type="button"
           className="flex-1 px-6 py-3 bg-[#006989] text-white rounded-lg"
           onClick={handleSubmit}
         >

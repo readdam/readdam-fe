@@ -1,93 +1,161 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   BookIcon,
-  ClockIcon,
-  GlobeIcon,
-  SaveIcon,
-  EyeIcon,
   CheckCircleIcon,
-  HashIcon,
-  AlertCircleIcon,
-  ImageIcon,
+  SaveIcon,
   SearchIcon,
   UploadIcon,
-} from 'lucide-react'
+} from 'lucide-react';
+import { useAxios } from '../../hooks/useAxios';
+import { url } from '../../config/config';
+import { useNavigate, useParams } from 'react-router-dom';
+import WriteTagSection from "@components/write/WriteTagSection";
 
-const WriteModify = ({ writeId }) => {
+const WriteModify = () => {
+  const { id } = useParams();
+  const axios = useAxios();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     type: '',
     visibility: 'public',
     needReview: false,
     reviewDeadline: '',
     title: '',
-    summary: '',
-    tags: '',
     content: '',
-    image: null
-  })
+    image: null,
+    imagePreview: null,
+  });
 
-  const [showGuideQuestions, setShowGuideQuestions] = useState(false)
-  const [isSpellchecking, setIsSpellchecking] = useState(false)
+  const [originalImageUrl, setOriginalImageUrl] = useState(null);
+  const [showGuideQuestions, setShowGuideQuestions] = useState(false);
+  const [isSpellchecking, setIsSpellchecking] = useState(false);
+  const [tags, setTags] = useState([]);
+  const [isReviewDeadlinePassed, setIsReviewDeadlinePassed] = useState(false);
+  const [commentCnt, setCommentCnt] = useState(0);
 
-  // ✅ 1. 기존 글 정보 로드
+  // 기존 글 정보 로드
   useEffect(() => {
     const fetchWriteDetail = async () => {
-      const dummyData = {
-        type: 'review',
-        visibility: 'public',
-        needReview: true,
-        reviewDeadline: '2025-06-15T10:00',
-        title: '수정할 글 제목입니다',
-        summary: '',
-        tags: '#독후감 #리액트',
-        content: '기존에 작성했던 본문입니다.',
-        image: null,
+      try {
+        const res = await axios.get(`${url}/writeDetail/${id}`);
+        const post = res.data.write;
+
+        const tagsArr = [
+          post.tag1,
+          post.tag2,
+          post.tag3,
+          post.tag4,
+          post.tag5,
+        ].filter(Boolean);
+
+        setTags(tagsArr);
+
+        const deadlinePassed =
+          post.endDate && new Date(post.endDate) < new Date();
+
+        setIsReviewDeadlinePassed(deadlinePassed);
+
+        setFormData({
+          type: post.type || '',
+          visibility: post.hide ? 'private' : 'public',
+          needReview: !!post.endDate,
+          reviewDeadline: post.endDate ? post.endDate.slice(0, 16) : '',
+          title: post.title,
+          summary: '',
+          content: post.content,
+          image: null,
+          imagePreview: null,
+        });
+
+        setCommentCnt(post.commentCnt || 0);
+
+        if (post.img) {
+          setOriginalImageUrl(`${url}/image?filename=${post.img}`);
+        }
+      } catch (err) {
+        console.error('❌ 글 상세 불러오기 실패', err);
       }
-      setFormData(dummyData)
-    }
+    };
 
-    fetchWriteDetail()
-  }, [writeId])
+    if (id) {
+      fetchWriteDetail();
+    }
+  }, [id]);
 
-  // ✅ 2. 수정 제출
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    alert('글이 수정되었습니다!')
-    // PUT 요청 or PATCH 요청 등 수정 API 호출
-  }
+  // 수정 제출
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // ✅ 3. 임시저장 및 기타 핸들러는 동일 (필요시 수정)
+    try {
+      const payload = new FormData();
+      payload.append('writeId', id);
+      payload.append('type', formData.type);
+      payload.append('visibility', formData.visibility);
+      payload.append('needReview', formData.needReview ? 'true' : 'false');
+      payload.append(
+        'endDate',
+        formData.needReview && !isReviewDeadlinePassed
+          ? formData.reviewDeadline
+          : ''
+      );
+      payload.append('title', formData.title);
+      payload.append('content', formData.content);
 
-    const handleTempSave = () => {
-        // 임시저장 로직 구현
-        alert('임시 저장되었습니다. 나의 글쓰기 목록에서 확인할 수 있어요.')
+      // ✅ tags 배열 사용
+      tags.slice(0, 5).forEach((tag, index) => {
+        payload.append(`tag${index + 1}`, tag);
+      });
+      for (let i = tags.length + 1; i <= 5; i++) {
+        payload.append(`tag${i}`, "");
+      }
+
+      if (formData.image) {
+        payload.append('ifile', formData.image);
+      }
+
+      await axios.post(`${url}/my/writeModify/${id}`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      alert('글이 수정되었습니다!');
+      navigate(`/writeDetail/${id}`);
+    } catch (error) {
+      console.error('❌ 글 수정 실패', error);
+      alert('글 수정 중 오류가 발생했습니다.');
     }
-    const handleSpellCheck = () => {
-        setIsSpellchecking(true)
-        // 맞춤법 검사 로직 구현
-        setTimeout(() => {
-        setIsSpellchecking(false)
-        alert('맞춤법 검사가 완료되었습니다.')
-        }, 1500)
+  };
+
+  const handleTempSave = () => {
+    alert('임시 저장되었습니다. 나의 글쓰기 목록에서 확인할 수 있어요.');
+  };
+
+  const handleSpellCheck = () => {
+    setIsSpellchecking(true);
+    setTimeout(() => {
+      setIsSpellchecking(false);
+      alert('맞춤법 검사가 완료되었습니다.');
+    }, 1500);
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData({
+        ...formData,
+        image: file,
+        imagePreview: URL.createObjectURL(file),
+      });
+      setOriginalImageUrl(null);
     }
-    const handleImageUpload = (e) => {
-        const file = e.target.files?.[0]
-        if (file) {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-            setFormData({
-            ...formData,
-            image: reader.result,
-            })
-        }
-        reader.readAsDataURL(file)
-        }
-    }
-    const handleSearchCover = () => {
-        // 북커버 검색 로직 구현
-        alert('북커버 검색 기능은 준비 중입니다.')
-    }
-  // ✅ 4. 렌더링 (타이틀/버튼만 변경)
+  };
+
+  const handleSearchCover = () => {
+    alert('북커버 검색 기능은 준비 중입니다.');
+  };
+
   return (
     <div className="w-full bg-gray-50 py-8">
       <div className="container mx-auto px-4">
@@ -96,18 +164,16 @@ const WriteModify = ({ writeId }) => {
             <h1 className="text-2xl font-bold text-gray-800 mb-6">
               글 수정하기
             </h1>
-            {/* 기본 정보 입력 */}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              {/* 좌측 컬럼 */}
               <div className="space-y-6">
-                {/* 글 종류 선택 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     글 종류 <span className="text-red-500">*</span>
                   </label>
                   <select
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-                    value={formData.type}
+                    value={formData.type ?? ''}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -117,26 +183,42 @@ const WriteModify = ({ writeId }) => {
                     required
                   >
                     <option value="">선택해주세요</option>
-                    <option value="review">독후감</option>
+                    <option value="bookreview">독후감</option>
                     <option value="essay">수필</option>
                     <option value="personal">자기소개서</option>
                     <option value="assignment">과제</option>
+                    <option value="other">기타</option>
                   </select>
                 </div>
-                {/* 공개 범위 선택 */}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     공개 범위 <span className="text-red-500">*</span>
                   </label>
                   <select
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-                    value={formData.visibility}
-                    onChange={(e) =>
+                    value={formData.visibility ?? ''}
+                    onChange={(e) =>{
+                      if (
+                        e.target.value === 'private' &&
+                        commentCnt > 0
+                      ) {
+                        alert(
+                          '댓글이 달린 글은 비공개로 전환할 수 없습니다.'
+                        );
+                        return;
+                      }
+
+
                       setFormData({
                         ...formData,
                         visibility: e.target.value,
-                      })
-                    }
+                        needReview:
+                          e.target.value === 'private'
+                            ? false
+                            : formData.needReview,
+                      });
+                    }}
                     required
                   >
                     <option value="public">전체 공개</option>
@@ -144,53 +226,56 @@ const WriteModify = ({ writeId }) => {
                   </select>
                 </div>
               </div>
-              {/* 우측 컬럼 - 이미지 업로드 */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    이미지 등록
-                </label>
-                {/* 프리뷰 + 버튼을 가로 정렬 */}
-                <div className="flex gap-4 items-start">
-                    {/* 이미지 프리뷰 */}
-                    <div className="w-48 h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                    {formData.image ? (
-                        <img
-                        src={formData.image}
-                        alt="업로드 이미지"
-                        className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#E88D67]">
-                        <BookIcon className="w-20 h-20 text-white" />
-                        </div>
-                    )}
-                    </div>
 
-                    {/* 버튼 그룹 - 세로 정렬 */}
-                    <div className="flex flex-col gap-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  이미지 등록
+                </label>
+                <div className="flex gap-4 items-start">
+                  <div className="w-48 h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                    {formData.imagePreview ? (
+                      <img
+                        src={formData.imagePreview}
+                        alt="업로드 미리보기"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : originalImageUrl ? (
+                      <img
+                        src={originalImageUrl}
+                        alt="기존 이미지"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-[#E88D67]">
+                        <BookIcon className="w-20 h-20 text-white" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2">
                     <button
-                        type="button"
-                        onClick={handleSearchCover}
-                        className="px-4 py-2 bg-[#F3F7EC] text-[#006989] rounded-lg hover:bg-[#E5EED9] transition-colors flex items-center justify-center gap-2"
+                      type="button"
+                      onClick={handleSearchCover}
+                      className="px-4 py-2 bg-[#F3F7EC] text-[#006989] rounded-lg hover:bg-[#E5EED9] transition-colors flex items-center justify-center gap-2"
                     >
-                        <SearchIcon className="w-4 h-4" />
-                        북커버 검색
+                      <SearchIcon className="w-4 h-4" />
+                      북커버 검색
                     </button>
                     <label className="px-4 py-2 bg-[#F3F7EC] text-[#006989] rounded-lg hover:bg-[#E5EED9] transition-colors flex items-center justify-center gap-2 cursor-pointer">
-                        <UploadIcon className="w-4 h-4" />
-                        이미지 첨부
-                        <input
+                      <UploadIcon className="w-4 h-4" />
+                      이미지 첨부
+                      <input
                         type="file"
                         accept="image/*"
                         className="hidden"
                         onChange={handleImageUpload}
-                        />
+                      />
                     </label>
-                    </div>
+                  </div>
                 </div>
-                </div>
+              </div>
             </div>
-            {/* 첨삭 설정 */}
+
             <div className="mb-6">
               <div className="flex items-center mb-2">
                 <input
@@ -198,12 +283,23 @@ const WriteModify = ({ writeId }) => {
                   id="needReview"
                   className="mr-2"
                   checked={formData.needReview}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                  if (
+                    !e.target.checked && // 첨삭 해제 시도
+                    commentCnt > 0
+                  ) {
+                    alert(
+                      '댓글이 달린 글은 첨삭 여부를 해제할 수 없습니다.'
+                    );
+                    return;
+                  }
                     setFormData({
                       ...formData,
                       needReview: e.target.checked,
                     })
-                  }
+                  }}
+                    disabled={formData.visibility === 'private'}
+                  
                 />
                 <label
                   htmlFor="needReview"
@@ -228,18 +324,26 @@ const WriteModify = ({ writeId }) => {
                       })
                     }
                     required
+                    disabled={isReviewDeadlinePassed} // 마감 시 비활성화
                   />
+                  {/* 날짜 마감 시 안내문구 */}
+                  {isReviewDeadlinePassed && (
+                    <p className="text-sm text-red-500 mt-2">
+                      첨삭 마감일이 이미 지났습니다. 날짜를 수정할 수 없습니다.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
           </div>
-          {/* 글 작성 영역 */}
+
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            {/* 제목 */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 글 제목 <span className="text-red-500">*</span>
-                <span className="text-sm text-gray-500 ml-2">(최대 100자)</span>
+                <span className="text-sm text-gray-500 ml-2">
+                  (최대 100자)
+                </span>
               </label>
               <input
                 type="text"
@@ -256,26 +360,9 @@ const WriteModify = ({ writeId }) => {
                 required
               />
             </div>
-            {/* 태그 */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                태그{' '}
-                <span className="text-sm text-gray-500 ml-2">(최대 5개)</span>
-              </label>
-              <input
-                type="text"
-                placeholder="#자기계발 #자소서 #추천도서"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-                value={formData.tags}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    tags: e.target.value,
-                  })
-                }
-              />
-            </div>
-            {/* 본문 작성 */}
+
+            <WriteTagSection tags={tags} setTags={setTags} />
+
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 본문 작성
@@ -305,7 +392,7 @@ const WriteModify = ({ writeId }) => {
                 required
               />
             </div>
-            {/* 버튼만 수정 */}
+
             <div className="flex items-center justify-between">
               <button
                 type="button"
@@ -336,7 +423,7 @@ const WriteModify = ({ writeId }) => {
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default WriteModify
+export default WriteModify;
