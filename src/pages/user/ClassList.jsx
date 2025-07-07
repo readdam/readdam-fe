@@ -101,7 +101,7 @@ const ClassList = () => {
         </div>
         <div className="bg-white rounded-lg p-6 mb-8">
           <div className="flex flex-wrap gap-4 mb-4">
-            <select
+            {/* <select
               className="px-4 py-2 border border-gray-300 rounded-lg"
               value={venueFilter}
               onChange={(e) => setVenueFilter(e.target.value)}
@@ -109,7 +109,7 @@ const ClassList = () => {
               <option value="전체">모든 장소</option>
               <option value="읽담">읽담에서 모임</option>
               <option value="타 장소">타 장소 모임</option>
-            </select>
+            </select> */}
             <div className="flex gap-2">
                <button
                 className={`px-4 py-2 rounded-full ${
@@ -141,16 +141,16 @@ const ClassList = () => {
               >
                 좋아요 순
               </button>
-              <button
+              {/* <button
                 className={`px-4 py-2 rounded-full ${
                   sortBy === "distance"
                     ? "bg-[#006989] text-white"
                     : "bg-gray-100 text-gray-700"
                 }`}
-                // onClick={() => handleSortChange("distance")}
+                onClick={() => handleSortChange("distance")}
               >
                 모임장소 가까운 순
-              </button>
+              </button> */}
             </div>
           </div>
           <form onSubmit={handleSearch} className="flex gap-2">
