@@ -1,38 +1,40 @@
-import React, { useState } from 'react'
-import {
-  SearchIcon,
-  HomeIcon,
-  UsersIcon,
-  BookOpenIcon,
-  MessageSquareIcon,
-  SettingsIcon,
-  BarChart3Icon,
-  CalendarIcon,
-  FileTextIcon,
-} from 'lucide-react'
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { SearchIcon, HomeIcon } from "lucide-react";
+import { url } from "@config/config";
 
 const AdminUserList = () => {
-  const [activeTab, setActiveTab] = useState('전체 회원')
-  const [searchCondition, setSearchCondition] = useState('전체')
-  const [activeMenu, setActiveMenu] = useState('회원관리')
+  const [keyword, setKeyword] = useState("");
+  const [dateType, setDateType] = useState("join");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [members, setMembers] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [loading, setLoading] = useState(false);
 
-  // 더미 회원 데이터
-  const members = [
-    {
-      username: 1,
-      name: '김회원',
-      nickname: 'user1',
-      email: 'user1@example.com',
-      joinDate: '2023-05-15',
-    },
-    {
-      username: 2,
-      name: '이독자',
-      nickname: 'reader2',
-      email: 'reader2@example.com',
-      joinDate: '2023-04-22'
-    },
-  ]
+  const fetchMembers = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${url}/api/admin/userList`, {
+        params: {
+          keyword,
+          dateType,
+          startDate,
+          endDate,
+          page,
+          size: pageSize,
+        },
+      });
+      setMembers(response.data.members);
+      setTotalCount(response.data.totalCount);
+    } catch (err) {
+      console.error("회원조회 실패:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -50,12 +52,11 @@ const AdminUserList = () => {
           <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">회원 조회</h2>
-              
             </div>
-           
+
             {/* 검색 필터 */}
             <div className="flex items-center space-x-4 mb-6">
-                <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4">
                 <SearchIcon className="w-5 h-5 text-gray-400" />
                 <input
                   type="text"
@@ -148,6 +149,6 @@ const AdminUserList = () => {
         </main>
       </div>
     </div>
-  )
-}
+  );
+};
 export default AdminUserList;
