@@ -39,7 +39,7 @@ const AdminNotice = () => {
   }, []);
 
   // 공지사항 상세모달 상태
-  const [selectedNotice, setSelectedNotice] = useState("");
+  const [selectedNotice, setSelectedNotice] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 공지사항 목록에서 행 클릭시
@@ -87,12 +87,11 @@ const AdminNotice = () => {
   };
 
   const formatDate = (dateStr) => {
-
-    if(!dateStr) return "";
+    if (!dateStr) return "";
 
     const date = new Date(dateStr);
-    if(isNaN(date.getTime())) return "날짜 오류";
-    
+    if (isNaN(date.getTime())) return "날짜 오류";
+
     return date
       .toLocaleDateString("ko-KR", {
         year: "numeric",
@@ -104,19 +103,18 @@ const AdminNotice = () => {
   };
 
   const handleDelete = async (noticeId) => {
-    const confirm = window.confirm("정말 삭제하시겠습니까?");
-    if (!confirm) return;
+    const confirmDelete = window.confirm("정말 삭제하시겠습니까?");
+    if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${url}/admin/notice/${selectedNotice.noticeId}`, {
+      await axios.delete(`${url}/admin/notice/${noticeId}`, {
         headers: { Authorization: token.access_token },
       });
 
       alert("삭제 완료됐습니다.");
-      setIsModalOpen(false); // 모달 닫기
       setSelectedNotice(null); //선택 해제
+      setIsModalOpen(false); // 모달 닫기
       fetchNotices();
-
     } catch (error) {
       console.error("삭제 실패", error);
       alert("삭제 중 오류가 발생했습니다.");
