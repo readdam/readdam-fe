@@ -227,7 +227,7 @@ const WriteDetail = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <div className="flex items-center flex-wrap gap-2 mb-4">
-                  <span className="px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm font-medium rounded-full">{typeMap[post.type]}</span>
+                  <span className="px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm font-medium rounded-full">{typeMap[post.writeType]}</span>
                   {[post.tag1, post.tag2, post.tag3, post.tag4, post.tag5]
                     .filter(Boolean)
                     .map((tag, idx) => (

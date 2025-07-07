@@ -60,7 +60,7 @@ const WriteModify = () => {
         setIsReviewDeadlinePassed(deadlinePassed);
 
         setFormData({
-          type: post.type || '',
+          type: post.writeType || '',
           visibility: post.hide ? 'private' : 'public',
           needReview: !!post.endDate,
           reviewDeadline: post.endDate ? post.endDate.slice(0, 16) : '',
@@ -96,7 +96,7 @@ const WriteModify = () => {
     try {
       const payload = new FormData();
       payload.append('writeId', id);
-      payload.append('type', formData.type);
+      payload.append('writeType', formData.type);
       payload.append('visibility', formData.visibility);
       payload.append('needReview', formData.needReview ? 'true' : 'false');
       if (formData.needReview && formData.reviewDeadline) {
@@ -131,10 +131,6 @@ const WriteModify = () => {
       console.error('❌ 글 수정 실패', error);
       alert('글 수정 중 오류가 발생했습니다.');
     }
-  };
-
-  const handleTempSave = () => {
-    alert('임시 저장되었습니다. 나의 글쓰기 목록에서 확인할 수 있어요.');
   };
 
   const handleSpellCheck = () => {
@@ -438,19 +434,18 @@ const WriteModify = () => {
               </button>
               <div className="flex items-center gap-4">
                 <button
-                  type="button"
-                  onClick={handleTempSave}
+                  type="submit"
                   className="px-6 py-2 text-[#006989] border border-[#006989] rounded-lg hover:bg-[#F3F7EC] transition-colors flex items-center gap-2"
                 >
                   <SaveIcon className="w-5 h-5" />
-                  임시저장
+                  수정 완료
                 </button>
-                <button
+                {/* <button
                   type="submit"
                   className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
                 >
                   수정 완료
-                </button>
+                </button> */}
               </div>
             </div>
           </div>

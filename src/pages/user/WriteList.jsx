@@ -63,7 +63,7 @@ const WriteList = () => {
       try {
         const res = await axios.post(`${url}/writeList`, {
           page: i,
-          type: normalize(params.type),
+          writeType: normalize(params.type),
           status: normalize(params.status),
           sort: params.sort,
           keyword: normalize(params.keyword),
