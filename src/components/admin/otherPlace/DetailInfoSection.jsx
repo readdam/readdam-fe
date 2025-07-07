@@ -109,11 +109,16 @@ export default function DetailInfoSection({
         </div>
 
         {/* 기타 입력 */}
-        <SimpleInput
-          label="이용 요금"
-          value={form.fee}
-          onChange={(v) => onChange('fee', v)}
-        />
+        <div>
+          <label className="block text-sm font-medium mb-2">이용 요금</label>
+          <input
+            type="number"
+            placeholder="이용 요금 입력하세요"
+            value={form.fee}
+            onChange={(e) => onChange('fee', e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
+          />
+        </div>
         <SimpleInput
           label="사용 안내"
           value={form.usageGuide}

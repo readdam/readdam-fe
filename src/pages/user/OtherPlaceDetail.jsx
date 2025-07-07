@@ -10,20 +10,6 @@ import OtherPlaceInfo from '@components/otherPlace/OtherPlaceInfo';
 import OtherPlaceReviewSection from '@components/otherPlace/OtherPlaceReviewSection';
 
 // 임시 데이터
-const placeData = {
-  id: 1,
-  name: '북카페 읽담',
-  address: '서울시 강남구 테헤란로 123',
-  contact: '02-1234-5678',
-  hours: '평일 10:00 - 22:00, 주말 11:00 - 21:00',
-  description:
-    '책과 함께하는 편안한 시간을 위한 공간, 북카페 읽담입니다. 다양한 장르의 책과 함께 맛있는 커피와 디저트를 즐기실 수 있습니다. 독서모임을 위한 공간 대여도 가능합니다.',
-  images: [
-    'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Ym9vayUyMGNhZmV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60',
-  ],
-  tags: ['카페', '북카페', '독서모임', '스터디', '강남'],
-  likes: 124,
-};
 const reviewsData = [
   {
     id: 1,
@@ -234,13 +220,7 @@ const OtherPlaceDetail = () => {
               lat={placeData.lat}
               lng={placeData.lng}
             />
-            {/* <ReservationSystem
-              placeId={placeData.id}
-              isLoggedIn={isLoggedIn}
-              rooms={placeData.rooms}
-              operatingHours={operatingHoursData}
-            />
-            <RelatedGroups tags={placeData.tags} groups={groupsData} /> */}
+            {/* <RelatedGroups tags={placeData.tags} groups={groupsData} /> */}
           </div>
         </div>
       </main>

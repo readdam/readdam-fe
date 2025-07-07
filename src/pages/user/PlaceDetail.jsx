@@ -8,36 +8,6 @@ import { useAxios } from '@hooks/useAxios';
 import PlaceMapCard from '@components/place/PlaceMapCard';
 
 // 임시 데이터
-
-const reviewsData = [
-  {
-    id: 1,
-    userId: 1,
-    userName: '책벌레',
-    rating: 5,
-    content:
-      '조용하고 아늑한 분위기가 정말 좋아요. 책을 읽기에 최적의 장소입니다. 커피도 맛있어요!',
-    date: '2023-05-15',
-  },
-  {
-    id: 2,
-    userId: 2,
-    userName: '카페홀릭',
-    rating: 4,
-    content:
-      '책 종류가 다양하고 인테리어가 예뻐요. 다만 주말에는 자리 잡기가 조금 힘들어요.',
-    date: '2023-05-10',
-  },
-  {
-    id: 3,
-    userId: 3,
-    userName: '독서광',
-    rating: 5,
-    content:
-      '독서모임을 위한 공간이 따로 마련되어 있어서 좋아요. 조명도 책 읽기에 딱 좋습니다.',
-    date: '2023-05-01',
-  },
-];
 const groupsData = [
   {
     id: 1,
@@ -134,7 +104,7 @@ const PlaceDetail = () => {
             />
 
             <ReservationSystem rooms={placeData.rooms} />
-            <RelatedGroups tags={placeData.tags} groups={groupsData} />
+            {/* <RelatedGroups tags={placeData.tags} groups={groupsData} /> */}
           </div>
         </div>
       </main>

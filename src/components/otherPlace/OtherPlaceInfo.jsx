@@ -122,8 +122,10 @@ const OtherPlaceInfo = ({ place }) => {
             <div className="flex items-start">
               <ClockIcon className="w-5 h-5 text-[#006989] mr-2 mt-0.5" />
               <span className="text-gray-700">
-                평일 {place.weekdayStime || '-'} ~ {place.weekdayEtime || '-'},
-                주말 {place.weekendStime || '-'} ~ {place.weekendEtime || '-'}
+                평일 {place.weekdayStime ? place.weekdayStime.slice(0, 5) : '-'}{' '}
+                ~ {place.weekdayEtime ? place.weekdayEtime.slice(0, 5) : '-'},
+                주말 {place.weekendStime ? place.weekendStime.slice(0, 5) : '-'}{' '}
+                ~ {place.weekendEtime ? place.weekendEtime.slice(0, 5) : '-'}
               </span>
             </div>
           )}
@@ -148,7 +150,9 @@ const OtherPlaceInfo = ({ place }) => {
             <h2 className="text-lg font-semibold text-gray-800 mb-2">
               이용 요금
             </h2>
-            <p className="text-gray-700">{place.fee}</p>
+            <p className="text-gray-700">
+              시간당 {place.fee.toLocaleString()}원
+            </p>
           </div>
         )}
 
