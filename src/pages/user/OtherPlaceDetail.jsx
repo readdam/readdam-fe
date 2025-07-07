@@ -5,6 +5,9 @@ import ReservationSystem from '@components/place/ReservationSystem';
 import RelatedGroups from '@components/place/RelatedGroups';
 import { useParams } from 'react-router';
 import { useAxios } from '@hooks/useAxios';
+import PlaceMapCard from '@components/place/PlaceMapCard';
+import OtherPlaceInfo from '@components/otherPlace/OtherPlaceInfo';
+import OtherPlaceReviewSection from '@components/otherPlace/OtherPlaceReviewSection';
 
 // 임시 데이터
 const placeData = {
@@ -170,7 +173,7 @@ const OtherPlaceDetail = () => {
     const fetchPlaceDetail = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(`/place/${id}`);
+        const response = await axios.get(`/otherPlace/${id}`);
         setPlaceData(response.data);
         console.log(response.data);
       } catch (error) {
@@ -216,21 +219,28 @@ const OtherPlaceDetail = () => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <PlaceInfo place={placeData} />
-            <ReviewSection
+            <OtherPlaceInfo place={placeData} />
+            <OtherPlaceReviewSection
               placeId={placeData.id}
               initialReviews={reviewsData}
               isLoggedIn={isLoggedIn}
             />
           </div>
           <div className="space-y-8">
-            <ReservationSystem
+            <PlaceMapCard
+              name={placeData.name}
+              address={placeData.basicAddress}
+              detailAddress={placeData.detailAddress}
+              lat={placeData.lat}
+              lng={placeData.lng}
+            />
+            {/* <ReservationSystem
               placeId={placeData.id}
               isLoggedIn={isLoggedIn}
               rooms={placeData.rooms}
               operatingHours={operatingHoursData}
             />
-            <RelatedGroups tags={placeData.tags} groups={groupsData} />
+            <RelatedGroups tags={placeData.tags} groups={groupsData} /> */}
           </div>
         </div>
       </main>

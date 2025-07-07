@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { StarIcon, EditIcon, TrashIcon } from 'lucide-react';
-// StarRatingSvg 컴포넌트 import (책 리뷰에서 사용하던 것)
 import StarRatingSvg from '@components/book/StarRatingSvg';
 import { useAtomValue } from 'jotai';
 import { userAtom } from '../../atoms';
 import { useAxios } from '@hooks/useAxios';
 import {
-  deletePlaceReview,
-  getPlaceReviews,
-  updatePlaceReview,
-  writePlaceReview,
-} from '@api/place';
+  deleteOtherPlaceReview,
+  getOtherPlaceReviews,
+  updateOtherPlaceReview,
+  writeOtherPlaceReview,
+} from '@api/otherplace';
 import { useParams } from 'react-router';
 import { createAxios } from '@config/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-const ReviewSection = () => {
+const OtherPlaceReviewSection = () => {
   const [newReview, setNewReview] = useState({
     rating: 0,
     content: '',
@@ -33,11 +32,12 @@ const ReviewSection = () => {
   const [editRating, setEditRating] = useState(0);
   const [editIsHide, setEditIsHide] = useState(false);
 
+  // 데이터 조회
   const { data: reviewPage, isLoading: isReviewLoading } = useQuery({
-    queryKey: ['placeReviews', id, currentPage],
+    queryKey: ['otherPlaceReviews', id, currentPage],
     queryFn: async () =>
-      await getPlaceReviews({
-        placeId: id,
+      await getOtherPlaceReviews({
+        otherPlaceId: id,
         page: currentPage,
         size: reviewsPerPage,
         axios: createAxios(),
@@ -45,12 +45,7 @@ const ReviewSection = () => {
     enabled: !!id,
   });
 
-  useEffect(() => {
-    console.log(user);
-    console.log(reviewPage);
-  }, [user, reviewPage]);
-
-  // 로그인 체크 핸들러
+  // 로그인 체크
   const handleCheckLogin = () => {
     if (!user?.username || user.username.trim() === '') {
       alert('로그인이 필요한 서비스입니다.');
@@ -59,47 +54,37 @@ const ReviewSection = () => {
     return true;
   };
 
-  // 리뷰 추가 핸들러
+  // 리뷰 작성
   const handleAddReview = async (e) => {
     e.preventDefault();
-    if (!user?.username || user.username.trim() === '') {
-      alert('로그인이 필요한 서비스입니다.');
-      return;
-    }
-
+    if (!handleCheckLogin()) return;
     if (!newReview.content.trim()) {
       alert('리뷰 내용을 입력해주세요.');
       return;
     }
     setIsSubmitting(true);
     try {
-      // 서버에 저장하는 API 요청 예시
-      await writePlaceReview({
+      await writeOtherPlaceReview({
         content: newReview.content,
         rating: newReview.rating,
         isHide: newReview.isHide,
-        placeId: id,
+        otherPlaceId: id,
         axios,
       });
-
-      setNewReview({
-        rating: 0,
-        content: '',
-        isHide: false,
-      });
+      setNewReview({ rating: 0, content: '', isHide: false });
+      alert('리뷰가 등록되었습니다!');
+      queryClient.invalidateQueries(['otherPlaceReviews']);
     } catch (err) {
       console.error(err);
       alert('리뷰 등록에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }
-    alert('리뷰가 등록되었습니다!');
-    queryClient.invalidateQueries(['placeReviews']);
   };
 
-  // 리뷰 수정 핸들러
+  // 리뷰 수정
   const handleEdit = (review) => {
-    setEditingId(review.placeReviewId);
+    setEditingId(review.otherPlaceReviewId);
     setEditContent(review.content);
     setEditRating(review.rating);
     setEditIsHide(review.isHide);
@@ -110,9 +95,8 @@ const ReviewSection = () => {
       alert('리뷰 내용을 입력해주세요.');
       return;
     }
-
     try {
-      await updatePlaceReview({
+      await updateOtherPlaceReview({
         reviewId: editingId,
         content: editContent,
         rating: editRating,
@@ -121,30 +105,27 @@ const ReviewSection = () => {
       });
       alert('리뷰가 수정되었습니다.');
       setEditingId(null);
-      queryClient.invalidateQueries(['placeReviews']);
+      queryClient.invalidateQueries(['otherPlaceReviews']);
     } catch (err) {
       console.error(err);
       alert('리뷰 수정에 실패했습니다.');
     }
   };
 
+  // 리뷰 삭제
   const handleDelete = async (reviewId) => {
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
-
     try {
-      await deletePlaceReview({
-        reviewId,
-        axios,
-      });
+      await deleteOtherPlaceReview({ reviewId, axios });
       alert('리뷰가 삭제되었습니다.');
-      queryClient.invalidateQueries(['placeReviews']);
+      queryClient.invalidateQueries(['otherPlaceReviews']);
     } catch (err) {
       console.error(err);
       alert('리뷰 삭제에 실패했습니다.');
     }
   };
 
-  // 기존 renderStars는 그대로 사용 가능
+  // 별점 렌더링
   const renderStars = (rating) => {
     return Array(5)
       .fill(0)
@@ -162,56 +143,53 @@ const ReviewSection = () => {
     <div className="bg-white rounded-lg shadow-md p-6 mt-8">
       <h2 className="text-xl font-bold text-gray-800 mb-6">리뷰</h2>
 
-      {
-        <form onSubmit={handleAddReview} className="mb-8 space-y-4">
-          <div>
-            <label className="block text-gray-700 mb-1">평점</label>
-            <StarRatingSvg
-              rating={newReview.rating}
-              setRating={(r) => {
-                if (!handleCheckLogin()) return;
-                setNewReview({ ...newReview, rating: r });
-              }}
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1">내용</label>
-            <textarea
-              value={newReview.content}
-              onFocus={(e) => {
-                if (!handleCheckLogin()) {
-                  e.target.blur(); // 포커스 해제
-                }
-              }}
-              onChange={(e) =>
-                setNewReview({ ...newReview, content: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#006989]"
-              rows={4}
-              placeholder="리뷰를 작성해주세요"
-              required
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={newReview.isHide}
-              onChange={(e) => {
-                if (!handleCheckLogin()) return;
-                setNewReview({ ...newReview, isHide: e.target.checked });
-              }}
-            />
-            비공개
-          </label>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] disabled:opacity-50"
-          >
-            {isSubmitting ? '등록 중...' : '리뷰 작성'}
-          </button>
-        </form>
-      }
+      {/* 작성 폼 */}
+      <form onSubmit={handleAddReview} className="mb-8 space-y-4">
+        <div>
+          <label className="block text-gray-700 mb-1">평점</label>
+          <StarRatingSvg
+            rating={newReview.rating}
+            setRating={(r) => {
+              if (!handleCheckLogin()) return;
+              setNewReview({ ...newReview, rating: r });
+            }}
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-1">내용</label>
+          <textarea
+            value={newReview.content}
+            onFocus={(e) => {
+              if (!handleCheckLogin()) e.target.blur();
+            }}
+            onChange={(e) =>
+              setNewReview({ ...newReview, content: e.target.value })
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#006989]"
+            rows={4}
+            placeholder="리뷰를 작성해주세요"
+            required
+          />
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={newReview.isHide}
+            onChange={(e) => {
+              if (!handleCheckLogin()) return;
+              setNewReview({ ...newReview, isHide: e.target.checked });
+            }}
+          />
+          비공개
+        </label>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] disabled:opacity-50"
+        >
+          {isSubmitting ? '등록 중...' : '리뷰 작성'}
+        </button>
+      </form>
 
       {/* 리뷰 리스트 */}
       <div className="space-y-6">
@@ -224,20 +202,17 @@ const ReviewSection = () => {
         ) : (
           reviewPage?.content.map((review) => (
             <div
-              key={review.placeReviewId}
+              key={review.otherPlaceReviewId}
               className="border-b border-gray-100 pb-6 last:border-0"
             >
-              {editingId === review.placeReviewId ? (
+              {editingId === review.otherPlaceReviewId ? (
                 <div className="space-y-3 w-full">
-                  {/* 수정모드: 별점 */}
                   <h3 className="font-bold">리뷰 수정하기</h3>
                   <label className="block text-gray-700 mb-1">평점</label>
                   <StarRatingSvg
                     rating={editRating}
                     setRating={setEditRating}
                   />
-
-                  {/* 수정모드: 텍스트 */}
                   <label className="block text-gray-700 mb-1">내용</label>
                   <textarea
                     value={editContent}
@@ -245,8 +220,6 @@ const ReviewSection = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#006989]"
                     rows={4}
                   />
-
-                  {/* 수정모드: 비공개 */}
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -255,8 +228,6 @@ const ReviewSection = () => {
                     />
                     비공개
                   </label>
-
-                  {/* 저장/취소 */}
                   <div className="flex gap-2">
                     <button
                       onClick={handleUpdateReview}
@@ -274,7 +245,6 @@ const ReviewSection = () => {
                 </div>
               ) : (
                 <>
-                  {/* 평소 모드 */}
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col gap-1">
                       <div className="flex">{renderStars(review.rating)}</div>
@@ -294,7 +264,9 @@ const ReviewSection = () => {
                           <EditIcon className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(review.placeReviewId)}
+                          onClick={() =>
+                            handleDelete(review.otherPlaceReviewId)
+                          }
                           className="text-gray-500 hover:text-red-500"
                         >
                           <TrashIcon className="w-4 h-4" />
@@ -310,6 +282,7 @@ const ReviewSection = () => {
         )}
       </div>
 
+      {/* 페이지네이션 */}
       <div className="flex justify-center mt-6">
         <nav className="flex items-center gap-2">
           <button
@@ -347,4 +320,4 @@ const ReviewSection = () => {
   );
 };
 
-export default ReviewSection;
+export default OtherPlaceReviewSection;
