@@ -67,7 +67,7 @@ export default function MyWriteComment() {
       {/* 리스트 */}
       {comments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-gray-500 mb-4">작성한 첨삭이 없습니다</p>
+          <p className="text-gray-500 mb-4">아직 작성한 첨삭이 없습니다.</p>
           <button
             onClick={() => navigate('/writeList')}
             className="px-6 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] transition"
