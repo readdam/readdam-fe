@@ -6,6 +6,7 @@ import {
   CalendarIcon,
   CompassIcon,
   BookOpenIcon,
+  UsersIcon,
 } from "lucide-react";
 
 const ClassCard = ({ group }) => {
@@ -55,19 +56,15 @@ const ClassCard = ({ group }) => {
           <span className="text-sm">시작일: &nbsp;</span>
           <span className="text-sm">{group.round1Date}</span>
         </div>
-        <div className="flex items-center text-gray-600 mb-4">
+        <div className="flex items-center text-gray-600 mb-2">
           <CompassIcon className="w-4 h-4 mr-2" />
           <span className="text-sm">장소: &nbsp;</span>
           <span className="text-sm">{group.round1PlaceName}</span>
         </div>
-        {/* <button
-          onClick={() => {
-            navigate(`/classDetail/${group.classId}`);
-          }}
-          className="w-full px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
-        >
-          자세히 보기
-        </button> */}
+        <div className="flex items-center text-gray-600 mb-2">
+          <UsersIcon className="w-4 h-4 mr-2" />
+          <span className="text-sm">{group.currentParticipants ?? 0} / {group.maxPerson}명</span>
+        </div>
       </div>
     </div>
   );
