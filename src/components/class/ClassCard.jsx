@@ -16,6 +16,9 @@ const ClassCard = ({ group }) => {
     <div
       key={group.classId}
       className="bg-white rounded-lg overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-shadow"
+      onClick={()=>{
+        navigate(`/classDetail/${group.classId}`)
+      }}
     >
       <div className="h-48 overflow-hidden">
         <img
@@ -57,14 +60,14 @@ const ClassCard = ({ group }) => {
           <span className="text-sm">장소: &nbsp;</span>
           <span className="text-sm">{group.round1PlaceName}</span>
         </div>
-        <button
+        {/* <button
           onClick={() => {
             navigate(`/classDetail/${group.classId}`);
           }}
           className="w-full px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
         >
           자세히 보기
-        </button>
+        </button> */}
       </div>
     </div>
   );
