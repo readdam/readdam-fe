@@ -46,6 +46,7 @@ const AdminNotice = () => {
   const handleRowClick = async (noticeId) => {
     try {
       const response = await axios.get(`${url}/admin/notice/${noticeId}`);
+      console.log("noticeId: ", noticeId);
       setSelectedNotice(response.data);
       setIsModalOpen(true);
     } catch (error) {
@@ -115,6 +116,7 @@ const AdminNotice = () => {
       setIsModalOpen(false); // 모달 닫기
       setSelectedNotice(null); //선택 해제
       fetchNotices();
+
     } catch (error) {
       console.error("삭제 실패", error);
       alert("삭제 중 오류가 발생했습니다.");
