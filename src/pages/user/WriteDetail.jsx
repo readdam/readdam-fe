@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef  } from 'react';
 import { useAxios } from '../../hooks/useAxios';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BookIcon, ShareIcon, PencilIcon, MessageSquareIcon, CheckCircleIcon, UserIcon, HeartIcon } from 'lucide-react';
+import { BookOpenIcon, ShareIcon, PencilIcon, MessageSquareIcon, CheckCircleIcon, UserIcon, HeartIcon } from 'lucide-react';
 import singoIcon from '@assets/singo.png';
 import { useAtom } from 'jotai';
 import { tokenAtom, userAtom } from '../../atoms';
@@ -28,6 +28,7 @@ const WriteDetail = () => {
   const navigate = useNavigate();
   const called = useRef(false); // StrictMode 때문에 useEffect 두 번 실행되지 않도록 방지
   const isAdmin = user?.isAdmin === true;
+  const isUrl = (path) => path?.startsWith('http://') || path?.startsWith('https://');
 
   // 글 상세 정보를 가져오는 함수
     const fetchWriteDetail = async (id) => {
@@ -198,14 +199,26 @@ const WriteDetail = () => {
         {/* 상단 섹션: 이미지와 메타 정보 */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
           <div className="flex">
-            <div className="w-96 h-96 flex-shrink-0">
+            <div className="w-96 h-96 flex-shrink-0 flex items-center justify-center bg-[#FCD5C9] rounded-lg">
               {post.img ? (
-                <img src={`${url}/image?filename=${post.img}`}
-                alt=""
-                className="w-full h-full object-cover" />
+                isUrl(post.img) ? (
+                  // 북커버 (URL) → 2:3 축소
+                  <img
+                    src={post.img}
+                    alt=""
+                    className="w-40 h-60 object-cover rounded-md"
+                  />
+                ) : (
+                  // 업로드 이미지 → 네모 꽉 차게
+                  <img
+                    src={`${url}/image?filename=${post.img}`}
+                    alt=""
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                )
               ) : (
-                <div className="w-full h-full bg-[#E88D67] flex items-center justify-center">
-                  <BookIcon className="w-24 h-24 text-white" />
+                <div className="w-full h-full bg-[#FCD5C9] flex items-center justify-center">
+                  <BookOpenIcon className="w-24 h-24 text-white" />
                 </div>
               )}
             </div>

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPinIcon, CalendarIcon, UsersIcon } from 'lucide-react'
 import { useAxios } from '../../hooks/useAxios';
 import { url } from '../../config/config';
-
+import ClassCard from '@components/class/ClassCard';
 
 const HomeClass = () => {
   const axios = useAxios();
@@ -44,47 +43,7 @@ const HomeClass = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {groups.map((group) => (
-            <div
-              key={group.classId}
-              className="bg-white rounded-lg overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-shadow"
-            >
-              <div className="h-48 overflow-hidden">
-                {group.mainImg ? (
-                  <img
-                    src={`${url}/image?filename=${group.mainImg}`}
-                    alt={group.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                    <p className="text-gray-400 text-sm">이미지가 없습니다</p>
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <span className="inline-block px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm font-medium rounded-full mb-2">
-                  {group.tag1}
-                </span>
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">
-                  {group.title} 
-                </h3>
-                <div className="flex items-center text-gray-600 mb-1">
-                  <CalendarIcon className="w-4 h-4 mr-1" />
-                  <span className="text-sm">{group.round1Date }</span>
-                </div>
-                <div className="flex items-center text-gray-600 mb-3">
-                  <MapPinIcon className="w-4 h-4 mr-1" />
-                  <span className="text-sm">{group.round1PlaceName}</span>
-                </div>
-                <Link
-                  to={`/classDetail/${group.classId}`}
-                  className="w-full px-4 py-2 bg-[#005C78] text-white rounded-lg hover:bg-[#004a61] transition-colors flex items-center justify-center"
-                >
-                  <UsersIcon className="w-4 h-4 mr-1" />
-                  <span>참여하기</span>
-                </Link>
-              </div>
-            </div>
+            <ClassCard key={group.classId} group={group} />
           ))}
         </div>
         )}

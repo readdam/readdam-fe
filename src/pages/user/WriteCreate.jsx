@@ -5,6 +5,7 @@ import { tokenAtom, userAtom } from '../../atoms';
 import { useAxios } from '../../hooks/useAxios';
 import { url } from '../../config/config';
 import WriteTagSection from "@components/write/WriteTagSection";
+import BookCoverSearchModal from "@components/write/BookCoverSearchModal";
 import {
   BookIcon,
   SaveIcon,
@@ -12,6 +13,7 @@ import {
   SearchIcon,
   UploadIcon,
 } from 'lucide-react'
+const isUrl = (path) => path?.startsWith('http://') || path?.startsWith('https://');
 const WriteCreate = () => {
   const axios = useAxios();
   const [formData, setFormData] = useState({
@@ -55,7 +57,11 @@ const WriteCreate = () => {
     }
 
     //이미지
-    if (ifile) submitData.append("ifile", ifile); 
+    if (ifile) {
+      submitData.append("ifile", ifile);
+    } else if (formData.image) {
+      submitData.append("thumbnailUrl", formData.image);
+    }
 
     axios.post(`${url}/my/write`, submitData)
       .then((res) => {
@@ -94,11 +100,19 @@ const WriteCreate = () => {
       reader.readAsDataURL(file);
       setIfile(file); 
     };
-
+  
+  const [showBookModal, setShowBookModal] = useState(false);
   const handleSearchCover = () => {
-    // 북커버 검색 로직 구현 필요
-    alert('북커버 검색 기능은 준비 중입니다.')
+   setShowBookModal(true);
   }
+  const handleSelectCover = (thumbnailUrl) => {
+  setFormData({
+    ...formData,
+    image: thumbnailUrl,
+  });
+  setIfile(null); // 기존 업로드 파일 제거
+  setShowBookModal(false);
+};
   return (
     <div className="w-full bg-gray-50 py-8">
       <div className="container mx-auto px-4">
@@ -166,19 +180,29 @@ const WriteCreate = () => {
                 {/* 프리뷰 + 버튼을 가로 정렬 */}
                 <div className="flex gap-4 items-start">
                     {/* 이미지 프리뷰 */}
-                    <div className="w-48 h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                    <div className="w-48 h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
                     {formData.image ? (
-                        <img
-                        src={formData.image}
-                        alt="업로드 이미지"
-                        className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#E88D67]">
-                        <BookIcon className="w-20 h-20 text-white" />
+                      formData.image.startsWith('http://') || formData.image.startsWith('https://') ? (
+                        <div className="w-28 h-42 bg-[#FCD5C9] flex items-center justify-center rounded-lg overflow-hidden">
+                          <img
+                            src={formData.image}
+                            alt="북커버 미리보기"
+                            className="w-28 h-42 object-cover rounded-md"
+                          />
                         </div>
+                      ) : (
+                        <img
+                          src={formData.image}
+                          alt="업로드 이미지"
+                          className="w-full h-full object-cover"
+                        />
+                      )
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-[#FCD5C9]">
+                        <BookIcon className="w-20 h-20 text-white" />
+                      </div>
                     )}
-                    </div>
+                  </div>
 
                     {/* 버튼 그룹 - 세로 정렬 */}
                     <div className="flex flex-col gap-2">
@@ -339,6 +363,12 @@ const WriteCreate = () => {
             </div>
           </div>
         </form>
+        {showBookModal && (
+          <BookCoverSearchModal
+            onClose={() => setShowBookModal(false)}
+            onSelect={handleSelectCover}
+          />
+        )}
       </div>
     </div>
   )
