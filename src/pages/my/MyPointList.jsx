@@ -85,39 +85,42 @@ export default function PointList() {
         ))}
       </div>
 
-      {/* 내역 테이블 */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2">구분</th>
-              <th className="px-4 py-2">포인트</th>
-              <th className="px-4 py-2">사유</th>
-              <th className="px-4 py-2">일시</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((p, i) => (
-              <tr key={i} className="border-b last:border-none">
-                <td className="px-4 py-3 text-[#005C78] font-semibold">
-                  {p.point > 0 ? '적립' : '사용'}
-                </td>
-                <td className={`px-4 py-3 ${p.point > 0 ? 'text-[#006989]' : 'text-red-500'}`}>
-                  {p.point > 0 ? `+${p.point}` : p.point}P
-                </td>
-                <td className="px-4 py-3">{p.reason}</td>
-                <td className="px-4 py-3">
-                  {new Date(p.date).toLocaleString('ko-KR', {
-                    year: 'numeric', month: '2-digit',
-                    day: '2-digit', hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+{/* 내역 테이블 (문의 디자인과 동일하게) */}
+<div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+  {/* 헤더 */}
+  <div className="grid grid-cols-12 px-4 py-2 text-sm font-medium bg-gray-50 border-b border-gray-200">
+    <div className="col-span-3 text-gray-500">구분</div>
+    <div className="col-span-3 text-gray-500">포인트</div>
+    <div className="col-span-3 text-gray-500">사유</div>
+    <div className="col-span-2 text-right text-gray-500">일시</div>
+  </div>
+
+  {/* 항목 */}
+  {visible.map((p, i) => (
+    <div
+      key={i}
+      className="grid grid-cols-12 px-4 py-4 text-sm border-b border-gray-200 items-center hover:bg-gray-50 cursor-pointer"
+    >
+      <div className="col-span-3 text-[#005C78] font-semibold">
+        {p.point > 0 ? '적립' : '사용'}
       </div>
+      <div className={`col-span-3 font-medium ${p.point > 0 ? 'text-[#006989]' : 'text-red-500'}`}>
+        {p.point > 0 ? `+${p.point}` : p.point}P
+      </div>
+      <div className="col-span-4 truncate">
+        {p.reason}
+      </div>
+      <div className="col-span-2 text-right text-gray-600">
+        {new Date(p.date).toLocaleString('ko-KR', {
+          year: 'numeric', month: '2-digit',
+          day: '2-digit', hour: '2-digit',
+          minute: '2-digit'
+        })}
+      </div>
+    </div>
+  ))}
+</div>
+
 
       {/* 더보기 */}
       {visibleCount < filtered.length && (

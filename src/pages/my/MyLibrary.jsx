@@ -31,7 +31,6 @@ export function MyLibrary() {
 
   useEffect(() => { fetchLibraries() }, [fetchLibraries])
 
-  const openAddModal = () => setShowModal('add')
   const openShowModal = (name, books) => {
     setModalCategory(name)
     setModalBooks(books)
@@ -40,6 +39,10 @@ export function MyLibrary() {
   const openEditModal = name => {
     setModalCategory(name)
     setShowModal('edit')
+  }
+  const openAddModal = () => {
+    setModalCategory('')
+    setShowModal('add')
   }
 
   const transform = book => ({
@@ -62,12 +65,6 @@ export function MyLibrary() {
     books: s.books.map(transform)
   }))
 
-  // 책이 없으면 3칸 placeholder
-  const fillSlots = books =>
-    books.length > 0
-      ? books
-      : Array.from({ length: 3 }).map((_, i) => ({ id: `empty-${i}`, empty: true }))
-
   const handleBookClick = isbn => navigate(`/bookDetail/${isbn}`)
 
   return (
@@ -76,31 +73,23 @@ export function MyLibrary() {
 
       {/* 인생 책 */}
       <div className="border border-gray-300 rounded-lg p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-[#005C78]">인생 책</h2>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => openEditModal(inLifeApi.name)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-[#E88D67] text-white rounded-md hover:bg-opacity-90 transition-colors"
-            >
-              <PlusIcon size={16} />
-              <span>책 추가</span>
-            </button>
-            <button
-              onClick={() => openShowModal(inLifeApi.name, inLife)}
-              className="px-3 py-1.5 border border-[#006989] text-[#006989] rounded-md hover:bg-[#006989] hover:text-white transition-colors"
-            >
-              전체보기
-            </button>
-          </div>
-        </div>
+        <h2 className="text-xl font-bold text-[#005C78] mb-4">인생 책</h2>
         <div className="flex gap-6 overflow-x-auto pb-4">
-          {fillSlots(inLife).map(book =>
+          {[...inLife, { id: 'plus-life', empty: true }].map(book =>
             book.empty ? (
               <div
                 key={book.id}
-                className="w-[140px] h-[190px] bg-gray-100 rounded-lg flex-shrink-0"
-              />
+                onClick={() => openEditModal(inLifeApi.name)}
+                className="
+                  w-[140px] h-[190px]
+                  flex-shrink-0
+                  border-2 border-dashed border-gray-300
+                  rounded-lg flex items-center justify-center
+                  cursor-pointer transition-colors hover:bg-gray-50
+                "
+              >
+                <PlusIcon size={32} className="text-gray-500" />
+              </div>
             ) : (
               <img
                 key={book.id}
@@ -116,31 +105,23 @@ export function MyLibrary() {
 
       {/* 읽은 책 */}
       <div className="border border-gray-300 rounded-lg p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-[#005C78]">읽은 책</h2>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => openEditModal(inLifeApi.name)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-[#E88D67] text-white rounded-md hover:bg-opacity-90 transition-colors"
-            >
-              <PlusIcon size={16} />
-              <span>책 추가</span>
-            </button>
-            <button
-              onClick={() => openShowModal(inReadApi.name, inRead)}
-              className="px-3 py-1.5 border border-[#006989] text-[#006989] rounded-md hover:bg-[#006989] hover:text-white transition-colors"
-            >
-              전체보기
-            </button>
-          </div>
-        </div>
+        <h2 className="text-xl font-bold text-[#005C78] mb-4">읽은 책</h2>
         <div className="flex gap-6 overflow-x-auto pb-4">
-          {fillSlots(inRead).map(book =>
+          {[...inRead, { id: 'plus-read', empty: true }].map(book =>
             book.empty ? (
               <div
                 key={book.id}
-                className="w-[140px] h-[190px] bg-gray-100 rounded-lg flex-shrink-0"
-              />
+                onClick={() => openEditModal(inReadApi.name)}
+                className="
+                  w-[140px] h-[190px]
+                  flex-shrink-0
+                  border-2 border-dashed border-gray-300
+                  rounded-lg flex items-center justify-center
+                  cursor-pointer transition-colors hover:bg-gray-50
+                "
+              >
+                <PlusIcon size={32} className="text-gray-500" />
+              </div>
             ) : (
               <img
                 key={book.id}

@@ -3,14 +3,8 @@ import React from 'react'
 import { PlusIcon } from 'lucide-react'
 
 export function PersonalShelf({ shelves, onAdd, onSelect }) {
-  // 최소 3칸 확보 로직
-  const slots = shelves.length > 0
-    ? [...shelves]
-    : []
-  const placeholdersCount = Math.max(0, 3 - slots.length)
-
   return (
-    <div className="space-y-4 mb-8 px-4">
+    <div className="space-y-4 mb-8">
       {/* 헤더 */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-[#005C78]">나만의 서재</h2>
@@ -23,10 +17,9 @@ export function PersonalShelf({ shelves, onAdd, onSelect }) {
         </button>
       </div>
 
-      {/* 선반 */}
+      {/* 선반 리스트 + 추가 슬롯 */}
       <div className="flex gap-6 overflow-x-auto pb-4">
-        {/* 실제 있는 서재들 */}
-        {slots.map(shelf => (
+        {shelves.map(shelf => (
           <div
             key={shelf.id}
             className="w-[140px] cursor-pointer flex-shrink-0"
@@ -55,7 +48,9 @@ export function PersonalShelf({ shelves, onAdd, onSelect }) {
                       />
                     )
                   })
-                : <div className="w-full h-full bg-gray-100 rounded-lg" />
+                : (
+                  <div className="w-full h-full bg-gray-100 rounded-lg" />
+                )
               }
             </div>
             <p className="mt-2 text-center text-sm font-medium text-[#006989]">
@@ -64,13 +59,18 @@ export function PersonalShelf({ shelves, onAdd, onSelect }) {
           </div>
         ))}
 
-        {/* 빈칸 placeholder */}
-        {Array.from({ length: placeholdersCount }).map((_, idx) => (
-          <div
-            key={`ph-${idx}`}
-            className="w-[140px] h-[190px] bg-gray-100 rounded-lg flex-shrink-0"
-          />
-        ))}
+        {/* 항상 보이는 + 슬롯 */}
+        <div
+          onClick={onAdd}
+          className="
+            w-[140px] h-[190px]
+            border-2 border-dashed border-gray-300
+            rounded-lg flex items-center justify-center
+            flex-shrink-0 cursor-pointer transition-colors hover:bg-gray-50
+          "
+        >
+          <PlusIcon size={32} className="text-gray-500" />
+        </div>
       </div>
     </div>
   )

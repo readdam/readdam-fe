@@ -1,6 +1,6 @@
 // src/pages/my/MyWriteShort.jsx
 import React, { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAtomValue } from 'jotai'
 import { useAxios } from '../../hooks/useAxios'
 import { tokenAtom } from '../../atoms'
@@ -75,9 +75,9 @@ export default function MyWriteShort() {
       {/* 탭 */}
       <div className="flex space-x-6 border-b mb-8 text-sm">
         {tabs.map(tab => (
-          <Link
+          <button
             key={tab.path}
-            to={tab.path}
+            onClick={() => navigate(tab.path)}
             className={`pb-2 transition-all ${
               location.pathname === tab.path
                 ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
@@ -85,7 +85,7 @@ export default function MyWriteShort() {
             }`}
           >
             {tab.label}
-          </Link>
+          </button>
         ))}
       </div>
 
@@ -105,18 +105,18 @@ export default function MyWriteShort() {
           {shorts.map(item => (
             <div
               key={item.writeshortId}
-              onClick={() => navigate(`/writeDetail/${item.writeId}`)}
               className={`
-                ${getPostItColor(item.color)}
-                aspect-square
-                p-4 rounded-lg
-                shadow-md hover:shadow-lg
-                transition-shadow
-                relative
+                ${getPostItColor(item.color)} 
+                w-[300px] h-[300px] 
+                p-4 rounded-sm shadow-md 
+                hover:shadow-lg transition-shadow 
+                relative transform 
+                hover:-rotate-1 
+                hover:translate-y-[-2px]
               `}
               style={{
                 backgroundImage:
-                  'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
+                  'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)'
               }}
             >
               <div className="flex justify-between items-start mb-2">
@@ -124,8 +124,9 @@ export default function MyWriteShort() {
                   {item.eventTitle}
                 </span>
                 <button
-                  onClick={(e) => toggleLike(item.writeshortId, e)}
+                  onClick={e => toggleLike(item.writeshortId, e)}
                   className="flex items-center gap-1 text-gray-600"
+                  style={{ cursor: 'pointer' }}
                 >
                   <HeartIcon
                     className={`w-6 h-6 transition-colors ${
@@ -139,7 +140,7 @@ export default function MyWriteShort() {
               </div>
               <div className="flex items-center justify-center h-[calc(100%-2.5rem)]">
                 <p
-                  className="text-center text-lg text-gray-700 leading-relaxed whitespace-pre-line overflow-hidden"
+                  className="text-center text-lg font-bold text-gray-500 leading-snug break-words overflow-hidden"
                   style={{ fontFamily: 'NanumGaram' }}
                 >
                   {item.content}
