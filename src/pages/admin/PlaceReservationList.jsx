@@ -194,7 +194,7 @@ export default function PlaceReservationList() {
               ].map((head) => (
                 <th
                   key={head}
-                  className="px-6 py-3 text-left text-sm font-medium text-gray-500"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500"
                 >
                   {head}
                 </th>
@@ -205,20 +205,30 @@ export default function PlaceReservationList() {
           <tbody className="divide-y divide-gray-200">
             {data?.content?.map((r) => (
               <tr key={`${r.reservationId}-${r.date}-${r.startTime}`}>
-                <td className="px-6 py-4">{r.placeName}</td>
-                <td className="px-6 py-4">{r.placeAddress}</td>
-                <td className="px-6 py-4">{r.roomName}</td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-gray-500 text-sm">
+                  {r.placeName}
+                </td>
+                <td className="px-6 py-4 text-gray-500 text-sm">
+                  {r.placeAddress}
+                </td>
+                <td className="px-6 py-4 text-gray-500 text-sm">
+                  {r.roomName}
+                </td>
+                <td className="px-6 py-4 text-gray-500 text-sm">
                   <div>
                     {r.date} {r.time}
                   </div>
                   <div>
-                    {r.startTime} - {r.endTime}
+                    {r.startTime.slice(0, 5)} - {r.endTime.slice(0, 5)}
                   </div>
                 </td>
-                <td className="px-6 py-4">{r.reserverName}</td>
-                <td className="px-6 py-4">{r.participantCount}명</td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-gray-500 text-sm">
+                  {r.reserverName}
+                </td>
+                <td className="px-6 py-4 text-gray-500 text-sm">
+                  {r.participantCount}명
+                </td>
+                <td className="px-6 py-4 text-gray-500 text-sm">
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${
                       r.status === 'CANCELLED'
