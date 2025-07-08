@@ -1,7 +1,7 @@
 // src/pages/my/MyInquiryModify.jsx
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import axios from 'axios';
+import { useAxios } from '../../hooks/useAxios';
 import { useAtomValue } from 'jotai';
 import { tokenAtom } from '../../atoms';
 import { url } from '../../config/config';
@@ -12,7 +12,9 @@ const MyInquiryModify = ({ inquiry, onClose, onUpdated, onDeleted }) => {
     content: inquiry.content || '',
     reason: inquiry.reason || '',
   });
+
   const token = useAtomValue(tokenAtom);
+  const axios = useAxios();
 
   const handleChange = e => {
     const { name, value } = e.target;

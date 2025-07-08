@@ -1,28 +1,46 @@
 // src/pages/my/MyInquiry.jsx
 import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAtomValue } from 'jotai'
 import { useAxios } from '../../hooks/useAxios'
+import { useAtomValue } from 'jotai'
 import { tokenAtom } from '../../atoms'
 import MyInquiryDetail from './MyInquiryDetail'
 import MyInquiryWrite from './MyInquiryWrite'
 import MyInquiryModify from './MyInquiryModify'
 
 export default function MyInquiry() {
-  const navigate = useNavigate()
   const axios = useAxios()
   const token = useAtomValue(tokenAtom)
+
   const [inquiries, setInquiries] = useState([])
+  const [page, setPage] = useState(0)
+  const [hasNext, setHasNext] = useState(false)
+
   const [selectedInquiry, setSelectedInquiry] = useState(null)
   const [isWriteOpen, setIsWriteOpen] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
 
-  useEffect(() => {
+  const fetchInquiries = (pageNum = 0) => {
     if (!token?.access_token) return
     axios
-      .get('/my/myInquiryList')
-      .then(res => setInquiries(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setInquiries([]))
+      .get(`/my/myInquiryList?page=${pageNum}&size=10`)
+      .then(res => {
+        const { content, pageInfo } = res.data
+        setInquiries(prev =>
+          pageNum === 0
+            ? content
+            : [...prev, ...content]
+        )
+        setHasNext(pageInfo.hasNext)
+      })
+      .catch(() => {
+        if (pageNum === 0) setInquiries([])
+        setHasNext(false)
+      })
+  }
+
+  useEffect(() => {
+    setPage(0)
+    fetchInquiries(0)
   }, [token, axios])
 
   const formatDate = dateString => {
@@ -32,8 +50,8 @@ export default function MyInquiry() {
 
   const convertStatus = status =>
     status === 'ANSWERED' ? '답변완료'
-    : status === 'UNANSWERED' ? '미답변'
-    : status
+      : status === 'UNANSWERED' ? '미답변'
+        : status
 
   return (
     <div className="px-4 py-8 max-w-screen-xl mx-auto bg-[#F3F7EC]">
@@ -43,14 +61,13 @@ export default function MyInquiry() {
         <p className="text-gray-600">문의 목록을 확인하세요</p>
       </div>
 
-      {/* 문의글 없을 때 */}
+      {/* 목록 또는 빈 상태 */}
       {inquiries.length === 0 ? (
         <div className="flex justify-center py-20">
           <p className="text-gray-500">문의 작성글이 없습니다.</p>
         </div>
       ) : (
         <>
-          {/* 테이블 */}
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="grid grid-cols-12 px-4 py-2 text-sm font-medium bg-gray-50 border-b border-gray-200">
               <div className="col-span-2 text-gray-500">작성일자</div>
@@ -58,7 +75,7 @@ export default function MyInquiry() {
               <div className="col-span-2 text-gray-600">문의 사유</div>
               <div className="col-span-2 text-right">답변상태</div>
             </div>
-            {inquiries.slice(0, 10).map(item => (
+            {inquiries.map(item => (
               <div
                 key={item.inquiryId}
                 onClick={() => setSelectedInquiry(item)}
@@ -83,17 +100,22 @@ export default function MyInquiry() {
             ))}
           </div>
 
-          {/* 더보기 */}
-          {inquiries.length > 10 && (
-            <div className="mt-6 text-center">
+          {/* 더보기 버튼 */}
+          {hasNext && (
+            <div className="mt-4 text-center">
               <button
-                onClick={() => setInquiries(prev => prev.concat(prev.slice(inquiries.length, inquiries.length + 10)))}
-                className="text-[#006989] text-sm hover:underline"
+                onClick={() => {
+                  const next = page + 1
+                  setPage(next)
+                  fetchInquiries(next)
+                }}
+                className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
               >
                 더보기
               </button>
             </div>
           )}
+
         </>
       )}
 
@@ -130,7 +152,9 @@ export default function MyInquiry() {
             <MyInquiryWrite
               onClose={() => setIsWriteOpen(false)}
               onCreate={newItem => {
-                setInquiries(prev => [newItem, ...prev])
+                // 새로 작성 후 첫 페이지부터 다시 로드
+                setPage(0)
+                fetchInquiries(0)
                 setIsWriteOpen(false)
               }}
             />

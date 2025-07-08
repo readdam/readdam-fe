@@ -1,7 +1,7 @@
 // src/layout/MyLayout.jsx
 import React, { useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { useAxios } from '../hooks/useAxios';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
 import { useAtom } from 'jotai';
@@ -15,7 +15,6 @@ import {
   FileEditIcon,
   BookOpenIcon,
   WalletIcon,
-  ClockIcon,
   BellIcon,
   HelpCircleIcon,
 } from 'lucide-react';
@@ -43,12 +42,10 @@ const groupedSidebarItems = [
       { label: '모임리뷰', icon: UsersIcon, path: '/myReviewClass' },
     ],
   },
-{
+  {
     category: '포인트',
     items: [
-      {
-        label: '포인트 관리', icon: WalletIcon, path: '/myPointList',
-      },
+      { label: '포인트 관리', icon: WalletIcon, path: '/myPointList' },
     ],
   },
   {
@@ -65,17 +62,22 @@ const MyLayout = ({ children }) => {
   const location = useLocation();
   const [user, setUser] = useAtom(userAtom);
   const [token] = useAtom(tokenAtom);
+  const axios = useAxios();
 
   useEffect(() => {
     if (!token?.access_token) return;
     axios
-      .post(`${url}/my/myProfile`, null, {
-        headers: { Authorization: token.access_token },
-        withCredentials: true,
-      })
+      .post(
+        `${url}/my/myProfile`,
+        null,
+        {
+          headers: { Authorization: token.access_token },
+          withCredentials: true,
+        }
+      )
       .then(res => setUser(res.data))
       .catch(err => console.error('사이드바 프로필 불러오기 실패', err));
-  }, [token?.access_token]);
+  }, [token?.access_token, axios]);
 
   return (
     <>
@@ -83,7 +85,7 @@ const MyLayout = ({ children }) => {
 
       <div className="min-h-screen bg-white">
         <div className="flex">
-          {/* 사이드바: 좌측에 붙어 있음 */}
+          {/* 사이드바 */}
           <div
             className="w-60 shadow-md flex flex-col items-center py-6"
             style={{ backgroundColor: '#FDF3F0' }}
@@ -139,8 +141,8 @@ const MyLayout = ({ children }) => {
             </div>
           </div>
 
-          {/* 메인 컨텐츠: 사이드바와 외곽 흰 배경 사이, 상하좌우 공백 */}
-          <div className="flex-1 mx-6  bg-[#F3F7EC] rounded-lg overflow-hidden p-6">
+          {/* 메인 컨텐츠 */}
+          <div className="flex-1 mx-6 bg-[#F3F7EC] rounded-lg overflow-hidden p-6">
             {children}
           </div>
         </div>

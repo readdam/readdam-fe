@@ -18,22 +18,44 @@ export default function MyClassContinue() {
   const navigate = useNavigate()
   const token = useAtomValue(tokenAtom)
   const api = useAxios()
-  const [classes, setClasses] = useState([])
-  const [showAll, setShowAll] = useState(false)
 
+  // 페이징 상태
+  const [classes, setClasses] = useState([])
+  const [page, setPage] = useState(0)
+  const [size] = useState(20)
+  const [totalPages, setTotalPages] = useState(0)
+
+  // page가 바뀔 때마다 백엔드 페이징 호출
   useEffect(() => {
     if (!token?.access_token) return
-    api
-      .get(`${url}/my/classes/ongoing`, {
-        headers: { Authorization: `Bearer ${token.access_token}` },
-        withCredentials: true,
-      })
-      .then(({ data }) => setClasses(Array.isArray(data) ? data : []))
-      .catch(() => setClasses([]))
-  }, [token, api])
+    ;(async () => {
+      try {
+        const res = await api.get(
+          `${url}/my/classes/ongoing?page=${page}&size=${size}`,
+          {
+            headers: { Authorization: `Bearer ${token.access_token}` },
+            withCredentials: true,
+          }
+        )
+        // res.data 를 { content, pageInfo } 형태로 내려준다고 가정
+        const { content, pageInfo } = res.data
+        setClasses(prev =>
+          page === 0 ? content : [...prev, ...content]
+        )
+        setTotalPages(pageInfo.totalPages)
+      } catch {
+        setClasses([])
+      }
+    })()
+  }, [token, api, page, size])
+
+  const loadMore = () => {
+    if (page + 1 < totalPages) {
+      setPage(prev => prev + 1)
+    }
+  }
 
   const safe = Array.isArray(classes) ? classes : []
-  const visible = showAll ? safe : safe.slice(0, 20)
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
@@ -74,17 +96,19 @@ export default function MyClassContinue() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {visible.map(item => (
+            {safe.map(item => (
               <ClassCard
                 key={(item.classDto ?? item).classId}
                 group={item}
               />
             ))}
           </div>
-          {!showAll && safe.length > 20 && (
+
+          {/* 백엔드 페이징 더보기 */}
+          {page + 1 < totalPages && (
             <div className="text-center mt-10">
               <button
-                onClick={() => setShowAll(true)}
+                onClick={loadMore}
                 className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
               >
                 더보기

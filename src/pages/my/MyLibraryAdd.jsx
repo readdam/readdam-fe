@@ -1,43 +1,45 @@
 // src/components/MyLibraryAdd.jsx
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
-import { url } from '../../config/config'
-import { useAtomValue } from 'jotai'
-import { tokenAtom } from '../../atoms'
+import React, { useEffect, useState } from 'react';
+import { useAxios } from '../../hooks/useAxios';
+import { url } from '../../config/config';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../../atoms';
 
 const MyLibraryAdd = ({ onClose, onCreate }) => {
-  const token = useAtomValue(tokenAtom)
-  const [shelfTitle, setShelfTitle] = useState('')
-  const [query, setQuery] = useState('')
-  const [searchResults, setSearchResults] = useState([])
-  const [selectedBooks, setSelectedBooks] = useState([])
+  const token = useAtomValue(tokenAtom);
+  const axios = useAxios();
+
+  const [shelfTitle, setShelfTitle] = useState('');
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedBooks, setSelectedBooks] = useState([]);
 
   // 도서 검색
   useEffect(() => {
-    if (!query.trim()) return
+    if (!query.trim()) return;
     const timer = setTimeout(() => {
       axios
         .get(`${url}/bookSearch`, {
           params: { query, page: 1, size: 10, sort: 'accuracy' },
         })
         .then(res => setSearchResults(res.data.documents || []))
-        .catch(() => setSearchResults([]))
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [query])
+        .catch(() => setSearchResults([]));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, axios]);
 
   const handleSelectBook = book => {
     if (!selectedBooks.find(b => b.isbn === book.isbn)) {
-      setSelectedBooks(prev => [...prev, book])
+      setSelectedBooks(prev => [...prev, book]);
     }
-  }
+  };
 
   const handleRemoveBook = isbn => {
-    setSelectedBooks(prev => prev.filter(b => b.isbn !== isbn))
-  }
+    setSelectedBooks(prev => prev.filter(b => b.isbn !== isbn));
+  };
 
   const handleCreate = async () => {
-    if (!shelfTitle || selectedBooks.length === 0) return
+    if (!shelfTitle || selectedBooks.length === 0) return;
     try {
       const { data: newShelfDto } = await axios.post(
         `${url}/my/myLibraryAdd`,
@@ -50,21 +52,21 @@ const MyLibraryAdd = ({ onClose, onCreate }) => {
           },
           withCredentials: true,
         }
-      )
+      );
       const newShelf = {
         libraryId: newShelfDto.libraryId,
         name: newShelfDto.name,
         isShow: newShelfDto.isShow,
         books: newShelfDto.books || [],
-      }
-      onCreate?.(newShelf)
-      alert('서재가 생성되었습니다.')
-      onClose()
+      };
+      onCreate?.(newShelf);
+      alert('서재가 생성되었습니다.');
+      onClose();
     } catch (e) {
-      console.error(e)
-      alert('서재 생성 실패')
+      console.error(e);
+      alert('서재 생성 실패');
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center text-[#006989]">
@@ -93,7 +95,7 @@ const MyLibraryAdd = ({ onClose, onCreate }) => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-40 overflow-y-auto mb-6">
             {searchResults.length > 0 ? (
               searchResults.map(book => {
-                const already = selectedBooks.some(b => b.isbn === book.isbn)
+                const already = selectedBooks.some(b => b.isbn === book.isbn);
                 return (
                   <div
                     key={book.isbn.trim()}
@@ -122,7 +124,7 @@ const MyLibraryAdd = ({ onClose, onCreate }) => {
                       </span>
                     )}
                   </div>
-                )
+                );
               })
             ) : (
               <p className="text-gray-400 text-sm col-span-full text-center py-4">
@@ -181,7 +183,7 @@ const MyLibraryAdd = ({ onClose, onCreate }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MyLibraryAdd
+export default MyLibraryAdd;
