@@ -1,11 +1,29 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useAxios } from "@hooks/useAxios";
+import { url } from "@config/config";
+import AdminUserModal from "./AdminUserModal";
 
 const UserTable = ({ members }) => {
+  const axios = useAxios();
   const navigate = useNavigate();
 
-  const handleDetail = (username) => {
-    navigate(`/admin/userList/${username}`);
+  // 회원상세 모달 상태
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 조회된 회원 목록에서 행 클릭시
+  const handleDetail = async (username) => {
+    try {
+      const response = await axios.get(`${url}/admin/userList/${username}`);
+      console.log("noticeId: ", username);
+      setSelectedUser(response.data.users);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.log("회원 상세 불러오기 실패: ", error);
+      alert("회원 상세 내용을 불러오지 못했습니다.");
+    }
   };
 
   return (
@@ -56,6 +74,14 @@ const UserTable = ({ members }) => {
                 {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.joinDate}</td> */}
               </tr>
             ))
+          )}
+          {/* 페이지별 콘텐츠 */}
+          {isModalOpen && selectedUser && (
+            <AdminUserModal
+              user={selectedUser}
+              onClose={() => setIsModalOpen(false)}
+              url={url}
+            />
           )}
         </tbody>
       </table>

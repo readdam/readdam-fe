@@ -78,6 +78,7 @@ const AdminUserList = () => {
               />
             </div>
 
+            {/* 조회 결과(테이블) 영역 */}
             {members?.length > 0 && (
               <>
                 <div className="bg-white rounded-lg shadow min-w-[800px]">
@@ -87,6 +88,7 @@ const AdminUserList = () => {
                   <UserTable members={members} />
                 </div>
 
+                {/* 페이지네이션 */}
                 <div className="flex justify-center mt-6">
                   <Pagination
                     currentPage={page}
