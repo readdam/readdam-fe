@@ -128,7 +128,7 @@ const GroupHeader = ({ group }) => {
             <div className="flex items-center text-gray-600">
               <UsersIcon className="w-5 h-5 mr-2" />
               <span>
-                {/* 현재 {group.currentParticipants}명 / */}
+                현재 {group.currentParticipants ?? 0}명 /
                 최소 {group.minPerson}명 ~ 최대 {group.maxPerson}명
               </span>
             </div>
