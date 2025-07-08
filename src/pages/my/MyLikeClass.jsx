@@ -5,7 +5,7 @@ import { useAtomValue } from 'jotai';
 import { useAxios } from '../../hooks/useAxios';
 import { tokenAtom } from '../../atoms';
 import { url } from '../../config/config';
-import { CalendarIcon, MapPinIcon, UsersIcon, HeartIcon } from 'lucide-react';
+import { CalendarIcon, MapPinIcon, UsersIcon, HeartIcon,CompassIcon } from 'lucide-react';
 
 const tabs = [
   { label: '모임', path: '/myLikeClass' },
@@ -118,7 +118,7 @@ export default function MyLikeClass() {
             {visible.map(meeting => (
               <div
                 key={meeting.id}
-                className="relative bg-white border border-[#006989] rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
+                className="relative bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
               >
                 {/* 좋아요 버튼 */}
                 <button
@@ -173,7 +173,7 @@ export default function MyLikeClass() {
                       {meeting.date}
                     </div>
                     <div className="flex items-center text-sm text-gray-500">
-                      <MapPinIcon className="w-5 h-5 mr-1" />
+                      <CompassIcon className="w-5 h-5 mr-1" />
                       {meeting.location}
                     </div>
                     <div className="flex items-center text-sm text-gray-500">

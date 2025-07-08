@@ -43,7 +43,7 @@ export default function MyWriteComment() {
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 bg-[#F3F7EC]">
       {/* 헤더 */}
-      <div className="space-y-2 mb-6">
+      <div className="space-y-2 mb-8">
         <h1 className="text-3xl font-bold text-[#006989]">작성한 첨삭</h1>
         <p className="text-gray-600">내가 남긴 첨삭 내역을 확인하세요</p>
       </div>
@@ -117,7 +117,7 @@ export default function MyWriteComment() {
                 {/* 원글 내용 (5줄 넘으면 ... 처리) */}
                 {item.writeContent && (
                   <p className="text-sm text-gray-600 italic line-clamp-5 whitespace-pre-line">
-                    원글: {item.writeContent}
+                    {item.writeContent}
                   </p>
                 )}
 

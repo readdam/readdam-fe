@@ -43,11 +43,12 @@ const groupedSidebarItems = [
       { label: '모임리뷰', icon: UsersIcon, path: '/myReviewClass' },
     ],
   },
-  {
+{
     category: '포인트',
     items: [
-      { label: '포인트 충전', icon: WalletIcon, path: '/myPointCharge' },
-      { label: '포인트 내역', icon: ClockIcon, path: '/myPointList' },
+      {
+        label: '포인트 관리', icon: WalletIcon, path: '/myPointList',
+      },
     ],
   },
   {

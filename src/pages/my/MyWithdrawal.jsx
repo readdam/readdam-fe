@@ -70,7 +70,7 @@ const WithdrawalModal = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="flex justify-between mt-6">
-                    <button onClick={onClose} className="bg-teal-800 text-white px-5 py-2 rounded-md">
+                    <button onClick={onClose} className="bg-[#E88D67] text-white px-5 py-2 rounded-md">
                         취소
                     </button>
                     <button onClick={handleWithdraw} className="bg-gray-100 border px-5 py-2 rounded-md text-gray-800">

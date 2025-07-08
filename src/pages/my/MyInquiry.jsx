@@ -38,54 +38,63 @@ export default function MyInquiry() {
   return (
     <div className="px-4 py-8 max-w-screen-xl mx-auto bg-[#F3F7EC]">
       {/* 헤더 */}
-      <div className="space-y-2 mb-6">
+      <div className="space-y-2 mb-8">
         <h1 className="text-3xl font-bold text-[#006989]">나의 문의 내역</h1>
         <p className="text-gray-600">문의 목록을 확인하세요</p>
       </div>
 
-      {/* 테이블 */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="grid grid-cols-12 px-4 py-2 text-sm font-medium bg-gray-50 border-b border-gray-200">
-          <div className="col-span-2 text-gray-500">작성일자</div>
-          <div className="col-span-6">제목</div>
-          <div className="col-span-2 text-gray-600">문의 사유</div>
-          <div className="col-span-2 text-right">답변상태</div>
+      {/* 문의글 없을 때 */}
+      {inquiries.length === 0 ? (
+        <div className="flex justify-center py-20">
+          <p className="text-gray-500">문의 작성글이 없습니다.</p>
         </div>
-        {inquiries.slice(0, 10).map(item => (
-          <div
-            key={item.inquiryId}
-            onClick={() => setSelectedInquiry(item)}
-            className="grid grid-cols-12 px-4 py-4 text-sm border-b border-gray-200 items-start hover:bg-gray-50 cursor-pointer"
-          >
-            <div className="col-span-2 text-gray-500">{formatDate(item.regDate)}</div>
-            <div className="col-span-6 font-medium text-gray-800 truncate">{item.title}</div>
-            <div className="col-span-2 text-gray-600 truncate">{item.reason}</div>
-            <div className="col-span-2 text-right">
-              <span
-                className={
-                  `inline-block px-2 py-1 text-xs font-medium rounded-full ` +
-                  (item.status === 'ANSWERED'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-200 text-gray-600')
-                }
-              >
-                {convertStatus(item.status)}
-              </span>
+      ) : (
+        <>
+          {/* 테이블 */}
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-12 px-4 py-2 text-sm font-medium bg-gray-50 border-b border-gray-200">
+              <div className="col-span-2 text-gray-500">작성일자</div>
+              <div className="col-span-6">제목</div>
+              <div className="col-span-2 text-gray-600">문의 사유</div>
+              <div className="col-span-2 text-right">답변상태</div>
             </div>
+            {inquiries.slice(0, 10).map(item => (
+              <div
+                key={item.inquiryId}
+                onClick={() => setSelectedInquiry(item)}
+                className="grid grid-cols-12 px-4 py-4 text-sm border-b border-gray-200 items-start hover:bg-gray-50 cursor-pointer"
+              >
+                <div className="col-span-2 text-gray-500">{formatDate(item.regDate)}</div>
+                <div className="col-span-6 font-medium text-gray-800 truncate">{item.title}</div>
+                <div className="col-span-2 text-gray-600 truncate">{item.reason}</div>
+                <div className="col-span-2 text-right">
+                  <span
+                    className={
+                      `inline-block px-2 py-1 text-xs font-medium rounded-full ` +
+                      (item.status === 'ANSWERED'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-200 text-gray-600')
+                    }
+                  >
+                    {convertStatus(item.status)}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* 더보기 */}
-      {inquiries.length > 10 && (
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => setInquiries(prev => prev.concat(prev.slice(inquiries.length, inquiries.length + 10)))}
-            className="text-[#006989] text-sm hover:underline"
-          >
-            더보기
-          </button>
-        </div>
+          {/* 더보기 */}
+          {inquiries.length > 10 && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setInquiries(prev => prev.concat(prev.slice(inquiries.length, inquiries.length + 10)))}
+                className="text-[#006989] text-sm hover:underline"
+              >
+                더보기
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* 문의 작성 버튼 */}

@@ -58,6 +58,7 @@ import WriteShortList from '@pages/user/WriteShortList';
 import WriteDetail from '@pages/user/WriteDetail';
 import WriteCreate from '@pages/user/WriteCreate';
 import WriteModify from '@pages/user/WriteModify';
+import OtherPlaceDetail from '@pages/user/OtherPlaceDetail';
 
 // 🔹 내정보(MyPage)
 import MyProfile from '@pages/my/MyProfile';
@@ -68,6 +69,7 @@ import MyLikeWrite from '@pages/my/MyLikeWrite';
 import MyLikeBook from '@pages/my/MyLikeBook';
 import MyClassContinue from '@pages/my/MyClassContinue';
 import MyClassEnd from '@pages/my/MyClassEnd';
+import MyClassIMade from '@pages/my/MyClassIMade'; 
 import MyWrite from '@pages/my/MyWrite';
 import MyWriteShort from '@pages/my/MyWriteShort';
 import MyWriteComment from '@pages/my/MyWriteComment';
@@ -81,7 +83,7 @@ import MyInquiry from '@pages/my/MyInquiry';
 import MyInquiryWrite from '@pages/my/MyInquiryWrite';
 import Success from '@pages/my/Success';
 import Fail from '@pages/my/Fail';
-import OtherPlaceDetail from '@pages/user/OtherPlaceDetail';
+
 
 function App() {
   const navigate = useNavigate();
@@ -207,7 +209,7 @@ function App() {
           <Route path="/myLikeBook" element={<MyLikeBook />} />
           <Route path="/myClassContinue" element={<MyClassContinue />} />
           <Route path="/myClassEnd" element={<MyClassEnd />} />
-          {/* <Route path="/myClassIMade" element={<MyClassIMade />} /> */}
+          <Route path="/myClassIMade" element={<MyClassIMade />} />
           <Route path="/myWrite" element={<MyWrite />} />
           <Route path="/myWriteComment" element={<MyWriteComment />} />
           <Route path="/myWriteShort" element={<MyWriteShort />} />

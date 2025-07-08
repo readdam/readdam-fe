@@ -30,7 +30,7 @@ export default function MyWrite() {
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 bg-[#F3F7EC]">
       {/* 헤더 */}
-      <div className="space-y-2 mb-6">
+      <div className="space-y-2 mb-8">
         <h1 className="text-3xl font-bold text-[#006989]">나의 글쓰기</h1>
         <p className="text-gray-600">내가 작성한 글을 확인하세요</p>
       </div>
