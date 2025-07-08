@@ -45,24 +45,24 @@ const Footer = () => {
             </div>
           </div>
           <div className="md:w-1/4">
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-2 text-left">
               <Link
                 to="/notice"
-                className="text-[#006989] hover:text-[#005C78]"
+                className="block w-fit text-[#006989] hover:text-[#005C78]"
               >
                 공지사항
               </Link>
               <button
                 type="button"
                 onClick={handleOneToOne}
-                className="text-[#006989] hover:text-[#005C78]"
+                className="block w-fit text-[#006989] hover:text-[#005C78] cursor-pointer "
               >
                 1:1 문의
               </button>
-              <a href="#" className="text-[#006989] hover:text-[#005C78]">
+              <a href="#" className="block w-fit text-[#006989] hover:text-[#005C78]">
                 이용약관
               </a>
-              <a href="#" className="text-[#006989] hover:text-[#005C78]">
+              <a href="#" className="block w-fit text-[#006989] hover:text-[#005C78]">
                 개인정보처리방침
               </a>
             </div>
