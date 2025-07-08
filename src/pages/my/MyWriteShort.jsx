@@ -1,53 +1,56 @@
 // src/pages/my/MyWriteShort.jsx
 import React, { useEffect, useState } from 'react'
-import { HeartIcon } from 'lucide-react'
-import axios from 'axios'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAtomValue } from 'jotai'
+import { useAxios } from '../../hooks/useAxios'
 import { tokenAtom } from '../../atoms'
-import { url } from '../../config/config'
+import { HeartIcon } from 'lucide-react'
 
 // 색상 매핑
 const getPostItColor = (color) => {
   switch (color) {
-    case 'mint': return 'bg-[#E8F3F1]'
+    case 'mint':   return 'bg-[#E8F3F1]'
     case 'yellow': return 'bg-[#FFF8E7]'
-    case 'pink': return 'bg-[#FFE8F3]'
-    default: return 'bg-[#E8F3F1]'
+    case 'pink':   return 'bg-[#FFE8F3]'
+    default:       return 'bg-[#E8F3F1]'
   }
 }
 
+const tabs = [
+  { label: '내가 작성한 글', path: '/myWrite' },
+  { label: '작성한 첨삭',   path: '/myWriteComment' },
+  { label: '읽담 한줄',     path: '/myWriteShort' },
+]
+
 export default function MyWriteShort() {
-  const token = useAtomValue(tokenAtom)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const token    = useAtomValue(tokenAtom)
+  const axios    = useAxios()
   const [shorts, setShorts] = useState([])
 
-  // 내 글 목록 불러오기 (isLiked, likeCount 포함해서 받는다고 가정)
   useEffect(() => {
-    if (!token?.access_token) return;
+    if (!token?.access_token) return
     axios
-      .get(`${url}/my/myWriteShort`, {
+      .get('/my/myWriteShort', {
         headers: { Authorization: `Bearer ${token.access_token}` },
         withCredentials: true,
       })
-      .then(res => {
-        console.log('✅ /my/myWriteShort 응답:', res.data);
-        setShorts(res.data);
-      })
-      .catch(err => console.error('조회 실패:', err));
-  }, [token]);
-  
+      .then(res => setShorts(res.data))
+      .catch(() => setShorts([]))
+  }, [token, axios])
 
-  // 좋아요 토글 핸들러
-  const toggleLike = async (id) => {
+  const toggleLike = async (id, e) => {
+    e.stopPropagation()
     try {
       const res = await axios.post(
-        `${url}/my/myLikeShort/${id}`,
-        null,                        
+        `/my/myLikeShort/${id}`,
+        null,
         {
           headers: { Authorization: `Bearer ${token.access_token}` },
           withCredentials: true,
         }
       )
-
       const { likeCount, isLiked } = res.data
       setShorts(prev =>
         prev.map(s =>
@@ -56,50 +59,76 @@ export default function MyWriteShort() {
             : s
         )
       )
-    } catch (err) {
-      console.error('좋아요 토글 실패:', err)
+    } catch {
+      alert('좋아요 토글 중 오류가 발생했습니다.')
     }
   }
 
   return (
-    <div className="px-4 py-6 max-w-screen-xl mx-auto">
-      <h2 className="text-xl font-bold mb-6">나의 글쓰기</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div className="max-w-screen-xl mx-auto px-4 py-8 bg-[#F3F7EC]">
+      {/* 헤더 */}
+      <div className="space-y-2 mb-6">
+        <h1 className="text-3xl font-bold text-[#006989]">읽담 한줄</h1>
+        <p className="text-gray-600">작성한 한줄 읽담을 확인하세요</p>
+      </div>
+
+      {/* 탭 */}
+      <div className="flex space-x-6 border-b mb-8 text-sm">
+        {tabs.map(tab => (
+          <Link
+            key={tab.path}
+            to={tab.path}
+            className={`pb-2 transition-all ${
+              location.pathname === tab.path
+                ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
+                : 'text-gray-500 hover:text-[#006989]'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* 카드 그리드 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {shorts.map(item => (
           <div
             key={item.writeshortId}
+            onClick={() => navigate(`/writeDetail/${item.writeId}`)}
             className={`
-              ${getPostItColor(item.color)} 
-              p-4 rounded-sm shadow-md hover:shadow-lg 
-              transition-shadow relative 
-              transform hover:-rotate-1 hover:translate-y-[-2px]
+              ${getPostItColor(item.color)}
+              aspect-square
+              p-4 rounded-lg
+              shadow-md hover:shadow-lg
+              transition-shadow
+              relative
             `}
             style={{
-              aspectRatio: '1 / 1',
               backgroundImage:
                 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
             }}
           >
             <div className="flex justify-between items-start mb-2">
-              <span className="text-xs font-semibold text-[#006989]">
+              <span className="text-base font-semibold text-[#006989]">
                 {item.eventTitle}
               </span>
               <button
-                onClick={() => toggleLike(item.writeshortId)}
+                onClick={(e) => toggleLike(item.writeshortId, e)}
                 className="flex items-center gap-1 text-gray-600"
               >
                 <HeartIcon
-                  className={`w-4 h-4 ${item.isLiked
+                  className={`w-6 h-6 transition-colors ${
+                    item.isLiked
                       ? 'fill-[#E88D67] text-[#E88D67]'
                       : 'text-gray-400'
-                    }`}
+                  }`}
                 />
-                <span>{item.likeCount}</span>
+                <span className="text-base">{item.likeCount}</span>
               </button>
             </div>
-            <div className="flex items-center justify-center h-[80%]">
+            <div className="flex items-center justify-center h-[calc(100%-2.5rem)]">
               <p
-                className="text-center text-sm text-gray-700 leading-snug break-words overflow-hidden"
+                className="text-center text-lg text-gray-700 leading-relaxed whitespace-pre-line overflow-hidden"
                 style={{ fontFamily: 'NanumGaram' }}
               >
                 {item.content}

@@ -36,7 +36,7 @@ const WriteCreate = () => {
     e.preventDefault();
     //일반필드
     const submitData = new FormData();
-    submitData.append("type", formData.type);
+    submitData.append("writeType", formData.type);
     submitData.append("title", formData.title);
     submitData.append("content", formData.content);
     submitData.append("username", user.username); 
@@ -74,10 +74,7 @@ const WriteCreate = () => {
         console.error(err);
       });
   };
-  const TempSave = () => {
-    // 임시저장 로직 구현 필요
-    alert('임시 저장되었습니다. 나의 글쓰기 목록에서 확인할 수 있어요.')
-  }
+
   const SpellCheck = () => {
     setIsSpellchecking(true)
     // 맞춤법 검사 로직 구현 필요
@@ -347,19 +344,18 @@ const WriteCreate = () => {
             </div>
             <div className="flex items-center gap-4">
               <button
-                type="button"
-                onClick={TempSave}
+                type="submit"
                 className="px-6 py-2 text-[#006989] border border-[#006989] rounded-lg hover:bg-[#F3F7EC] transition-colors flex items-center gap-2"
               >
                 <SaveIcon className="w-5 h-5" />
-                임시저장
+                등록하기
               </button>
-              <button
+              {/* <button
                 type="submit"
                 className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
               >
                 등록하기
-              </button>
+              </button> */}
             </div>
           </div>
         </form>
