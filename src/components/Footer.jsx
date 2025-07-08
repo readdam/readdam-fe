@@ -1,4 +1,20 @@
+import { Link, useNavigate } from "react-router-dom";
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../atoms';
+
 const Footer = () => {
+  const navigate = useNavigate();
+  const token = useAtomValue(tokenAtom);
+
+  const handleOneToOne = () => {
+    if (!token?.access_token) {
+      alert("로그인이 필요한 서비스입니다.");
+      navigate("/login");
+      return;
+    }
+    navigate("/myInquiry"); 
+  };
+
   return (
     <footer className="w-full bg-gray-50 py-10 border-t border-gray-200">
       <div className="container mx-auto px-4">
@@ -30,17 +46,24 @@ const Footer = () => {
           </div>
           <div className="md:w-1/4">
             <div className="flex flex-col space-y-2">
+              <Link
+                to="/notice"
+                className="text-[#006989] hover:text-[#005C78]"
+              >
+                공지사항
+              </Link>
+              <button
+                type="button"
+                onClick={handleOneToOne}
+                className="text-[#006989] hover:text-[#005C78]"
+              >
+                1:1 문의
+              </button>
               <a href="#" className="text-[#006989] hover:text-[#005C78]">
                 이용약관
               </a>
               <a href="#" className="text-[#006989] hover:text-[#005C78]">
                 개인정보처리방침
-              </a>
-              <a href="#" className="text-[#006989] hover:text-[#005C78]">
-                공지사항
-              </a>
-              <a href="#" className="text-[#006989] hover:text-[#005C78]">
-                1:1 문의
               </a>
             </div>
           </div>
