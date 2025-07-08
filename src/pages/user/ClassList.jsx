@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { PlusCircleIcon, SearchIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams  } from "react-router-dom";
 import { useAtom } from "jotai";
 import { tokenAtom } from "../../atoms";
 import axios from "axios";
@@ -13,13 +13,17 @@ const ClassList = () => {
   const [page, setPage] = useState(0);
   const [hasNext, setHasNext] = useState(true);
   const pageSize = 8;
-  const [searchTerm, setSearchTerm] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [venueFilter, setVenueFilter] = useState("전체");
-  const [keyword, setKeyword] = useState("");
   const [tags, setTags] = useState("");
   const [place, setPlace] = useState("");
   const [sortBy, setSortBy] = useState("latest");
+  // const [keyword, setKeyword] = useState("");
+  // const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams();
+  const keywordParam = searchParams.get("keyword") || "";
+  const [keyword, setKeyword] = useState(keywordParam);
+  const [searchTerm, setSearchTerm] = useState(keywordParam);
 
   const navigate = useNavigate();
 

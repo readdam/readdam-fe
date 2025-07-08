@@ -54,7 +54,7 @@ const WriteCard = ({ post, variant = 'list', onClick }) => {
       <div className="flex-1">
         <div className="flex gap-2 mb-2">
           <span className="px-3 py-1 text-sm rounded-full bg-[#F3F7EC] text-[#006989]">
-            {typeMap[post.type]}
+            {typeMap[post.writeType]}
           </span>
           <span className={`px-3 py-1 text-sm ${statusClass}`}>{reviewStatus}</span>
         </div>

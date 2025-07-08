@@ -13,10 +13,14 @@ import { useAtomValue } from 'jotai';
 import { userAtom } from '../../atoms';
 import { useNavigate } from 'react-router';
 import { createAxios } from '@config/config';
+import { useSearchParams } from 'react-router-dom';
 
 const Place = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const keywordParam = searchParams.get('keyword') || '';
+  const [searchQuery, setSearchQuery] = useState(keywordParam);
+  //const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('latest');
   const user = useAtomValue(userAtom);
   const axios = createAxios();

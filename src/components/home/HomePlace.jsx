@@ -46,9 +46,9 @@ const HomePlace = () => {
 
   const handleCardClick = (place) => {
     if (place.type === 'PLACE') {
-      navigate(`/place/${place.id}`);
+      navigate(`/placeDetail/${place.id}`);
     } else if (place.type === 'OTHER') {
-      navigate(`/otherPlace/${place.id}`);
+      navigate(`/otherPlaceDetail/${place.id}`);
     }
   };
 
