@@ -126,7 +126,7 @@ export default function MyLikePlace() {
             {visible.map((place, idx) => (
               <div
                 key={`${place.type}-${place.id}-${idx}`}
-                className="relative bg-white border border-[#006989] rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
+                className="relative bg-white  rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
               >
                 <button
                   onClick={() => toggleLike(place)}

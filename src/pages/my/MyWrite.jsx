@@ -30,7 +30,7 @@ export default function MyWrite() {
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 bg-[#F3F7EC]">
       {/* 헤더 */}
-      <div className="space-y-2 mb-6">
+      <div className="space-y-2 mb-8">
         <h1 className="text-3xl font-bold text-[#006989]">나의 글쓰기</h1>
         <p className="text-gray-600">내가 작성한 글을 확인하세요</p>
       </div>
@@ -55,12 +55,12 @@ export default function MyWrite() {
       {/* 콘텐츠 */}
       {posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-gray-500 mb-4">작성한 글이 없습니다</p>
+          <p className="text-gray-500 mb-4">아직 작성한 글이 없습니다.</p>
           <button
             onClick={() => navigate('/writeList')}
             className="px-6 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] transition"
           >
-            글 보러가기
+            글 쓰러가기
           </button>
         </div>
       ) : (

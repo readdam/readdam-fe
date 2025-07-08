@@ -20,6 +20,15 @@ const SearchResult = () => {
 
   const { allSearch } = useAllSearch();
 
+    // handlePlaceCardClick 함수 추가
+  const handlePlaceCardClick = (place) => {
+    if (place.type === 'PLACE') {
+      navigate(`/placeDetail/${place.id}`);
+    } else if (place.type === 'OTHER') {
+      navigate(`/otherPlaceDetail/${place.id}`);
+    }
+  };
+
   useEffect(() => {
   if (!keywordParam) return;
 
@@ -28,6 +37,7 @@ const SearchResult = () => {
   setLoading(true);
   allSearch(keywordParam, 'latest')
     .then((data) => {
+            console.log('검색 결과 전체:', data);
       setResult(data);
     })
     .catch((e) => {
@@ -49,10 +59,17 @@ const SearchResult = () => {
     }
   };
 
-  const meetingResults = result?.classes || [];
-  const spaceResults = result?.places || [];
-  const postResults = result?.writes || [];
-  const bookResults = result?.books || [];
+  const meetingResults = result?.classes?.content || [];
+  const meetingTotal = result?.classes?.totalCount || 0;
+
+  const spaceResults = result?.places?.content || [];
+  const spaceTotal = result?.places?.totalCount || 0;
+
+  const postResults = result?.writes?.content || [];
+  const postTotal = result?.writes?.totalCount || 0;
+
+  const bookResults = result?.books?.content || [];
+  const bookTotal = result?.books?.totalCount || 0;
 
   const ResultSection = ({ title, count, children, onViewMore }) => (
     <section className="mb-12">
@@ -125,7 +142,7 @@ const SearchResult = () => {
         {/* 검색 결과 렌더링 */}
         <ResultSection
           title="모임"
-          count={meetingResults.length}
+          count={meetingTotal}
           onViewMore={() => {
             navigate(`/classList?keyword=${encodeURIComponent(searchKeyword)}`);
           }}
@@ -140,33 +157,57 @@ const SearchResult = () => {
         {/* 장소 결과 */}
         <ResultSection
           title="장소"
-          count={spaceResults.length}
+          count={spaceTotal}
           onViewMore={() => {
             navigate(`/place?keyword=${encodeURIComponent(searchKeyword)}`);
           }}
         >
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {spaceResults.map((place) => (
-              <PlaceCard
-                key={place.placeId || place.otherPlaceId}
-                place={{
-                  ...place,
-                  address: place.basicAddress,
-                  image: place.img1 || place.image, 
-                  tags: [place.tag1, place.tag2, place.tag3, place.tag4, place.tag5].filter(Boolean),
-                  likes: place.likeCount,
-                }}
-                onClick={() => navigate(`/placeDetail/${place.placeId || place.otherPlaceId}`)}
-                size="large"
-              />
-            ))}
+            {spaceResults.map((place) => {
+              const idPrefix = place.type === 'OTHER' ? 'other' : 'place';
+              const id = `${idPrefix}-${place.placeId || place.otherPlaceId}`;
+
+              const tags = [
+                place.tag1,
+                place.tag2,
+                place.tag3,
+                place.tag4,
+                place.tag5
+              ].filter(Boolean);
+
+              return (
+                <div
+                  key={id}
+                  onClick={() =>
+                    handlePlaceCardClick({
+                      ...place,
+                      id: place.placeId || place.otherPlaceId,
+                    })
+                  }
+                  className="cursor-pointer"
+                >
+                  <PlaceCard
+                    place={{
+                      id: place.placeId || place.otherPlaceId,
+                      name: place.name,
+                      address: place.basicAddress,
+                      image: place.img1 || place.image,
+                      tags,
+                      likes: place.likeCount,
+                      isPromoted: place.type === 'OTHER',
+                    }}
+                    size="large"
+                  />
+                </div>
+              );
+            })}
           </div>
         </ResultSection>
 
         {/* 글 결과 */}
         <ResultSection
           title="글"
-          count={postResults.length}
+          count={postTotal}
             onViewMore={() => {
               navigate(`/writeList?keyword=${encodeURIComponent(searchKeyword)}&type=all&status=all&sort=recent&page=1`);
             }}
@@ -185,7 +226,7 @@ const SearchResult = () => {
         {/* 책 결과 */}
         <ResultSection
             title="책"
-            count={bookResults.length}
+            count={bookTotal}
             onViewMore={() => {
               navigate(`/bookSearch?query=${encodeURIComponent(searchKeyword)}`);
             }}

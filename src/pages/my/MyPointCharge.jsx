@@ -7,8 +7,8 @@ import { tokenAtom } from "../../atoms";
 import axios from "axios";
 import { url } from "../../config/config";
 
-const clientKey    = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
-const originUrl    = "http://localhost:5173";
+const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+const originUrl = "http://localhost:5173";
 const pointOptions = [
   { point: 500,  amount: 10000 },
   { point: 1100, amount: 20000 },
@@ -16,11 +16,10 @@ const pointOptions = [
   { point: 3250, amount: 50000 },
 ];
 
-export default function MyPointCharge() {
-  const token    = useAtomValue(tokenAtom);
+export default function MyPointCharge({ onClose }) {
+  const token = useAtomValue(tokenAtom);
   const navigate = useNavigate();
 
-  // axios 인스턴스 (인증 헤더 포함)
   const api = useMemo(() => {
     if (!token?.access_token) return null;
     return axios.create({
@@ -42,7 +41,7 @@ export default function MyPointCharge() {
   const widgetRef  = useRef(null);
   const methodsRef = useRef(null);
 
-  // 사용자 정보 가져오기
+  // 사용자 정보
   useEffect(() => {
     if (!api) return;
     setLoadingUser(true);
@@ -58,7 +57,6 @@ export default function MyPointCharge() {
   // Toss 위젯 초기화
   useEffect(() => {
     if (!user || widgetRef.current || selectedAmount === null) return;
-
     const safeKey = `${user.username}_uid`
       .replace(/[^a-zA-Z0-9\-_.=@]/g, "")
       .slice(0, 50);
@@ -71,13 +69,10 @@ export default function MyPointCharge() {
           selectedAmount
         );
       })
-      .catch(err => {
-        console.error("widget load 실패:", err);
-        alert("결제 위젯 로드에 실패했습니다. 잠시 후 다시 시도해주세요.");
-      });
+      .catch(() => alert("결제 위젯 로드 실패"));
   }, [user, selectedAmount]);
 
-  // 결제 금액 업데이트
+  // 금액 업데이트
   useEffect(() => {
     const methods = methodsRef.current;
     if (methods && selectedAmount !== null) {
@@ -85,45 +80,30 @@ export default function MyPointCharge() {
     }
   }, [selectedAmount]);
 
-  // 주문 생성 + 위젯 호출
+  // 결제 요청
   const handlePayment = async () => {
-    if (selectedAmount === null) return;
-
-    if (!widgetRef.current) {
-      alert("결제 위젯이 아직 준비되지 않았습니다.\n잠시 후 다시 시도해주세요.");
-      return;
-    }
-    if (!user) {
-      alert("사용자 정보가 없습니다.");
-      return;
-    }
-
+    if (selectedAmount === null || !widgetRef.current || !user) return;
     const opt = pointOptions.find(o => o.amount === selectedAmount);
-    if (!opt) return;
-
     try {
       const { data } = await api.post("/my/myPointBefore", {
         point: opt.point,
         price: selectedAmount,
       });
-      const orderUuid = data.orderUuid;
-
       await widgetRef.current.requestPayment({
-        orderId:    orderUuid,
+        orderId:    data.orderUuid,
         orderName:  `${opt.point}P 충전`,
         amount:     selectedAmount,
         point:      opt.point,
         successUrl: `${originUrl}/success?point=${opt.point}`,
         failUrl:    `${originUrl}/fail?point=${opt.point}`,
       });
-    } catch (err) {
-      console.error("주문 생성 또는 위젯 호출 중 오류:", err);
-      alert("주문 생성에 실패했습니다. 다시 시도해주세요.");
+    } catch {
+      alert("주문 생성 실패");
     }
   };
 
   if (!api) return <div className="text-center mt-20">로딩 중…</div>;
-  if (loadingUser) return <div className="text-center mt-20">사용자 정보를 불러오는 중…</div>;
+  if (loadingUser) return <div className="text-center mt-20">사용자 정보 로딩 중…</div>;
   if (!user) return null;
 
   const currentPoint = user.totalPoint || 0;
@@ -132,10 +112,16 @@ export default function MyPointCharge() {
   const afterCharge = currentPoint + chargePoint;
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow border border-gray-200">
+    <div className="relative max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow border">
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+      >
+        ✕
+      </button>
+
       <h2 className="text-2xl font-bold mb-6 text-center">포인트 충전</h2>
 
-      {/* 포인트 옵션 */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         {pointOptions.map(opt => (
           <button
@@ -145,10 +131,11 @@ export default function MyPointCharge() {
               widgetRef.current = null;
               methodsRef.current = null;
             }}
-            className={`border rounded-lg p-4 text-center transition
-              ${selectedAmount === opt.amount
+            className={`border rounded-lg p-4 text-center transition ${
+              selectedAmount === opt.amount
                 ? "border-orange-500 text-orange-600 font-semibold"
-                : "border-gray-200 text-gray-700"}`}
+                : "border-gray-200 text-gray-700"
+            }`}
           >
             <div className="text-lg">{opt.point}P</div>
             <div className="text-sm">{opt.amount.toLocaleString()}원</div>
@@ -156,19 +143,19 @@ export default function MyPointCharge() {
         ))}
       </div>
 
-      {/* 선택 안내 */}
       {selectedAmount === null && (
         <p className="text-center text-gray-500 mb-6">충전할 포인트를 선택해주세요.</p>
       )}
 
-      {/* 결제 위젯 */}
       <div
         id="payment-widget"
-        className={`mb-6 min-h-[200px] rounded-lg border
-          ${selectedAmount !== null ? "border-gray-200" : "border-dashed border-gray-300"}`}
+        className={`mb-6 min-h-[200px] rounded-lg border ${
+          selectedAmount !== null
+            ? "border-gray-200"
+            : "border-dashed border-gray-300"
+        }`}
       />
 
-      {/* 포인트 요약 */}
       <div className="border border-gray-200 p-4 rounded-lg mb-6 bg-gray-50 text-sm">
         <p className="flex justify-between"><span>현재 포인트:</span><span>{currentPoint}P</span></p>
         <p className="flex justify-between"><span>충전 예정 포인트:</span><span>{chargePoint}P</span></p>
@@ -176,19 +163,19 @@ export default function MyPointCharge() {
           <span>충전 후 포인트:</span><span>{afterCharge}P</span>
         </p>
         <p className="flex justify-between mt-2">
-          <span>결제 금액:</span><span className="font-bold">{selectedAmount ? selectedAmount.toLocaleString() : 0}원</span>
+          <span>결제 금액:</span><span className="font-bold">{selectedAmount?.toLocaleString() || 0}원</span>
         </p>
       </div>
 
-      {/* 결제하기 버튼 */}
       <div className="flex justify-end">
         <button
           onClick={handlePayment}
           disabled={selectedAmount === null}
-          className={`px-6 py-2 rounded-lg text-white font-medium
-            ${selectedAmount !== null
+          className={`px-6 py-2 rounded-lg text-white font-medium ${
+            selectedAmount
               ? "bg-orange-500 hover:bg-orange-600"
-              : "bg-orange-300 opacity-50 cursor-not-allowed"}`}
+              : "bg-orange-300 opacity-50 cursor-not-allowed"
+          }`}
         >
           결제하기
         </button>
