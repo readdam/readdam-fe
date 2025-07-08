@@ -210,9 +210,6 @@ const AdminNotice = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 고정여부
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                관리
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -237,17 +234,6 @@ const AdminNotice = () => {
                       고정
                     </span>
                   )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    className="text-red-600 hover:text-red-800"
-                    onClick={(e) => {
-                      e.stopPropagation(); //행 클릭 이벤트 전파 방지
-                      handleDelete(notice.noticeId); //선택된 ID로 삭제 실행
-                    }}
-                  >
-                    <TrashIcon className="w-4 h-4 cursor-pointer" />
-                  </button>
                 </td>
               </tr>
             ))}
