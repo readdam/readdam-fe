@@ -14,15 +14,20 @@ const tabs = [
   { label: '책', path: '/myLikeBook' },
 ]
 
+// 한 페이지당 보여줄 아이템 수
+const ITEMS_PER_PAGE = 12
+
 export default function MyLikePlace() {
   const location = useLocation()
   const token = useAtomValue(tokenAtom)
   const axios = useAxios()
+
   const [places, setPlaces] = useState([])
-  const [showAll, setShowAll] = useState(false)
+  const [page, setPage] = useState(0)  // 페이지 인덱스(0부터)
 
   useEffect(() => {
     if (!token?.access_token) return
+
     axios
       .get(`${url}/my/likePlace`, {
         headers: { Authorization: `Bearer ${token.access_token}` },
@@ -32,7 +37,7 @@ export default function MyLikePlace() {
         const list = Array.isArray(res.data) ? res.data : res.data.places || []
         const mapped = list.map(p => ({
           id: p.id,
-          type: p.type, // "PLACE" 또는 "OTHER"
+          type: p.type,
           name: p.name,
           basicAddress: p.basicAddress,
           detailAddress: p.detailAddress,
@@ -44,11 +49,12 @@ export default function MyLikePlace() {
           image: p.img1 || '',
         }))
         setPlaces(mapped)
+        setPage(0)  // 데이터 로드할 때마다 페이지 초기화
       })
       .catch(() => setPlaces([]))
   }, [token, axios])
 
-  const toggleLike = (place) => {
+  const toggleLike = place => {
     const { id, type } = place
     if (!token?.access_token) {
       alert('로그인이 필요합니다.')
@@ -71,27 +77,30 @@ export default function MyLikePlace() {
         if (!res.data.liked) {
           alert('좋아요가 취소되었습니다.')
         } else {
-          // 만약 취소가 아닌 반전(liked=true)라면 복원
+          // 다시 좋아요된 경우 복원
           setPlaces(prev => [place, ...prev])
         }
       })
       .catch(() => {
         alert('좋아요 처리 중 오류가 발생했습니다.')
-        // 오류 시 복원
         setPlaces(prev => [place, ...prev])
       })
   }
 
   const safe = Array.isArray(places) ? places : []
-  const visible = showAll ? safe : safe.slice(0, 4)
+  // slice 범위: 0부터 (page+1)*ITEMS_PER_PAGE
+  const visible = safe.slice(0, (page + 1) * ITEMS_PER_PAGE)
+  const hasMore = (page + 1) * ITEMS_PER_PAGE < safe.length
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
+      {/* 헤더 */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-[#006989]">좋아요</h1>
         <p className="text-gray-600">좋아요한 장소를 확인하세요</p>
       </div>
 
+      {/* 탭 */}
       <div className="flex space-x-6 border-b mb-8 text-sm">
         {tabs.map(tab => (
           <Link
@@ -108,7 +117,8 @@ export default function MyLikePlace() {
         ))}
       </div>
 
-      {safe.length === 0 && (
+      {/* 콘텐츠 */}
+      {safe.length === 0 ? (
         <div className="text-center py-20">
           <p className="mb-4 text-gray-600">아직 좋아요한 장소가 없습니다.</p>
           <Link
@@ -118,15 +128,13 @@ export default function MyLikePlace() {
             장소 보러가기
           </Link>
         </div>
-      )}
-
-      {safe.length > 0 && (
+      ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {visible.map((place, idx) => (
               <div
                 key={`${place.type}-${place.id}-${idx}`}
-                className="relative bg-white  rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
+                className="relative bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
               >
                 <button
                   onClick={() => toggleLike(place)}
@@ -179,9 +187,7 @@ export default function MyLikePlace() {
 
                     <div className="flex items-start">
                       <PhoneIcon className="w-5 h-5 text-[#006989] mr-2 mt-0.5" />
-                      <span className="text-gray-700">
-                        {place.phone}
-                      </span>
+                      <span className="text-gray-700">{place.phone}</span>
                     </div>
                   </div>
                 </Link>
@@ -189,10 +195,10 @@ export default function MyLikePlace() {
             ))}
           </div>
 
-          {safe.length > 4 && !showAll && (
+          {hasMore && (
             <div className="text-center mt-10">
               <button
-                onClick={() => setShowAll(true)}
+                onClick={() => setPage(prev => prev + 1)}
                 className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
               >
                 더보기

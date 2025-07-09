@@ -1,12 +1,12 @@
 // src/components/MyPointRefund.jsx
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useAtomValue } from 'jotai';
+import { useAxios } from '../../hooks/useAxios';
 import { tokenAtom } from '../../atoms';
-import { url } from '../../config/config';
 
 const MyPointRefund = ({ refundablePoints, onClose }) => {
   const token = useAtomValue(tokenAtom);
+  const axios = useAxios();
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,13 +25,9 @@ const MyPointRefund = ({ refundablePoints, onClose }) => {
 
     setLoading(true);
     try {
-      await axios.post(
-        `${url}/my/refund`,
-        { orderId, reason },
-        { headers: { Authorization: token.access_token } }
-      );
+      await axios.post('/my/refund', { orderId, reason });
       alert('환불이 완료되었습니다.');
-      onClose(true);  // 필요 시 부모 콜백에 성공 플래그 전달
+      onClose(true);
     } catch (err) {
       console.error(err);
       const msg =

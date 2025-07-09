@@ -22,46 +22,54 @@ export default function MyLikeBook() {
   const user = useAtomValue(userAtom)
   const axios = useAxios()
 
-  const [books, setBooks] = useState([])  // BookDto[]
-  const [showAll, setShowAll] = useState(false)
+  const [books, setBooks]     = useState([])        // BookDto[]
+  const [page, setPage]       = useState(0)
+  const [hasMore, setHasMore] = useState(false)
 
-  // 좋아요한 책 목록 불러오기
+  // 페이지가 바뀔 때마다 호출
   useEffect(() => {
     if (!token?.access_token) return
 
-    axios.get('/my/likeBook', { withCredentials: true })
-      .then(res => setBooks(res.data))
-      .catch(() => setBooks([]))
-  }, [token, user.username, axios])
+    axios.get('/my/likeBook', {
+      params: { page, size: ITEMS_PER_PAGE },
+      withCredentials: true,
+    })
+    .then(res => {
+      // Spring Data Page<BookDto> : { content, totalPages, ... }
+      const { content, totalPages } = res.data
+      setBooks(prev => page === 0 ? content : [...prev, ...content])
+      setHasMore(page + 1 < totalPages)
+    })
+    .catch(() => {
+      if (page === 0) setBooks([])
+    })
+  }, [token, user.username, axios, page])
 
-  // 좋아요 토글 처리
   const toggleLike = (book) => {
     if (!token?.access_token) {
       alert('로그인이 필요합니다.')
       return navigate('/login')
     }
 
+    // UI 즉시 반영
     setBooks(prev => prev.filter(b => b.bookIsbn !== book.bookIsbn))
 
     axios.post('/book-like', null, {
       params: { bookIsbn: book.bookIsbn },
       withCredentials: true,
     })
-      .then(res => {
-        const msg = res.data
-        if (msg.includes('취소')) {
-          alert('책 좋아요가 취소되었습니다.')
-        } else {
-          setBooks(prev => [book, ...prev])
-        }
-      })
-      .catch(() => {
-        alert('좋아요 처리 중 오류가 발생했습니다.')
+    .then(res => {
+      if (res.data.includes('취소')) {
+        alert('책 좋아요가 취소되었습니다.')
+      } else {
         setBooks(prev => [book, ...prev])
-      })
+      }
+    })
+    .catch(() => {
+      alert('좋아요 처리 중 오류가 발생했습니다.')
+      setBooks(prev => [book, ...prev])
+    })
   }
-
-  const display = showAll ? books : books.slice(0, ITEMS_PER_PAGE)
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
@@ -102,7 +110,7 @@ export default function MyLikeBook() {
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {display.map(book => (
+            {books.map(book => (
               <div
                 key={book.bookIsbn}
                 className="relative rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
@@ -115,7 +123,6 @@ export default function MyLikeBook() {
                   <HeartIcon fill="#E88D67" stroke="#E88D67" className="w-5 h-5" />
                 </button>
 
-                {/* 상단: 회색 배경 + 이미지 */}
                 <Link to={`/bookDetail/${book.bookIsbn}`} className="block">
                   <div className="bg-gray-100 p-1">
                     <div className="w-32 h-48 mx-auto overflow-hidden rounded">
@@ -126,8 +133,6 @@ export default function MyLikeBook() {
                       />
                     </div>
                   </div>
-
-                  {/* 하단: 흰색 배경 + 정보 */}
                   <div className="p-3 bg-white space-y-1">
                     <div className="text-base font-semibold truncate">
                       {book.title}
@@ -149,10 +154,10 @@ export default function MyLikeBook() {
             ))}
           </div>
 
-          {!showAll && books.length > ITEMS_PER_PAGE && (
+          {hasMore && (
             <div className="text-center mt-10">
               <button
-                onClick={() => setShowAll(true)}
+                onClick={() => setPage(prev => prev + 1)}
                 className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
               >
                 더보기

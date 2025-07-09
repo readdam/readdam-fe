@@ -5,7 +5,13 @@ import { useAtomValue } from 'jotai';
 import { useAxios } from '../../hooks/useAxios';
 import { tokenAtom } from '../../atoms';
 import { url } from '../../config/config';
-import { CalendarIcon, MapPinIcon, UsersIcon, HeartIcon,CompassIcon } from 'lucide-react';
+import {
+  CalendarIcon,
+  CompassIcon,
+  MapPinIcon,
+  UsersIcon,
+  HeartIcon,
+} from 'lucide-react';
 
 const tabs = [
   { label: '모임', path: '/myLikeClass' },
@@ -14,15 +20,20 @@ const tabs = [
   { label: '책', path: '/myLikeBook' },
 ];
 
+const ITEMS_PER_PAGE = 12;
+
 export default function MyLikeClass() {
   const location = useLocation();
   const token = useAtomValue(tokenAtom);
   const axios = useAxios();
-  const [meetings, setMeetings] = useState([]);
-  const [showAll, setShowAll] = useState(false);
 
+  const [allMeetings, setAllMeetings] = useState([]); // 전체 좋아요 모임
+  const [page, setPage] = useState(0);                // 현재 페이지
+
+  // 한 번만 전체 좋아요 모임 가져오기
   useEffect(() => {
     if (!token?.access_token) return;
+
     axios
       .get(`${url}/my/likeClass`, {
         headers: { Authorization: `Bearer ${token.access_token}` },
@@ -30,34 +41,30 @@ export default function MyLikeClass() {
       })
       .then(res => {
         const list = Array.isArray(res.data) ? res.data : [];
-        setMeetings(
-          list.map(item => ({
-            id: item.classId,
-            title: item.title,
-            date: item.round1Date?.split('T')[0] || '',
-            location: item.round1PlaceLoc || '',
-            participants: `${item.currentParticipants}/${item.maxPerson}명`,
-            tags: [item.tag1, item.tag2, item.tag3].filter(Boolean),
-            image: item.mainImg || '',
-            liked: item.liked ?? false,
-          }))
-        );
+        const mapped = list.map(item => ({
+          id: item.classId,
+          title: item.title,
+          date: item.round1Date?.split('T')[0] || '',
+          location: item.round1PlaceLoc || '',
+          participants: `${item.currentParticipants}/${item.maxPerson}명`,
+          tags: [item.tag1, item.tag2, item.tag3].filter(Boolean),
+          image: item.mainImg || '',
+        }));
+        setAllMeetings(mapped);
       })
-      .catch(() => setMeetings([]));
+      .catch(() => {
+        setAllMeetings([]);
+      });
   }, [token, axios]);
 
-  const toggleLike = id => {
-    // Optimistic removal + alert
-    setMeetings(prev => {
-      const target = prev.find(m => m.id === id);
-      if (target?.liked) {
-        alert('좋아요가 취소되었습니다.');
-        return prev.filter(m => m.id !== id);
-      }
-      return prev;
-    });
+  // 현재 페이지에 보여줄 모임
+  const meetings = allMeetings.slice(0, (page + 1) * ITEMS_PER_PAGE);
+  const hasMore = meetings.length < allMeetings.length;
 
-    // Send request (no need to wait)
+  const toggleLike = id => {
+    setAllMeetings(prev => prev.filter(m => m.id !== id));
+    alert('좋아요가 취소되었습니다.');
+
     axios
       .post(
         `${url}/my/class-like`,
@@ -69,9 +76,6 @@ export default function MyLikeClass() {
       )
       .catch(() => alert('좋아요 처리 중 오류가 발생했습니다.'));
   };
-
-  const safe = Array.isArray(meetings) ? meetings : [];
-  const visible = showAll ? safe : safe.slice(0, 4);
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
@@ -98,8 +102,8 @@ export default function MyLikeClass() {
         ))}
       </div>
 
-      {/* 좋아요한 모임 없을 때 */}
-      {safe.length === 0 && (
+      {/* 콘텐츠 */}
+      {allMeetings.length === 0 ? (
         <div className="text-center py-20">
           <p className="mb-4 text-gray-600">아직 좋아요한 모임이 없습니다.</p>
           <Link
@@ -109,32 +113,24 @@ export default function MyLikeClass() {
             모임 보러가기
           </Link>
         </div>
-      )}
-
-      {/* 모임 카드 리스트 */}
-      {safe.length > 0 && (
+      ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {visible.map(meeting => (
+            {meetings.map(meeting => (
               <div
                 key={meeting.id}
                 className="relative bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
               >
-                {/* 좋아요 버튼 */}
                 <button
                   type="button"
-                  className="absolute top-2 right-2 bg-white p-1 rounded-full shadow z-10 pointer-events-auto"
+                  className="absolute top-2 right-2 bg-white p-1 rounded-full shadow z-10"
                   onClick={e => {
                     e.preventDefault();
                     e.stopPropagation();
                     toggleLike(meeting.id);
                   }}
                 >
-                  <HeartIcon
-                    fill="#E88D67"
-                    stroke="#E88D67"
-                    className="w-5 h-5"
-                  />
+                  <HeartIcon fill="#E88D67" stroke="#E88D67" className="w-5 h-5" />
                 </button>
 
                 <Link to={`/classDetail/${meeting.id}`}>
@@ -154,7 +150,6 @@ export default function MyLikeClass() {
                     <div className="font-semibold text-base line-clamp-1">
                       {meeting.title}
                     </div>
-
                     {meeting.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-1">
                         {meeting.tags.map((tag, idx) => (
@@ -167,7 +162,6 @@ export default function MyLikeClass() {
                         ))}
                       </div>
                     )}
-
                     <div className="flex items-center text-sm text-gray-500 mt-2">
                       <CalendarIcon className="w-5 h-5 mr-1" />
                       {meeting.date}
@@ -186,10 +180,11 @@ export default function MyLikeClass() {
             ))}
           </div>
 
-          {safe.length > 4 && !showAll && (
+          {/* 더보기 버튼 */}
+          {hasMore && (
             <div className="text-center mt-10">
               <button
-                onClick={() => setShowAll(true)}
+                onClick={() => setPage(prev => prev + 1)}
                 className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
               >
                 더보기

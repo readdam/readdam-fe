@@ -15,6 +15,9 @@ const tabs = [
   { label: '책', path: '/myLikeBook' },
 ]
 
+// 한 페이지당 보여줄 아이템 수
+const ITEMS_PER_PAGE = 8
+
 export default function MyLikeWrite() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -24,6 +27,7 @@ export default function MyLikeWrite() {
 
   const [posts, setPosts] = useState([])
   const [likedMap, setLikedMap] = useState({})
+  const [page, setPage] = useState(0)  // 현재 페이지(0부터)
 
   const fetchLikedWrites = () => {
     if (!token?.access_token) return
@@ -46,6 +50,7 @@ export default function MyLikeWrite() {
 
   useEffect(() => {
     fetchLikedWrites()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user.username])
 
   const handleToggleLike = async writeId => {
@@ -66,11 +71,18 @@ export default function MyLikeWrite() {
       if (!liked) {
         alert('좋아요가 취소되었습니다.')
         fetchLikedWrites()
+        setPage(0)  // 취소 후 페이지 초기화
       }
     } catch {
       alert('좋아요 처리 중 오류가 발생했습니다.')
     }
   }
+
+  const safe = Array.isArray(posts) ? posts : []
+  // slice 범위를 (page+1)*ITEMS_PER_PAGE로 설정
+  const visible = safe.slice(0, (page + 1) * ITEMS_PER_PAGE)
+  // 더 가져올 아이템이 남았는지
+  const hasMore = (page + 1) * ITEMS_PER_PAGE < safe.length
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
@@ -98,7 +110,7 @@ export default function MyLikeWrite() {
       </div>
 
       {/* 콘텐츠 */}
-      {posts.length === 0 ? (
+      {safe.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
           <p className="text-gray-500 mb-4">아직 좋아요한 글이 없습니다.</p>
           <button
@@ -109,29 +121,39 @@ export default function MyLikeWrite() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
-          {posts.map(post => (
-            <div key={post.writeId} className="relative">
-              {/* 좋아요 버튼 */}
-              <button
-                onClick={() => handleToggleLike(post.writeId)}
-                className="absolute top-2 right-2 bg-white p-1 rounded-full shadow z-10"
-              >
-                <HeartIcon
-                  fill={likedMap[post.writeId] ? '#E88D67' : 'transparent'}
-                  stroke={likedMap[post.writeId] ? '#E88D67' : '#888'}
-                  className="w-5 h-5"
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
+            {visible.map(post => (
+              <div key={post.writeId} className="relative">
+                <button
+                  onClick={() => handleToggleLike(post.writeId)}
+                  className="absolute top-2 right-2 bg-white p-1 rounded-full shadow z-10"
+                >
+                  <HeartIcon
+                    fill={likedMap[post.writeId] ? '#E88D67' : 'transparent'}
+                    stroke={likedMap[post.writeId] ? '#E88D67' : '#888'}
+                    className="w-5 h-5"
+                  />
+                </button>
+                <WriteCard
+                  post={post}
+                  onClick={() => navigate(`/writeDetail/${post.writeId}`)}
                 />
-              </button>
+              </div>
+            ))}
+          </div>
 
-              {/* 글 카드 */}
-              <WriteCard
-                post={post}
-                onClick={() => navigate(`/writeDetail/${post.writeId}`)}
-              />
+          {hasMore && (
+            <div className="text-center mt-10">
+              <button
+                onClick={() => setPage(prev => prev + 1)}
+                className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+              >
+                더보기
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   )

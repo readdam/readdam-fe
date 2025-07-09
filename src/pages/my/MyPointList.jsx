@@ -1,57 +1,58 @@
 // src/components/PointList.jsx
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAtomValue, useSetAtom } from 'jotai';
-import { tokenAtom, userAtom } from '../../atoms';
-import { useAxios } from '../../hooks/useAxios';
-import MyPointRefund from './MyPointRefund';
-import MyPointCharge from './MyPointCharge';
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { tokenAtom, userAtom } from '../../atoms'
+import { useAxios } from '../../hooks/useAxios'
+import MyPointRefund from './MyPointRefund'
+import MyPointCharge from './MyPointCharge'
 
 export default function PointList() {
-  const [points, setPoints] = useState([]);
-  const [visibleCount, setVisibleCount] = useState(15);
-  const [activeTab, setActiveTab] = useState('전체');
-  const [showRefundModal, setShowRefundModal] = useState(false);
-  const [showChargeModal, setShowChargeModal] = useState(false);
+  const ITEMS_PER_PAGE = 15
+  const [points, setPoints] = useState([])
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
+  const [activeTab, setActiveTab] = useState('전체')
+  const [showRefundModal, setShowRefundModal] = useState(false)
+  const [showChargeModal, setShowChargeModal] = useState(false)
 
-  const navigate = useNavigate();
-  const api = useAxios();
-  const token = useAtomValue(tokenAtom);
-  const setUser = useSetAtom(userAtom);
-  const user = useAtomValue(userAtom);
+  const navigate = useNavigate()
+  const api = useAxios()
+  const token = useAtomValue(tokenAtom)
+  const setUser = useSetAtom(userAtom)
+  const user = useAtomValue(userAtom)
 
   useEffect(() => {
-    if (!token?.access_token) return;
-    (async () => {
+    if (!token?.access_token) return
+    ;(async () => {
       try {
         const res = await api.post(
           '/my/myPointList',
           null,
           { headers: { Authorization: `Bearer ${token.access_token}` } }
-        );
-        setPoints(res.data.pointList);
-        setUser(prev => ({ ...prev, totalPoint: res.data.totalPoint }));
+        )
+        setPoints(res.data.pointList)
+        setUser(prev => ({ ...prev, totalPoint: res.data.totalPoint }))
       } catch (err) {
-        console.error('포인트 내역 조회 실패:', err);
+        console.error('포인트 내역 조회 실패:', err)
       }
-    })();
-  }, [token, api, setUser]);
+    })()
+  }, [token, api, setUser])
 
   const filtered = points.filter(p => {
-    if (activeTab === '전체') return true;
-    if (activeTab === '적립') return p.point > 0;
-    if (activeTab === '사용') return p.point < 0;
-    return true;
-  });
-  const visible = filtered.slice(0, visibleCount);
+    if (activeTab === '전체') return true
+    if (activeTab === '적립') return p.point > 0
+    if (activeTab === '사용') return p.point < 0
+    return true
+  })
+  const visible = filtered.slice(0, visibleCount)
 
   const refundable = points.filter(p => {
-    if (p.point <= 0) return false;
-    if (!p.reason.includes('충전')) return false;
-    const t = new Date(p.date).getTime();
-    if (Date.now() - t > 7 * 86400000) return false;
-    return !points.some(q => q.point < 0 && new Date(q.date).getTime() > t);
-  });
+    if (p.point <= 0) return false
+    if (!p.reason.includes('충전')) return false
+    const t = new Date(p.date).getTime()
+    if (Date.now() - t > 7 * 86400000) return false
+    return !points.some(q => q.point < 0 && new Date(q.date).getTime() > t)
+  })
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
@@ -73,7 +74,10 @@ export default function PointList() {
         {['전체', '적립', '사용'].map(tab => (
           <button
             key={tab}
-            onClick={() => { setActiveTab(tab); setVisibleCount(15); }}
+            onClick={() => {
+              setActiveTab(tab)
+              setVisibleCount(ITEMS_PER_PAGE)
+            }}
             className={`px-4 py-2 font-medium ${
               activeTab === tab
                 ? 'text-[#005C78] border-b-2 border-[#005C78]'
@@ -86,45 +90,51 @@ export default function PointList() {
       </div>
 
       {/* 내역 테이블 */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2">구분</th>
-              <th className="px-4 py-2">포인트</th>
-              <th className="px-4 py-2">사유</th>
-              <th className="px-4 py-2">일시</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((p, i) => (
-              <tr key={i} className="border-b last:border-none">
-                <td className="px-4 py-3 text-[#005C78] font-semibold">
-                  {p.point > 0 ? '적립' : '사용'}
-                </td>
-                <td className={`px-4 py-3 ${p.point > 0 ? 'text-[#006989]' : 'text-red-500'}`}>
-                  {p.point > 0 ? `+${p.point}` : p.point}P
-                </td>
-                <td className="px-4 py-3">{p.reason}</td>
-                <td className="px-4 py-3">
-                  {new Date(p.date).toLocaleString('ko-KR', {
-                    year: 'numeric', month: '2-digit',
-                    day: '2-digit', hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        {/* 헤더 */}
+        <div className="grid grid-cols-12 px-4 py-2 text-sm font-medium bg-gray-50 border-b border-gray-200">
+          <div className="col-span-3 text-gray-500">구분</div>
+          <div className="col-span-3 text-gray-500">포인트</div>
+          <div className="col-span-3 text-gray-500">사유</div>
+          <div className="col-span-2 text-right text-gray-500">일시</div>
+        </div>
+
+        {/* 항목 */}
+        {visible.map((p, i) => (
+          <div
+            key={i}
+            className="grid grid-cols-12 px-4 py-4 text-sm border-b border-gray-200 items-center hover:bg-gray-50 cursor-pointer"
+          >
+            <div className="col-span-3 text-[#005C78] font-semibold">
+              {p.point > 0 ? '적립' : '사용'}
+            </div>
+            <div
+              className={`col-span-3 font-medium ${
+                p.point > 0 ? 'text-[#006989]' : 'text-red-500'
+              }`}
+            >
+              {p.point > 0 ? `+${p.point}` : p.point}P
+            </div>
+            <div className="col-span-4 truncate">{p.reason}</div>
+            <div className="col-span-2 text-right text-gray-600">
+              {new Date(p.date).toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* 더보기 */}
+      {/* 더보기 버튼 */}
       {visibleCount < filtered.length && (
-        <div className="text-center">
+        <div className="text-center mt-6">
           <button
-            onClick={() => setVisibleCount(c => c + 15)}
-            className="text-[#006989] text-sm hover:underline"
+            onClick={() => setVisibleCount(c => c + ITEMS_PER_PAGE)}
+            className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
           >
             더보기
           </button>
@@ -166,5 +176,5 @@ export default function PointList() {
         </div>
       )}
     </div>
-);
+  )
 }

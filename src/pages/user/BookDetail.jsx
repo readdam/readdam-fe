@@ -1,12 +1,16 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StarIcon, HeartIcon, LockIcon } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { searchBook } from '@api/kakaoApi';
 import BookReviewSection from '@components/book/BookReviewSection';
+import { checkBookLike, toggleBookLike } from '@api/book';
+import { useAxios } from '@hooks/useAxios';
 
 export default function BookDetail() {
   const param = useParams();
+  const [isLiked, setIsLiked] = useState(false);
+
   const { data, isLoading } = useQuery({
     queryKey: ['bookDetail', param.isbn],
     queryFn: () =>
@@ -24,6 +28,26 @@ export default function BookDetail() {
   const reviewRef = useRef(null);
   const meetingRef = useRef(null);
   const lifeBookRef = useRef(null);
+  const axios = useAxios();
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+
+  const book = data?.documents.find((doc) => doc.isbn.includes(isbnParam));
+
+  // 좋아요 상태 불러오기
+  useEffect(() => {
+    if (isbnParam) {
+      checkBookLike({ isbn: isbnParam, axios })
+        .then((res) => {
+          setIsLiked(res.data === true);
+        })
+        .catch((err) => {
+          console.error('좋아요 상태 확인 실패:', err);
+        });
+    }
+  }, [isbnParam]);
 
   if (isLoading || !data?.documents?.[0]) {
     return (
@@ -31,7 +55,18 @@ export default function BookDetail() {
     );
   }
 
-  const book = data.documents.find((doc) => doc.isbn.includes(isbnParam));
+  // 좋아요 토글 함수
+  const handleToggleLike = async () => {
+    try {
+      const res = await toggleBookLike({ isbn: isbnParam, axios });
+      if (res.status === 200) {
+        setIsLiked((prev) => !prev);
+      }
+    } catch (err) {
+      console.error('좋아요 토글 실패:', err);
+      alert('로그인이 필요합니다.');
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -44,7 +79,13 @@ export default function BookDetail() {
             className=" h-fit"
           />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 relative">
+          <HeartIcon
+            className={`w-6 h-6 ${
+              isLiked ? 'fill-[#E88D67] text-[#E88D67]' : 'text-gray-400'
+            } absolute top-2 right-2`}
+            onClick={() => handleToggleLike()}
+          />
           <h1 className="text-2xl font-bold mb-2">{book.title}</h1>
           <p className="text-sm mb-1">저자 {book.authors.join(', ')}</p>
           <p className="text-sm mb-1">출판 {book.publisher}</p>

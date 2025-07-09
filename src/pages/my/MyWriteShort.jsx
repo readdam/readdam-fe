@@ -1,13 +1,13 @@
 // src/pages/my/MyWriteShort.jsx
 import React, { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAtomValue } from 'jotai'
 import { useAxios } from '../../hooks/useAxios'
 import { tokenAtom } from '../../atoms'
 import { HeartIcon } from 'lucide-react'
 
 // 색상 매핑
-const getPostItColor = (color) => {
+const getPostItColor = color => {
   switch (color) {
     case 'mint':   return 'bg-[#E8F3F1]'
     case 'yellow': return 'bg-[#FFF8E7]'
@@ -22,12 +22,16 @@ const tabs = [
   { label: '읽담 한줄',     path: '/myWriteShort' },
 ]
 
+// 한 페이지당 보여줄 아이템 수
+const PAGE_SIZE = 8
+
 export default function MyWriteShort() {
   const location = useLocation()
   const navigate = useNavigate()
   const token    = useAtomValue(tokenAtom)
   const axios    = useAxios()
   const [shorts, setShorts] = useState([])
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     if (!token?.access_token) return
@@ -36,7 +40,10 @@ export default function MyWriteShort() {
         headers: { Authorization: `Bearer ${token.access_token}` },
         withCredentials: true,
       })
-      .then(res => setShorts(res.data))
+      .then(res => {
+        setShorts(res.data)
+        setPage(0)
+      })
       .catch(() => setShorts([]))
   }, [token, axios])
 
@@ -64,6 +71,10 @@ export default function MyWriteShort() {
     }
   }
 
+  // 현재 페이지까지 보여줄 아이템
+  const visible = shorts.slice(0, (page + 1) * PAGE_SIZE)
+  const hasMore = (page + 1) * PAGE_SIZE < shorts.length
+
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 bg-[#F3F7EC]">
       {/* 헤더 */}
@@ -75,9 +86,9 @@ export default function MyWriteShort() {
       {/* 탭 */}
       <div className="flex space-x-6 border-b mb-8 text-sm">
         {tabs.map(tab => (
-          <Link
+          <button
             key={tab.path}
-            to={tab.path}
+            onClick={() => navigate(tab.path)}
             className={`pb-2 transition-all ${
               location.pathname === tab.path
                 ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
@@ -85,7 +96,7 @@ export default function MyWriteShort() {
             }`}
           >
             {tab.label}
-          </Link>
+          </button>
         ))}
       </div>
 
@@ -101,53 +112,66 @@ export default function MyWriteShort() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {shorts.map(item => (
-            <div
-              key={item.writeshortId}
-              onClick={() => navigate(`/writeDetail/${item.writeId}`)}
-              className={`
-                ${getPostItColor(item.color)}
-                aspect-square
-                p-4 rounded-lg
-                shadow-md hover:shadow-lg
-                transition-shadow
-                relative
-              `}
-              style={{
-                backgroundImage:
-                  'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
-              }}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-base font-semibold text-[#006989]">
-                  {item.eventTitle}
-                </span>
-                <button
-                  onClick={(e) => toggleLike(item.writeshortId, e)}
-                  className="flex items-center gap-1 text-gray-600"
-                >
-                  <HeartIcon
-                    className={`w-6 h-6 transition-colors ${
-                      item.isLiked
-                        ? 'fill-[#E88D67] text-[#E88D67]'
-                        : 'text-gray-400'
-                    }`}
-                  />
-                  <span className="text-base">{item.likeCount}</span>
-                </button>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {visible.map(item => (
+              <div
+                key={item.writeshortId}
+                className={`
+                  ${getPostItColor(item.color)}
+                  w-full h-[300px]
+                  p-4 rounded-sm shadow-md
+                  hover:shadow-lg transition-shadow
+                  relative transform
+                  hover:-rotate-1 hover:-translate-y-1
+                `}
+                style={{
+                  backgroundImage:
+                    'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)'
+                }}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-base font-semibold text-[#006989]">
+                    {item.eventTitle}
+                  </span>
+                  <button
+                    onClick={e => toggleLike(item.writeshortId, e)}
+                    className="flex items-center gap-1 text-gray-600"
+                  >
+                    <HeartIcon
+                      className={`w-6 h-6 transition-colors ${
+                        item.isLiked
+                          ? 'fill-[#E88D67] text-[#E88D67]'
+                          : 'text-gray-400'
+                      }`}
+                    />
+                    <span className="text-base">{item.likeCount}</span>
+                  </button>
+                </div>
+                <div className="flex items-center justify-center h-[calc(100%-2.5rem)]">
+                  <p
+                    className="text-center text-lg font-bold text-gray-500 leading-snug break-words overflow-hidden"
+                    style={{ fontFamily: 'NanumGaram' }}
+                  >
+                    {item.content}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center justify-center h-[calc(100%-2.5rem)]">
-                <p
-                  className="text-center text-lg text-gray-700 leading-relaxed whitespace-pre-line overflow-hidden"
-                  style={{ fontFamily: 'NanumGaram' }}
-                >
-                  {item.content}
-                </p>
-              </div>
+            ))}
+          </div>
+
+          {/* 더보기 버튼 */}
+          {hasMore && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setPage(prev => prev + 1)}
+                className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+              >
+                더보기
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   )
