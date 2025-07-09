@@ -14,11 +14,13 @@ export const useKakaoLoader = () => {
 
         const script = document.createElement('script');
         script.id = scriptId;
-        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&libraries=services`;
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false&libraries=services`;
         script.async = true;
 
         script.onload = () => {
+            window.kakao.maps.load(() => {
             setLoaded(true);
+        });
         };
 
         document.head.appendChild(script);

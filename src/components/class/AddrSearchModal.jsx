@@ -30,7 +30,7 @@ const AddrSearchModal = ({ onSelect, onClose }) => {
             placeholder="장소 키워드 입력"
             className="flex-1 border px-2 py-1 rounded"
           />
-          <button onClick={handleSearch} className="bg-blue-500 text-white px-3 py-1 rounded">
+          <button type="button" onClick={handleSearch} className="bg-blue-500 text-white px-3 py-1 rounded">
             검색
           </button>
         </div>
@@ -54,7 +54,7 @@ const AddrSearchModal = ({ onSelect, onClose }) => {
         </ul>
 
         <button
-            type='button'
+          type='button'
           onClick={onClose}
           className="mt-4 w-full bg-gray-300 hover:bg-gray-400 py-2 rounded"
         >

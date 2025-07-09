@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAtom } from "jotai";
 import { tokenAtom, userAtom } from "../../atoms";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 import { url } from "../../config/config";
 import AddrSearchModal from "@components/class/AddrSearchModal";
 import {
@@ -15,6 +15,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const ClassCreate = () => {
+  const axios = useAxios();
   const [form, setForm] = useState({
     title: "",
     shortDescription: "",
@@ -113,7 +114,6 @@ const ClassCreate = () => {
 
   const [token] = useAtom(tokenAtom);
   const [user] = useAtom(userAtom);
-  const [showTempSaveModal, setShowTempSaveModal] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -231,18 +231,18 @@ const ClassCreate = () => {
   };
 
   // 모임 회차별 북커버 이미지 불러오기
-  const [showBookModal, setShowBookModal] = useState(false);
-  const handleSearchCover = () => {
-    setShowBookModal(true);
-  };
-  const handleSelectCover = (thumbnailUrl) => {
-    setFormData({
-      ...formData,
-      image: thumbnailUrl,
-    });
-    // setIfile(null); // 기존 업로드 파일 제거
-    setShowBookModal(false);
-  };
+  // const [showBookModal, setShowBookModal] = useState(false);
+  // const handleSearchCover = () => {
+  //   setShowBookModal(true);
+  // };
+  // const handleSelectCover = (thumbnailUrl) => {
+  //   setFormData({
+  //     ...formData,
+  //     image: thumbnailUrl,
+  //   });
+  //   // setIfile(null); // 기존 업로드 파일 제거
+  //   setShowBookModal(false);
+  // };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -490,6 +490,7 @@ const ClassCreate = () => {
                     // }
                   />
                   <button
+                    type="button"
                     onClick={() => setIsModalOpen(true)}
                     disabled={form.venue === "읽담"}
                     className={`px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -579,7 +580,7 @@ const ClassCreate = () => {
                                 className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
                                 type="button"
                               >
-                                <XIcon className="w-4 h-4" />
+                                <XIcon className="w-3 h-3" />
                               </button>
                             </div>
                           )}
@@ -712,14 +713,14 @@ const ClassCreate = () => {
                       <img
                         src={leaderImgFPreview}
                         alt="미리보기"
-                        className="w-30 h-30 object-cover rounded-md"
+                        className="w-36 h-36 object-cover rounded-md"
                       />
                       <button
                         onClick={removeLeaderImgF}
                         className="absolute top-1 right-1 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
                         type="button"
                       >
-                        <XIcon className="w-2 h-2" />
+                        <XIcon className="w-3 h-3" />
                       </button>
                     </div>
                   )}
