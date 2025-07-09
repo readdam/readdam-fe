@@ -46,14 +46,20 @@ const AdminNotice = () => {
   const handleRowClick = async (noticeId) => {
     try {
       const response = await axios.get(`${url}/admin/notice/${noticeId}`);
+
       console.log("noticeId: ", noticeId);
       setSelectedNotice(response.data);
-      setIsModalOpen(true);
     } catch (error) {
       console.log("공지 상세 불러오기 실패: ", error);
       alert("공지사항 내용을 불러오지 못했습니다.");
     }
   };
+
+  
+  useEffect(()=> {
+     selectedNotice && setIsModalOpen(true);
+      
+  },[selectedNotice])
 
   // 공지사항 등록
   const handleNoticeSubmit = async (e) => {
@@ -120,6 +126,7 @@ const AdminNotice = () => {
       alert("삭제 중 오류가 발생했습니다.");
     }
   };
+
 
   const renderNoticePage = () => (
     <div className="space-y-8">
