@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 
 const NoticeModal = ({
   notice,
@@ -11,6 +11,7 @@ const NoticeModal = ({
   onDelete,
   onFormatDate,
 }) => {
+  const axios = useAxios();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     title: notice.title,
