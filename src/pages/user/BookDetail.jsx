@@ -185,8 +185,8 @@ export default function BookDetail() {
             인생책
           </button>
         </div>
-        <BookReviewSection isbn={isbnParam} />
       </div>
+      <BookReviewSection isbn={isbnParam} />
 
       {/* 추천 도서 */}
       <div ref={meetingRef} id="meetingSection" className="mt-12">
