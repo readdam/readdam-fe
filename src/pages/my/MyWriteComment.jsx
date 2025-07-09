@@ -5,7 +5,7 @@ import { useAtomValue } from 'jotai'
 import { useAxios } from '../../hooks/useAxios'
 import { tokenAtom } from '../../atoms'
 import { url } from '../../config/config'
-import { BookOpenIcon} from 'lucide-react';
+import { BookOpenIcon } from 'lucide-react'
 
 const typeMap = {
   bookreview: '독후감',
@@ -21,6 +21,9 @@ const tabs = [
   { label: '읽담 한줄', path: '/myWriteShort' },
 ]
 
+// 한 페이지당 보여줄 댓글 수
+const PAGE_SIZE = 10
+
 export default function MyWriteComment() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -28,6 +31,7 @@ export default function MyWriteComment() {
   const axios = useAxios()
 
   const [comments, setComments] = useState([])
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     if (!token?.access_token) return
@@ -36,9 +40,16 @@ export default function MyWriteComment() {
         headers: { Authorization: `Bearer ${token.access_token}` },
         withCredentials: true,
       })
-      .then(res => setComments(res.data))
+      .then(res => {
+        setComments(res.data)
+        setPage(0)
+      })
       .catch(() => setComments([]))
   }, [token, axios])
+
+  // 화면에 보여줄 댓글
+  const visible = comments.slice(0, (page + 1) * PAGE_SIZE)
+  const hasMore = (page + 1) * PAGE_SIZE < comments.length
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 bg-[#F3F7EC]">
@@ -54,17 +65,18 @@ export default function MyWriteComment() {
           <Link
             key={tab.path}
             to={tab.path}
-            className={`pb-2 transition-all ${location.pathname === tab.path
+            className={`pb-2 transition-all ${
+              location.pathname === tab.path
                 ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
                 : 'text-gray-500 hover:text-[#006989]'
-              }`}
+            }`}
           >
             {tab.label}
           </Link>
         ))}
       </div>
 
-      {/* 리스트 */}
+      {/* 리스트 또는 빈 상태 */}
       {comments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
           <p className="text-gray-500 mb-4">아직 작성한 첨삭이 없습니다.</p>
@@ -76,59 +88,73 @@ export default function MyWriteComment() {
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {comments.map(item => (
-            <div
-              key={item.writeCommentId}
-              className="bg-white rounded-lg p-6 shadow hover:shadow-md transition-shadow flex cursor-pointer"
-              onClick={() => navigate(`/writeDetail/${item.writeId}`)}
-            >
-              {/* 원글 이미지 또는 아이콘 플레이스홀더 */}
-              <div className="w-28 h-28 flex-shrink-0 mr-4">
-                {item.writeImage ? (
-                  <img
-                    src={`${url}/image?filename=${item.writeImage.trim()}`}
-                    alt="원글 이미지"
-                    className="w-full h-full object-cover"
-                    onError={e => {
-                      e.currentTarget.onerror = null
-                      e.currentTarget.src = '/static/default-thumbnail.png'
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-[#FCD5C9] flex items-center justify-center">
-                    <BookOpenIcon className="w-12 h-12 text-white" />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 space-y-2">
-                {/* 상단 정보 */}
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
-                    {typeMap[item.type] || '첨삭'}
-                  </span>
-                  <h2 className="text-lg font-semibold truncate">{item.title}</h2>
-                  <span className="ml-auto text-xs text-gray-500">
-                    {item.postNickname} · {item.regDate?.split('T')[0]}
-                  </span>
+        <>
+          <div className="space-y-6">
+            {visible.map(item => (
+              <div
+                key={item.writeCommentId}
+                className="bg-white rounded-lg p-6 shadow hover:shadow-md transition-shadow flex cursor-pointer"
+                onClick={() => navigate(`/writeDetail/${item.writeId}`)}
+              >
+                {/* 원글 이미지 또는 아이콘 */}
+                <div className="w-28 h-28 flex-shrink-0 mr-4">
+                  {item.writeImage ? (
+                    <img
+                      src={`${url}/image?filename=${item.writeImage.trim()}`}
+                      alt="원글 이미지"
+                      className="w-full h-full object-cover"
+                      onError={e => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = '/static/default-thumbnail.png'
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#FCD5C9] flex items-center justify-center">
+                      <BookOpenIcon className="w-12 h-12 text-white" />
+                    </div>
+                  )}
                 </div>
 
-                {/* 원글 내용 (5줄 넘으면 ... 처리) */}
-                {item.writeContent && (
-                  <p className="text-sm text-gray-600 italic line-clamp-5 whitespace-pre-line">
-                    {item.writeContent}
-                  </p>
-                )}
+                <div className="flex-1 space-y-2">
+                  {/* 상단 정보 */}
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                      {typeMap[item.type] || '첨삭'}
+                    </span>
+                    <h2 className="text-lg font-semibold truncate">{item.title}</h2>
+                    <span className="ml-auto text-xs text-gray-500">
+                      {item.postNickname} · {item.regDate?.split('T')[0]}
+                    </span>
+                  </div>
 
-                {/* 내 첨삭 내용 */}
-                <p className="text-sm text-gray-700 bg-[#FAFAFA] p-3 rounded-md whitespace-pre-line leading-relaxed">
-                  {item.content}
-                </p>
+                  {/* 원글 내용 */}
+                  {item.writeContent && (
+                    <p className="text-sm text-gray-600 italic line-clamp-5 whitespace-pre-line">
+                      {item.writeContent}
+                    </p>
+                  )}
+
+                  {/* 내 첨삭 내용 */}
+                  <p className="text-sm text-gray-700 bg-[#FAFAFA] p-3 rounded-md whitespace-pre-line leading-relaxed">
+                    {item.content}
+                  </p>
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* 더보기 버튼 */}
+          {hasMore && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setPage(prev => prev + 1)}
+                className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+              >
+                더보기
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   )

@@ -5,7 +5,13 @@ import { useAtomValue } from 'jotai';
 import { useAxios } from '../../hooks/useAxios';
 import { tokenAtom } from '../../atoms';
 import { url } from '../../config/config';
-import { CalendarIcon, MapPinIcon, UsersIcon, HeartIcon, CompassIcon } from 'lucide-react';
+import {
+  CalendarIcon,
+  CompassIcon,
+  MapPinIcon,
+  UsersIcon,
+  HeartIcon,
+} from 'lucide-react';
 
 const tabs = [
   { label: '모임', path: '/myLikeClass' },
@@ -14,17 +20,17 @@ const tabs = [
   { label: '책', path: '/myLikeBook' },
 ];
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 12;
 
 export default function MyLikeClass() {
   const location = useLocation();
   const token = useAtomValue(tokenAtom);
   const axios = useAxios();
 
-  const [meetings, setMeetings] = useState([]);   // 누적된 데이터
-  const [page, setPage] = useState(0);            // 현재 페이지 (0부터)
-  const [hasMore, setHasMore] = useState(false);  // 다음 페이지 존재 여부
+  const [allMeetings, setAllMeetings] = useState([]); // 전체 좋아요 모임
+  const [page, setPage] = useState(0);                // 현재 페이지
 
+  // 한 번만 전체 좋아요 모임 가져오기
   useEffect(() => {
     if (!token?.access_token) return;
 
@@ -32,13 +38,10 @@ export default function MyLikeClass() {
       .get(`${url}/my/likeClass`, {
         headers: { Authorization: `Bearer ${token.access_token}` },
         withCredentials: true,
-        params: { page, size: ITEMS_PER_PAGE },
       })
       .then(res => {
-        // Spring Data Page 구조라 가정
-        const { content = [], totalPages = 0 } = res.data;
-        // 새로 불러온 content 매핑
-        const mapped = content.map(item => ({
+        const list = Array.isArray(res.data) ? res.data : [];
+        const mapped = list.map(item => ({
           id: item.classId,
           title: item.title,
           date: item.round1Date?.split('T')[0] || '',
@@ -47,18 +50,19 @@ export default function MyLikeClass() {
           tags: [item.tag1, item.tag2, item.tag3].filter(Boolean),
           image: item.mainImg || '',
         }));
-        setMeetings(prev => (page === 0 ? mapped : [...prev, ...mapped]));
-        setHasMore(page + 1 < totalPages);
+        setAllMeetings(mapped);
       })
       .catch(() => {
-        if (page === 0) setMeetings([]);
-        setHasMore(false);
+        setAllMeetings([]);
       });
-  }, [token, axios, page]);
+  }, [token, axios]);
+
+  // 현재 페이지에 보여줄 모임
+  const meetings = allMeetings.slice(0, (page + 1) * ITEMS_PER_PAGE);
+  const hasMore = meetings.length < allMeetings.length;
 
   const toggleLike = id => {
-    // UI에서 바로 제거
-    setMeetings(prev => prev.filter(m => m.id !== id));
+    setAllMeetings(prev => prev.filter(m => m.id !== id));
     alert('좋아요가 취소되었습니다.');
 
     axios
@@ -98,8 +102,8 @@ export default function MyLikeClass() {
         ))}
       </div>
 
-      {/* 좋아요한 모임 없을 때 */}
-      {meetings.length === 0 && (
+      {/* 콘텐츠 */}
+      {allMeetings.length === 0 ? (
         <div className="text-center py-20">
           <p className="mb-4 text-gray-600">아직 좋아요한 모임이 없습니다.</p>
           <Link
@@ -109,10 +113,7 @@ export default function MyLikeClass() {
             모임 보러가기
           </Link>
         </div>
-      )}
-
-      {/* 모임 카드 리스트 */}
-      {meetings.length > 0 && (
+      ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {meetings.map(meeting => (
