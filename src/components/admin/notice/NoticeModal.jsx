@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 
 const NoticeModal = ({
   notice,
@@ -11,12 +11,14 @@ const NoticeModal = ({
   onDelete,
   onFormatDate,
 }) => {
+  const axios = useAxios();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     title: notice.title,
     content: notice.content,
     topFix: notice.topFix,
   });
+
 
   const handleEditSubmit = async () => {
     const formData = new FormData();

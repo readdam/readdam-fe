@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAtom } from "jotai";
 import { tokenAtom, userAtom } from "../../atoms";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 import { url } from "../../config/config";
 import AddrSearchModal from "@components/class/AddrSearchModal";
 import {
@@ -15,6 +15,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const ClassCreate = () => {
+  const axios = useAxios();
   const [form, setForm] = useState({
     title: "",
     shortDescription: "",
@@ -32,12 +33,12 @@ const ClassCreate = () => {
     description: "",
     leaderDescription: "",
   });
-  
+
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handlePlaceSelect = (place) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       venueAddress: place.address_name,
     }));
@@ -90,7 +91,6 @@ const ClassCreate = () => {
       setMainImgFPreview(URL.createObjectURL(file));
     }
   };
-  
 
   const removeMainImgF = (e) => {
     e.preventDefault();
@@ -114,7 +114,6 @@ const ClassCreate = () => {
 
   const [token] = useAtom(tokenAtom);
   const [user] = useAtom(userAtom);
-  const [showTempSaveModal, setShowTempSaveModal] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -205,13 +204,6 @@ const ClassCreate = () => {
     return date.toISOString().split("T")[0];
   };
 
-  //임시저장
-  const handleTempSave = () => {
-    setShowTempSaveModal(true);
-    // 임시저장 로직 추가 예정
-    console.log("Temporary saved:", form);
-  };
-
   const handleTagToggle = (tag) => {
     if (form.tags.includes(tag)) {
       setForm({
@@ -237,6 +229,20 @@ const ClassCreate = () => {
       dates: [],
     });
   };
+
+  // 모임 회차별 북커버 이미지 불러오기
+  // const [showBookModal, setShowBookModal] = useState(false);
+  // const handleSearchCover = () => {
+  //   setShowBookModal(true);
+  // };
+  // const handleSelectCover = (thumbnailUrl) => {
+  //   setFormData({
+  //     ...formData,
+  //     image: thumbnailUrl,
+  //   });
+  //   // setIfile(null); // 기존 업로드 파일 제거
+  //   setShowBookModal(false);
+  // };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -484,7 +490,8 @@ const ClassCreate = () => {
                     // }
                   />
                   <button
-                    onClick={()=> setIsModalOpen(true)}
+                    type="button"
+                    onClick={() => setIsModalOpen(true)}
                     disabled={form.venue === "읽담"}
                     className={`px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -566,14 +573,14 @@ const ClassCreate = () => {
                               <img
                                 src={roundImgPreviews[roundField]}
                                 alt="미리보기"
-                                className="w-32 h-32 object-cover mt-2"
+                                className="w-36 h-36 object-cover rounded-md"
                               />
                               <button
                                 onClick={removeRoundImgF}
                                 className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
                                 type="button"
                               >
-                                <XIcon className="w-4 h-4" />
+                                <XIcon className="w-3 h-3" />
                               </button>
                             </div>
                           )}
@@ -653,7 +660,7 @@ const ClassCreate = () => {
                       className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
                       type="button"
                     >
-                      <XIcon className="w-4 h-4" />
+                      <XIcon className="w-3 h-3" />
                     </button>
                   </div>
                 )}
@@ -706,14 +713,14 @@ const ClassCreate = () => {
                       <img
                         src={leaderImgFPreview}
                         alt="미리보기"
-                        className="w-32 h-32 object-cover rounded-md"
+                        className="w-36 h-36 object-cover rounded-md"
                       />
                       <button
                         onClick={removeLeaderImgF}
                         className="absolute top-1 right-1 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
                         type="button"
                       >
-                        <XIcon className="w-4 h-4" />
+                        <XIcon className="w-3 h-3" />
                       </button>
                     </div>
                   )}
@@ -740,13 +747,13 @@ const ClassCreate = () => {
             </div>
           </div>
           <div className="flex justify-center gap-4">
-            <button
+            {/* <button
               type="button"
               onClick={handleTempSave}
               className="px-8 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
             >
-              임시저장
-            </button>
+              수정
+            </button> */}
             <button
               type="submit"
               className="px-8 py-3 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors"
@@ -756,20 +763,6 @@ const ClassCreate = () => {
           </div>
         </form>
       </main>
-      {/* 임시저장 모달 */}
-      {showTempSaveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl">
-            <p className="text-lg mb-4">작성하신 글이 임시저장 됐습니다.</p>
-            <button
-              onClick={() => setShowTempSaveModal(false)}
-              className="w-full px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors"
-            >
-              확인
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

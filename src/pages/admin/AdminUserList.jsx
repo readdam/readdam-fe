@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { SearchIcon, HomeIcon } from "lucide-react";
-import { url } from "@config/config";
-import SearchFilter from "@components/admin/user/SearchFilter";
-import Pagination from "@components/admin/user/Pagination";
-import UserTable from "@components/admin/user/UserTable";
+import { useAxios } from "../../hooks/useAxios";
+import { HomeIcon } from "lucide-react";
+import { url } from "../../config/config";
+import SearchFilter from "../../components/admin/user/SearchFilter";
+import Pagination from "../../components/admin/user/Pagination";
+import UserTable from "../../components/admin/user/UserTable";
 
 const AdminUserList = () => {
-  const [keyword, setKeyword] = useState("");
+  const axios = useAxios();
 
+  // 검색어 & 페이징 상태
+  const [keyword, setKeyword] = useState("");
   const [members, setMembers] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0); // 조회된 user의 수
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [loading, setLoading] = useState(false);
 
+  // 회원 조회 함수
   const fetchMembers = async () => {
     setLoading(true);
     try {
@@ -35,13 +38,16 @@ const AdminUserList = () => {
     }
   };
 
-  const handleSearch = () => {
+  // 검색 버튼
+  const handleSearch = (e) => {
+    e.preventDefault();
     setPage(1);
     fetchMembers();
-  }
+  };
 
-  useEffect(()=> {
-    if(page !== 1) {
+  // 페이지 변경시 자동 조회
+  useEffect(() => {
+    if (page !== 1) {
       fetchMembers();
     }
   }, [page]);
@@ -64,44 +70,36 @@ const AdminUserList = () => {
             </div>
 
             {/* 검색 영역 */}
-            <SearchFilter 
-              keyword = {keyword}
-              setKeyword = {setKeyword}
-              onSearch = {handleSearch}
-            />
-            { members?.length > 0 && (
-              <>
-                <p>총 {totalCount}명의 회원이 검색됐습니다.</p>
-                <UserTable members={members} />
+            <div className="flex gap-4 mb-6">
+              <SearchFilter
+                keyword={keyword}
+                setKeyword={setKeyword}
+                onSearch={handleSearch}
+              />
+            </div>
 
-                <Pagination
-                  currentPage = {page}
-                  totalCount = {totalCount}
-                  pageSize = {pageSize}
-                  onPageChange = {setPage}
-                />
+            {/* 조회 결과(테이블) 영역 */}
+            {members?.length > 0 && (
+              <>
+                <div className="bg-white rounded-lg shadow min-w-[800px]">
+                  <p className="text-sm text-gray-700">
+                    총 {totalCount}명의 회원이 검색됐습니다.
+                  </p>
+                  <UserTable members={members} />
+                </div>
+
+                {/* 페이지네이션 */}
+                <div className="flex justify-center mt-6">
+                  <Pagination
+                    currentPage={page}
+                    totalCount={totalCount}
+                    pageSize={pageSize}
+                    onPageChange={setPage}
+                  />
+                </div>
               </>
             )}
           </div>
-
-            {/* 페이지네이션 */}
-            {/* <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200">
-              <div className="text-sm text-gray-700">
-                총 5명의 회원이 있습니다.
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
-                  이전
-                </button>
-                <button className="px-3 py-1 bg-black text-white rounded text-sm">
-                  1
-                </button>
-                <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
-                  다음
-                </button>
-              </div>
-            </div>
-          </div> */}
         </main>
       </div>
     </div>

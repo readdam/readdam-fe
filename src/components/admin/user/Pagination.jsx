@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const Pagination = ({ currentPage, totalCount, pageSize, onPageChange }) => {
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -10,10 +10,11 @@ const Pagination = ({ currentPage, totalCount, pageSize, onPageChange }) => {
   }
 
   return (
-    <div className="pagination">
+    <div className="flex items-center space-x-2">
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
       >
         이전
       </button>
@@ -23,6 +24,7 @@ const Pagination = ({ currentPage, totalCount, pageSize, onPageChange }) => {
           key={page}
           onClick={() => onPageChange(page)}
           disabled={page === currentPage}
+          className="px-3 py-1 bg-black text-white rounded text-sm"
         >
           {page}
         </button>
@@ -31,6 +33,7 @@ const Pagination = ({ currentPage, totalCount, pageSize, onPageChange }) => {
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
       >
         다음
       </button>
