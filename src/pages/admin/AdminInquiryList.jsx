@@ -92,7 +92,7 @@ export default function AdminInquiryListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
 
       {/* 카드 바깥: 브레드크럼 + 제목 */}
       <div className="max-w-6xl mx-auto mb-4">

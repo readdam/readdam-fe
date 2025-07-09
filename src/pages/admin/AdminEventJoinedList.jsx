@@ -66,7 +66,7 @@ const AdminEventJoinedList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       <div className="flex max-w-6xl mx-auto">
         <main className="flex-1 p-6">
           {/* breadcrumb */}

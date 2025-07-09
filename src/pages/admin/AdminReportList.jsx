@@ -85,7 +85,7 @@ export default function AdminReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       {/* 브레드크럼 + 제목 (카드 바깥) */}
       <div className="max-w-6xl mx-auto mb-4">
         <div className="flex items-center text-sm text-gray-600 mb-2">

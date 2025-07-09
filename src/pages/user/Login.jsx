@@ -54,63 +54,77 @@ const Login = () => {
 
   // ✅ 2. 일반 로그인 처리
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const fcmToken = await getFcmToken(); // ✅ FCM 토큰 가져오기
+  try {
+    // 1) FCM 토큰 가져오기
+    const fcmToken = await getFcmToken();
 
-      const response = await axios.post(
-        `${url}/loginProc`,
-        {
-          username: userId,
-          password: password,
-          fcmToken: fcmToken || null,
-        },
-        {
-          withCredentials: true,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-
-      const access_token = response.headers['authorization'];
-
-      if (access_token) {
-        const decoded = jwtDecode(access_token);
-        const userInfo = {
-          username: decoded.sub,
-          nickname: decoded.nickname,
-          isAdmin: decoded.isAdmin,
-          lat: decoded.lat,
-          lng: decoded.lng,
-        };
-        const tokenObj = {
-          access_token: access_token.startsWith("Bearer") ? access_token : `Bearer ${access_token}`,
-          refresh_token: '',
-        };
-
-        // ✅ Jotai 상태 설정
-        setToken(tokenObj);
-        setUser(userInfo);
-
-        if (saveId) {
-          sessionStorage.setItem('savedId', userId);
-          sessionStorage.setItem('savedPw', password);
-          sessionStorage.setItem('saveId', 'true');
-        } else {
-          sessionStorage.removeItem('savedId');
-          sessionStorage.removeItem('savedPw');
-          sessionStorage.setItem('saveId', 'false');
-        }
-
-        navigate('/');
-      } else {
-        alert('로그인 응답이 올바르지 않습니다.');
+    // 2) 로그인 요청 (폼 로그인)
+    const response = await axios.post(
+      `${url}/loginProc`,
+      {
+        username: userId,
+        password,
+        fcmToken: fcmToken || null,
+      },
+      {
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" },
       }
-    } catch (err) {
-      alert('로그인에 실패했습니다.');
-      console.error(err);
+    );
+
+    // 3) 응답 바디에서 access_token, refresh_token 꺼내기
+    const { access_token: rawAccess, refresh_token: rawRefresh } = response.data;
+
+    // 4) "Bearer " prefix 처리
+    const accessToken = rawAccess.startsWith("Bearer ")
+      ? rawAccess
+      : `Bearer ${rawAccess}`;
+    const refreshToken = rawRefresh.startsWith("Bearer ")
+      ? rawRefresh.replace(/^Bearer\s/, "")
+      : rawRefresh;
+
+    // 5) JWT 디코딩 (decode 는 prefix 없는 토큰으로)
+    const decoded = jwtDecode(accessToken.replace(/^Bearer\s/, ""));
+
+    // 6) 사용자 정보 구성
+    const userInfo = {
+      username: decoded.sub,
+      nickname: decoded.nickname,
+      isAdmin: decoded.isAdmin,
+      lat: decoded.lat,
+      lng: decoded.lng,
+    };
+
+    // 7) Jotai 상태 및 세션 스토리지에 토큰/유저 저장
+    const tokenObj = {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
+    setToken(tokenObj);
+    setUser(userInfo);
+    sessionStorage.setItem("token", JSON.stringify(tokenObj));
+    sessionStorage.setItem("user", JSON.stringify(userInfo));
+
+    // 8) 아이디/비번 저장 처리
+    if (saveId) {
+      sessionStorage.setItem("savedId", userId);
+      sessionStorage.setItem("savedPw", password);
+      sessionStorage.setItem("saveId", "true");
+    } else {
+      sessionStorage.removeItem("savedId");
+      sessionStorage.removeItem("savedPw");
+      sessionStorage.setItem("saveId", "false");
     }
-  };
+
+    // 9) 홈으로 이동
+    navigate("/");
+  } catch (err) {
+    alert("로그인에 실패했습니다.");
+    console.error(err);
+  }
+};
 
 
   return (

@@ -35,7 +35,7 @@ export default function AdminReportList({
   onCloseModal
 }) {
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 overflow-auto mb-8">
+    <div className="bg-white p-6 rounded-lg overflow-auto mb-8">
       {/* 상단 총 건수 */}
       <div className="text-gray-600 mb-4">
         총 <span className="font-semibold text-[#006989]">{totalCount}</span>건

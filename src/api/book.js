@@ -65,3 +65,10 @@ export const checkBookLike = ({ isbn, axios }) =>
 // 좋아요 토글
 export const toggleBookLike = async ({ isbn, axios }) =>
   await axios.post(`/book-like?bookIsbn=${isbn}`);
+
+export const fetchLifeBookUsers = async ({ isbn, axios }) => {
+  const response = await axios.get(`/library/lifeBook/users`, {
+    params: { isbn },
+  });
+  return response.data; // User[] - nickname, profileImg 포함
+};

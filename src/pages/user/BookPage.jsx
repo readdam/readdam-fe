@@ -21,9 +21,9 @@ const BookPage = () => {
   // ── 검색 & 기간 드롭다운 ──────────────────
   const [searchQuery, setSearchQuery] = useState('')
   const periods = [
-    { label: '일간', value: 'DAILY' },
-    { label: '주간', value: 'WEEKLY' },
-    { label: '월간', value: 'MONTHLY' },
+    { label: '일간',   value: 'DAILY'   },
+    { label: '주간',   value: 'WEEKLY'  },
+    { label: '월간',   value: 'MONTHLY' },
   ]
   const [period, setPeriod] = useState(periods[0].value)
   const selectedLabel = periods.find(p => p.value === period)?.label
@@ -47,8 +47,7 @@ const BookPage = () => {
         })
         setBooks(data.content || [])
         setPageInfo(data.pageInfo || { totalPages: 0, hasNext: false })
-      } catch (err) {
-        console.error(err)
+      } catch {
         setBooks([])
         setPageInfo({ totalPages: 0, hasNext: false })
       }
@@ -56,7 +55,7 @@ const BookPage = () => {
     fetchBestsellers()
   }, [period, page, size, axios])
 
-  // ── “서재에 추가” 클릭 핸들러 (토큰 여부만 체크) ─────────────
+  // ── “서재에 추가” 클릭 핸들러 ─────────────────
   const onAddClick = (e, book) => {
     e.stopPropagation()
     if (!token?.access_token) {
@@ -81,14 +80,14 @@ const BookPage = () => {
   const canNextGroup = endPage < total
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#F9F9F7]">
       <main className="flex-grow container mx-auto px-4 py-8">
         {/* 상단 배너 & 검색 */}
-        <div className="rounded-lg py-8 mb-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
+        <div className="rounded-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-2">읽담 베스트셀러</h1>
-              <p className="text-lg opacity-90">
+              <h1 className="text-3xl font-bold mb-4 text-[#006989]">읽담 베스트셀러</h1>
+              <p>
                 독자들이 가장 많이 읽고 있는 인기 도서를 만나보세요
               </p>
             </div>
@@ -154,66 +153,62 @@ const BookPage = () => {
             표시할 도서가 없습니다.
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
             {books.map(book => (
               <div
                 key={book.id}
-                className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                className="relative w-64 bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => navigate(`/bookDetail/${book.isbn}`)}
               >
-                <div className="relative">
-                  <img
-                    src={book.imageName}
-                    alt={book.title}
-                    className="w-full h-64 object-cover"
-                  />
-                  <div className="absolute top-0 left-0 w-10 h-10 bg-[#E88D67] text-white flex items-center justify-center font-bold">
-                    {book.ranking}
+                {/* 랭킹 뱃지 (정사각형, 좌상단) */}
+                <div className="absolute top-0 left-0 bg-[#E88D67] text-white text-xs font-bold w-8 h-8 flex items-center justify-center">
+                  {book.ranking}
+                </div>
+
+                {/* 이미지 */}
+                <div className="bg-[#FCD5C9] p-1">
+                  <div className="w-32 h-48 mx-auto overflow-hidden rounded">
+                    <img
+                      src={book.imageName}
+                      alt={book.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-lg mb-1 line-clamp-1">
+
+                {/* 도서 정보 */}
+                <div className="p-3 space-y-1">
+                  <h3 className="text-base font-semibold truncate">
                     {book.title}
                   </h3>
-                  <p className="text-gray-600 text-sm mb-2">
-                    {book.author} | {book.publisher}
+                  <p className="text-sm text-gray-500 truncate">
+                    {book.author} · {book.publisher}
                   </p>
-                  <div className="flex items-center mb-4">
-                    <StarIcon className="w-4 h-4 text-[#E8BD67]" />
-                    <span className="ml-1 text-sm">
-                      {book.rating?.toFixed(1) ?? '0.0'}
-                    </span>
-                    <span className="mx-1 text-gray-400">|</span>
-                    <span className="text-gray-500 text-sm">
-                      리뷰 {book.reviewCnt ?? 0}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      className="flex-1 py-2 bg-[#006989] text-white rounded hover:bg-[#005C78]"
-                      onClick={e => {
-                        e.stopPropagation()
-                        navigate(`/bookDetail/${book.isbn}`)
-                      }}
-                    >
-                      자세히 보기
-                    </button>
-                    <button
-                      className="px-3 py-2 border border-gray-200 rounded hover:bg-gray-50"
-                      onClick={e => onAddClick(e, book)}
-                    >
-                      <BookOpenIcon className="w-5 h-5 text-[#E88D67]" />
-                    </button>
+                  <div className="flex items-center gap-1 text-sm text-gray-700">
+                    <StarIcon className="w-4 h-4 text-[#E88D67]" />
+                    <span>{book.rating?.toFixed(1) ?? '0.0'}</span>
                   </div>
                 </div>
+
+                {/* 서재 추가 버튼 (정보 바로 위, 우측 아래에서 한 칸 올림) */}
+                <button
+                  onClick={e => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onAddClick(e, book)
+                  }}
+                  className="absolute bottom-3 right-3 bg-white w-10 h-10 flex items-center justify-center rounded-lg shadow hover:bg-gray-50"
+                >
+                  <BookOpenIcon className="w-6 h-6 text-[#E88D67]" />
+                </button>
               </div>
             ))}
           </div>
         )}
 
-        {/* 페이지 네비게이션 (그룹 페이징) */}
+        {/* 페이지 네비게이션 */}
         {total > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-8">
+          <div className="flex justify-center items-center gap-2 mt-12">
             <button
               disabled={!canPrevGroup}
               onClick={() => setPage(startPage - maxBtn)}
