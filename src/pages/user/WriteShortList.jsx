@@ -90,7 +90,7 @@ const WriteShortList = () => {
     }
   }
 
-  // 답변 작성
+  // 답변 작성 or 수정
   const handleSubmitAnswer = async () => {
     if (!user || !token?.access_token) {
       alert('로그인이 필요한 서비스입니다')
@@ -98,22 +98,64 @@ const WriteShortList = () => {
     }
     if (!answerText.trim()) return
     try {
-      const res = await axios.post(`${url}/my/writeShort`, { content: answerText, color: selectedColor })
-      setAnswers([res.data, ...answers])
-      setHasWritten(true)
-      setShowModal(false)
-      setAnswerText('')
-    } catch (err) {
-      console.error(err)
-      alert('작성 실패')
+      if (hasWritten) {
+            // 수정 API 호출
+            await axios.put(`${url}/my/writeShort`, {
+              content: answerText,
+              color: selectedColor,
+            });
+
+            // answers 배열 순회해서 내가 쓴 글 골라내서 리스트 즉시 반영
+            setAnswers((prevAnswers) =>  
+              prevAnswers.map((a) => 
+                a.username === user.username 
+                  ? { ...a, content: answerText, color: selectedColor } 
+                  : a 
+              )
+            );
+
+          } else {
+            // 신규 작성
+            const res = await axios.post(`${url}/my/writeShort`, { 
+              content: answerText, 
+              color: selectedColor });
+
+            setAnswers([res.data, ...answers])
+            setHasWritten(true)
+          }
+          setShowModal(false)
+          setAnswerText('')
+      } catch (err) {
+        console.error(err)
+        alert('작성 실패')
+      }
     }
-  }
 
     const { openReportModal, ReportModalComponent } = useReportModal({
-    defaultCategory: REPORT_CATEGORY.WRITE_SHORT,
-    onSuccess: () => {
-    },
+      defaultCategory: REPORT_CATEGORY.WRITE_SHORT,
+      onSuccess: () => {
+      },
   });
+
+  const handleOpenModal = () => {
+    if (!user || !token?.access_token) {
+      alert('로그인이 필요한 서비스입니다')
+      return navigate('/login')
+    }
+
+    if (hasWritten) {
+      const myAnswer = answers.find(a => a.username === user.username);
+      if (myAnswer) {
+        setAnswerText(myAnswer.content);
+        setSelectedColor(myAnswer.color || 'mint');
+      }
+    } else {
+      setAnswerText('');
+      setSelectedColor('mint');
+    }
+
+    setShowModal(true);
+  };
 
   return (
     <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
@@ -126,19 +168,12 @@ const WriteShortList = () => {
           </div>
           {hasWritten !== null && (
             <button
-              onClick={() => {
-                if (!user || !token?.access_token) {
-                  alert('로그인이 필요한 서비스입니다')
-                  return navigate('/login')
-                }
-                setShowModal(true)
-              }}
-              disabled={hasWritten}
-              className={`flex items-center px-6 py-2.5 rounded-lg transition-colors 
-                ${hasWritten ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#006989] text-white hover:bg-[#005C78]'}`}
+              onClick={handleOpenModal}
+              disabled={false}
+              className={`flex items-center px-6 py-2.5 rounded-lg transition-colors bg-[#006989] text-white hover:bg-[#005C78]}`}
             >
               <PenIcon className="w-5 h-5 mr-2" />
-              {hasWritten ? '이미 작성함' : '답변작성'}
+              {hasWritten ? '답변수정' : '답변작성'}
             </button>
           )}
         </div>
@@ -162,6 +197,7 @@ const WriteShortList = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {answers.map((answer) => (
             <PostItCard
+              key={answer.writeshortId}
               color={answer.color}
               nickname={answer.nickname}
               content={answer.content}
@@ -202,6 +238,7 @@ const WriteShortList = () => {
             setSelectedColor={setSelectedColor}
             onSubmit={handleSubmitAnswer}
             onClose={() => setShowModal(false)}
+            isEdit={hasWritten}
           />
         )}
 

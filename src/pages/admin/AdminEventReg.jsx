@@ -106,7 +106,7 @@ const AdminEventReg = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
+    <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 space-y-12">
         {/* breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600">

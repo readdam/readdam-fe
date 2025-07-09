@@ -23,7 +23,7 @@ export default function AdminReportFilter({
   onReset,
 }) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow mb-8">
+    <div className="bg-white p-6 rounded-lg border border-gray-200 mb-8">
       {/* 1행 */}
       <div className="flex items-center gap-4 mb-4">
         <span className="w-16 text-gray-700">검색어</span>
