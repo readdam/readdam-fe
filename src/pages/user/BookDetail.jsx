@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { StarIcon, HeartIcon, LockIcon } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { searchBook } from '@api/kakaoApi';
 import BookReviewSection from '@components/book/BookReviewSection';
@@ -8,6 +8,8 @@ import { checkBookLike, fetchLifeBookUsers, toggleBookLike } from '@api/book';
 import { useAxios } from '@hooks/useAxios';
 import { url } from '@config/config';
 import LibraryModal from '@components/book/LibraryModal';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../../atoms';
 
 export default function BookDetail() {
   const param = useParams();
@@ -36,6 +38,8 @@ export default function BookDetail() {
   const meetingRef = useRef(null);
   const lifeBookRef = useRef(null);
   const axios = useAxios();
+  const token = useAtomValue(tokenAtom);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log(data);
@@ -129,7 +133,13 @@ export default function BookDetail() {
 
             <button
               className="bg-[#006989] text-white w-24 h-10 rounded-lg text-xs font-bold cursor-pointer"
-              onClick={() => setIsModalOpen(!isModalOpen)}
+              onClick={() => {
+                if (!token?.access_token) {
+                  alert('로그인이 필요한 서비스입니다.');
+                  return navigate('/login');
+                }
+                setIsModalOpen(!isModalOpen);
+              }}
             >
               서재에 담기
             </button>
