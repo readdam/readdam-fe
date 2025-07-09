@@ -4,8 +4,9 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { searchBook } from '@api/kakaoApi';
 import BookReviewSection from '@components/book/BookReviewSection';
-import { checkBookLike, toggleBookLike } from '@api/book';
+import { checkBookLike, fetchLifeBookUsers, toggleBookLike } from '@api/book';
 import { useAxios } from '@hooks/useAxios';
+import { url } from '@config/config';
 
 export default function BookDetail() {
   const param = useParams();
@@ -21,6 +22,11 @@ export default function BookDetail() {
   });
 
   const isbnParam = decodeURIComponent(param.isbn); // 공백 포함된 ISBN 복원
+  const { data: lifeBookUsers, isLoading: isLifeBookLoading } = useQuery({
+    queryKey: ['lifeBookUsers', isbnParam],
+    queryFn: () => fetchLifeBookUsers({ isbn: isbnParam, axios }),
+    enabled: !!isbnParam,
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -211,18 +217,31 @@ export default function BookDetail() {
           <HeartIcon className="w-6 h-6  text-[#E88D67]" /> 이 책이 인생책인
           회원
         </h2>
-        <div className="flex gap-6">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="text-center">
-              <img
-                src="https://i.pravatar.cc/60?img=${i}"
-                alt="user"
-                className="w-16 h-16 rounded-full mx-auto"
-              />
-              <div className="text-xs mt-1">독서왕</div>
+
+        {isLifeBookLoading ? (
+          <div className="text-gray-400 text-sm">불러오는 중...</div>
+        ) : lifeBookUsers?.length > 0 ? (
+          <div className="overflow-x-auto">
+            <div className="flex gap-6 flex-nowrap min-w-max">
+              {lifeBookUsers.map((user, i) => (
+                <div key={i} className="text-center shrink-0">
+                  <img
+                    src={`${url}/image?filename=${
+                      user.profileImg?.trim() || 'defaultProfile.jpg'
+                    }`}
+                    alt={user.nickname}
+                    className="w-16 h-16 rounded-full mx-auto object-cover"
+                  />
+                  <div className="text-xs mt-1">{user.nickname}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500">
+            아직 인생책으로 등록한 유저가 없어요.
+          </div>
+        )}
       </div>
     </div>
   );
