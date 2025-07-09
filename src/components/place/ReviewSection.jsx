@@ -192,24 +192,25 @@ const ReviewSection = () => {
               required
             />
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={newReview.isHide}
-              onChange={(e) => {
-                if (!handleCheckLogin()) return;
-                setNewReview({ ...newReview, isHide: e.target.checked });
-              }}
-            />
-            비공개
-          </label>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] disabled:opacity-50"
-          >
-            {isSubmitting ? '등록 중...' : '리뷰 작성'}
-          </button>
+          <div className="flex justify-end gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={newReview.isHide}
+                onChange={(e) => {
+                  if (!handleCheckLogin()) return;
+                  setNewReview({ ...newReview, isHide: e.target.checked });
+                }}
+              />
+              비공개
+            </label>
+            <button
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] disabled:opacity-50"
+            >
+              {isSubmitting ? '등록 중...' : '작성하기'}
+            </button>
+          </div>
         </form>
       }
 
@@ -247,29 +248,31 @@ const ReviewSection = () => {
                   />
 
                   {/* 수정모드: 비공개 */}
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={editIsHide}
-                      onChange={(e) => setEditIsHide(e.target.checked)}
-                    />
-                    비공개
-                  </label>
+                  <div className="flex justify-end gap-4">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={editIsHide}
+                        onChange={(e) => setEditIsHide(e.target.checked)}
+                      />
+                      비공개
+                    </label>
 
-                  {/* 저장/취소 */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleUpdateReview}
-                      className="px-3 py-1 bg-[#006989] text-white rounded-md text-sm hover:bg-[#005C78]"
-                    >
-                      저장
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-sm hover:bg-gray-300"
-                    >
-                      취소
-                    </button>
+                    {/* 저장/취소 */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleUpdateReview}
+                        className="px-3 py-1 bg-[#006989] text-white rounded-md text-sm hover:bg-[#005C78]"
+                      >
+                        저장
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-sm hover:bg-gray-300"
+                      >
+                        취소
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
