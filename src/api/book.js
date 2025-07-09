@@ -57,3 +57,11 @@ export const deleteReview = async ({ reviewId, axios }) => {
   const { data } = await axios.delete(`/book/reviews/${reviewId}`);
   return data;
 };
+
+// 좋아요 상태 조회
+export const checkBookLike = ({ isbn, axios }) =>
+  axios.get(`/book-like/check?bookIsbn=${isbn}`);
+
+// 좋아요 토글
+export const toggleBookLike = async ({ isbn, axios }) =>
+  await axios.post(`/book-like?bookIsbn=${isbn}`);

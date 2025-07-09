@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAxios } from '../../hooks/useAxios';
 import { SearchIcon,PenIcon } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAtom } from 'jotai';
+import { useAtomValue  } from 'jotai';
 import { tokenAtom } from '../../atoms';
 import { url } from '../../config/config';
 import WriteCard from '@components/write/WriteCard';
@@ -10,7 +10,7 @@ import WriteCard from '@components/write/WriteCard';
 const WriteList = () => {
   const axios = useAxios();
   const navigate = useNavigate();
-  const [token] = useAtom(tokenAtom);
+  const token = useAtomValue(tokenAtom);
   const [searchParams, setSearchParams] = useSearchParams();
   const [writeList, setWriteList] = useState([]);
   const [hasNext, setHasNext] = useState(false);
