@@ -20,6 +20,7 @@ const OAuthRedirect = () => {
     const handleOAuth = async () => {
       const urlObj = new URL(window.location.href);
       const access_token = urlObj.searchParams.get('access_token');
+      const refresh_token = urlObj.searchParams.get("refresh_token");  // ← 추가
 
       if (!access_token) {
         alert("access_token이 없습니다.");
@@ -28,7 +29,7 @@ const OAuthRedirect = () => {
 
       const tokenObj = {
         access_token: `Bearer ${access_token}`,
-        refresh_token: '',
+        refresh_token,
       };
       setToken(tokenObj);
       sessionStorage.setItem("token", JSON.stringify(tokenObj));
