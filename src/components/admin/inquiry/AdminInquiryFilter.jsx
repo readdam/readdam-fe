@@ -29,7 +29,7 @@ export default function AdminInquiryFilter({
     ]
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow mb-8">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 rounded mb-8">
             {/* 1행. 검색 필드 */}
             <div className="flex items-center gap-4 mb-4">
                 <select

@@ -140,107 +140,120 @@ export default function AdminPointStats() {
     return <div className="p-8 text-center text-gray-500">로딩 중…</div>
   }
 
-  return (
-    <div className="p-8 space-y-8">
-      {/* 1) 요약 카드 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          ['오늘',   summary.todayAmount,  summary.todayCount,  'text-gray-800'],
-          ['이번주', summary.weekAmount,   summary.weekCount,   'text-green-600'],
-          ['이번달', summary.monthAmount,  summary.monthCount,  'text-blue-600'],
-          ['올해',   summary.yearAmount,   summary.yearCount,   'text-purple-600'],
-        ].map(([label, amt, cnt, color], i) => (
-          <div key={i} className="bg-gray-50 p-6 rounded-xl shadow-sm flex flex-col">
-            <span className="text-sm text-gray-500">{label}</span>
-            <span className={`text-2xl font-extrabold ${color}`}>
-              {amt.toLocaleString()}원
-            </span>
-            <span className="text-sm text-gray-400 mt-auto">{cnt}건</span>
-          </div>
-        ))}
+return (
+     <div className="bg-gray-50 min-h-screen p-6">
+    {/* 1) 브레드크럼 + 페이지 제목 */}
+    <div className="max-w-5xl mx-auto px-5 mb-4">
+      <div className="flex items-center text-sm text-gray-600 mb-2">
+        <span>관리자</span>
+        <span className="mx-2">›</span>
+        <span className="text-[#006989]">포인트 통계</span>
       </div>
+      <h2 className="text-2xl font-bold">포인트 통계</h2>
+    </div>
 
-      {/* 2) 필터 UI */}
-      <div className="bg-gray-50 p-6 rounded-xl shadow-sm flex flex-wrap items-end gap-4">
-        {/* 빠른 기간 */}
-        <div className="flex space-x-2">
-          {[1,3,6,12].map(m => (
-            <button
-              key={m}
-              onClick={() => applyQuick(m)}
-              className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
-            >
-              {m}개월
-            </button>
+      {/* 2) 본문 컨테이너 (요약 카드, 필터, 차트) */}
+      <div className="max-w-5xl mx-auto px-4 space-y-8">
+        {/* 2-1) 요약 카드 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            ['오늘',   summary.todayAmount,  summary.todayCount,  'text-gray-800'],
+            ['이번주', summary.weekAmount,   summary.weekCount,   'text-green-600'],
+            ['이번달', summary.monthAmount,  summary.monthCount,  'text-blue-600'],
+            ['올해',   summary.yearAmount,   summary.yearCount,   'text-purple-600'],
+          ].map(([label, amt, cnt, color], i) => (
+            <div key={i} className="bg-white p-6 rounded-xl shadow-sm flex flex-col">
+              <span className="text-sm text-gray-500">{label}</span>
+              <span className={`text-2xl font-extrabold ${color}`}>
+                {amt.toLocaleString()}원
+              </span>
+              <span className="text-sm text-gray-400 mt-auto">{cnt}건</span>
+            </div>
           ))}
         </div>
-        {/* 날짜 선택 */}
-        <div className="flex items-center space-x-2">
-          <input
-            type="date"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            className="border px-3 py-2 rounded"
-          />
-          <span>~</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={e => setEndDate(e.target.value)}
-            className="border px-3 py-2 rounded"
-          />
-        </div>
-        {/* 일별/월별 */}
-        <select
-          value={period}
-          onChange={e => setPeriod(e.target.value)}
-          className="border px-3 py-2 rounded"
-        >
-          <option value="day">일별</option>
-          <option value="month">월별</option>
-        </select>
-        {/* 조회 버튼 */}
-        <button
-          onClick={fetchStats}
-          className="ml-auto bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600"
-        >
-          조회
-        </button>
-      </div>
 
-      {/* 3) 차트 */}
-      <div className="bg-gray-50 p-8 rounded-xl shadow-sm h-[500px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart
-            data={data}
-            margin={{ top:20, right:50, left:0, bottom:5 }}
-            barCategoryGap="50%"
-            barGap={8}
+        {/* 2-2) 필터 UI */}
+        <div className="bg-white p-6 rounded-xl shadow-sm flex flex-wrap items-end gap-4">
+          {/* 빠른 기간 버튼 */}
+          <div className="flex space-x-2">
+            {[1,3,6,12].map(m => (
+              <button
+                key={m}
+                onClick={() => applyQuick(m)}
+                className="px-4 py-2 border border-[#006989] text-[#006989] rounded hover:bg-[#006989] hover:text-white"
+              >
+                {m}개월
+              </button>
+            ))}
+          </div>
+          {/* 날짜 선택 */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="date"
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+              className="border px-3 py-2 rounded"
+            />
+            <span>~</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+              className="border px-3 py-2 rounded"
+            />
+          </div>
+          {/* 일별/월별 선택 */}
+          <select
+            value={period}
+            onChange={e => setPeriod(e.target.value)}
+            className="border px-3 py-2 rounded"
           >
-            <CartesianGrid strokeDasharray="4 2" stroke="#e5e7eb" />
-            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-            <YAxis
-              yAxisId="amt"
-              tickFormatter={v => v.toLocaleString()}
-              axisLine={false}
-              tickLine={false}
-              width={60}
-            />
-            <YAxis
-              yAxisId="cnt"
-              orientation="right"
-              axisLine={false}
-              tickLine={false}
-              width={30}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend verticalAlign="bottom" iconSize={8} wrapperStyle={{ paddingTop:16 }}/>
-            <Bar yAxisId="amt" dataKey="totalAmount"   name="총 금액"   fill="#4ade80" radius={[4,4,0,0]} barSize={16}/>
-            <Bar yAxisId="amt" dataKey="netAmount"     name="실 매출"   fill="#60a5fa" radius={[4,4,0,0]} barSize={16}/>
-            <Bar yAxisId="amt" dataKey="refundAmount"  name="환불 금액" fill="#f87171"radius={[4,4,0,0]} barSize={16}/>
-          </ComposedChart>
-        </ResponsiveContainer>
+            <option value="day">일별</option>
+            <option value="month">월별</option>
+          </select>
+          {/* 조회 버튼 */}
+          <button
+            onClick={fetchStats}
+            className="ml-auto bg-[#006989] text-white px-6 py-2 rounded-lg hover:bg-[#005f6f]"
+          >
+            조회
+          </button>
+        </div>
+
+        {/* 2-3) 차트 */}
+        <div className="bg-white p-8 rounded-xl shadow-sm h-[500px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart
+              data={data}
+              margin={{ top:20, right:50, left:0, bottom:5 }}
+              barCategoryGap="50%"
+              barGap={8}
+            >
+              <CartesianGrid strokeDasharray="4 2" stroke="#e5e7eb" />
+              <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+              <YAxis
+                yAxisId="amt"
+                tickFormatter={v => v.toLocaleString()}
+                axisLine={false}
+                tickLine={false}
+                width={60}
+              />
+              <YAxis
+                yAxisId="cnt"
+                orientation="right"
+                axisLine={false}
+                tickLine={false}
+                width={30}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend verticalAlign="bottom" iconSize={8} wrapperStyle={{ paddingTop:16 }}/>
+              <Bar yAxisId="amt" dataKey="totalAmount"   name="총 금액"   fill="#4ade80" radius={[4,4,0,0]} barSize={16}/>
+              <Bar yAxisId="amt" dataKey="netAmount"     name="실 매출"   fill="#60a5fa" radius={[4,4,0,0]} barSize={16}/>
+              <Bar yAxisId="amt" dataKey="refundAmount"  name="환불 금액" fill="#f87171" radius={[4,4,0,0]} barSize={16}/>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
-  )
+  ) 
 }

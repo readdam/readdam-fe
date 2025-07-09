@@ -1,3 +1,4 @@
+// src/pages/admin/AdminEventJoinedList.jsx
 import React, { useState, useEffect } from "react";
 import { HomeIcon, SearchIcon } from "lucide-react";
 import { useAxios } from "../../hooks/useAxios";
@@ -45,24 +46,22 @@ const AdminEventJoinedList = () => {
       .then(res => {
         setParticipations(res.data.content);
         setTotalPages(res.data.pageInfo.totalPages);
+        setPage(pageNum);
       })
       .catch(console.error);
   };
 
   const handleSearch = () => {
-    setPage(1);
     fetchData(selectedYM, sortBy, 1);
   };
 
   const handleSort = key => {
     setSortBy(key);
-    setPage(1);
     fetchData(selectedYM, key, 1);
   };
 
   const goTo = p => {
     if (p < 1 || p > totalPages) return;
-    setPage(p);
     fetchData(selectedYM, sortBy, p);
   };
 
@@ -99,7 +98,9 @@ const AdminEventJoinedList = () => {
                 type="button"
                 onClick={() => handleSort("date")}
                 className={`px-3 py-1 rounded ${
-                  sortBy === "date" ? "bg-[#006989] text-white" : "border border-gray-300"
+                  sortBy === "date"
+                    ? "bg-[#006989] text-white"
+                    : "border border-gray-300"
                 }`}
               >
                 일자순
@@ -108,7 +109,9 @@ const AdminEventJoinedList = () => {
                 type="button"
                 onClick={() => handleSort("likes")}
                 className={`px-3 py-1 rounded ${
-                  sortBy === "likes" ? "bg-[#006989] text-white" : "border border-gray-300"
+                  sortBy === "likes"
+                    ? "bg-[#006989] text-white"
+                    : "border border-gray-300"
                 }`}
               >
                 좋아요순
@@ -127,7 +130,7 @@ const AdminEventJoinedList = () => {
           </div>
 
           {/* 테이블 */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-bold">참여 내역</h3>
               <span className="text-sm text-gray-600">총 {participations.length}건</span>
@@ -136,21 +139,35 @@ const AdminEventJoinedList = () => {
               <table className="w-full">
                 <thead className="bg-[#F3F7EC]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">사용자명</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">참여 내용</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">등록일</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">좋아요</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      사용자명
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      참여 내용
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      등록일
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      좋아요
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {participations.map(item => (
                     <tr key={item.writeshortId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.username}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-md truncate">{item.content}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.username}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900 max-w-md truncate">
+                        {item.content}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {item.regDate.split("T")[0]}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.likes}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.likes}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -163,7 +180,7 @@ const AdminEventJoinedList = () => {
             <button
               onClick={() => goTo(page - 1)}
               disabled={page === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100"
             >
               이전
             </button>
@@ -171,7 +188,9 @@ const AdminEventJoinedList = () => {
               <button
                 key={p}
                 onClick={() => goTo(p)}
-                className={`px-3 py-1 border rounded ${p === page ? "bg-[#006989] text-white" : ""}`}
+                className={`px-3 py-1 border rounded ${
+                  p === page ? "bg-[#006989] text-white" : "hover:bg-gray-100"
+                }`}
               >
                 {p}
               </button>
@@ -179,7 +198,7 @@ const AdminEventJoinedList = () => {
             <button
               onClick={() => goTo(page + 1)}
               disabled={page === totalPages}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100"
             >
               다음
             </button>

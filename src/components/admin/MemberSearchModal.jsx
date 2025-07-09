@@ -50,7 +50,7 @@ export default function MemberSearchModal({
     if (!visible) return null
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
                 {/* 헤더 */}
                 <div className="flex justify-between items-center mb-4">
@@ -78,7 +78,8 @@ export default function MemberSearchModal({
                         {list.map(user => (
                             <li
                                 key={user.username}
-                                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg"
+                                onClick={() => toggle(user.username)}
+                                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
                             >
                                 <div className="flex items-center gap-2">
                                     <UserIcon className="w-5 h-5 text-gray-500" />
@@ -89,6 +90,7 @@ export default function MemberSearchModal({
                                     type="checkbox"
                                     checked={checked.includes(user.username)}
                                     onChange={() => toggle(user.username)}
+                                    onClick={e => e.stopPropagation()}
                                     className="form-checkbox text-[#006989] focus:ring-[#006989]"
                                 />
                             </li>
