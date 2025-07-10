@@ -477,9 +477,9 @@ const ClassCreate = () => {
                 <input
                   type="text"
                   placeholder="장소 이름"
-                  // className={`w-full px-4 py-2 border border-gray-300 rounded-lg ${
-                  //   form.venue === "읽담" ? "bg-gray-100" : ""
-                  // }`}
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg ${
+                    form.venue === "읽담" ? "bg-gray-100" : ""
+                  }`}
                   disabled={form.venue === "읽담"}
                   value={form.venueName}
                   onChange={(e) =>
@@ -493,9 +493,9 @@ const ClassCreate = () => {
                   <input
                     type="text"
                     placeholder="주소(외부 장소의 경우 검색버튼을 눌러주세요)"
-                    // className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg ${
-                    //   form.venue === "읽담" ? "bg-gray-100" : ""
-                    // }`}
+                    className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg ${
+                      form.venue === "읽담" ? "bg-gray-100" : ""
+                    }`}
                     disabled={form.venue === "읽담"}
                     value={form.venueAddress}
                     readOnly
