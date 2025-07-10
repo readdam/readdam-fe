@@ -23,9 +23,11 @@ const ClassCreate = () => {
     minParticipants: "",
     maxParticipants: "",
     sessionCount: 3,
-    venue: "읽담",
+    venue: "외부",
     venueName: "",
     venueAddress: "",
+    lat: 0,
+    lag: 0,
     dates: [],
     sessionDetails: Array(3).fill({
       description: "",
@@ -41,6 +43,8 @@ const ClassCreate = () => {
     setForm((prev) => ({
       ...prev,
       venueAddress: place.address_name,
+      lat: place.y,
+      log: place.x,
     }));
   };
 
@@ -127,6 +131,8 @@ const ClassCreate = () => {
     submitData.append("classIntro", form.description);
     submitData.append("leaderIntro", form.leaderDescription);
     submitData.append("leaderUsername", user.username);
+    submitData.append("isReaddam", form.venue === "읽담" ? "0" : "1");
+
 
     //태그 파싱
     const tagArray = form.tags.map((tag) => tag.trim()).filter((tag) => tag); // 공백 제거 + 빈 문자열 제거
