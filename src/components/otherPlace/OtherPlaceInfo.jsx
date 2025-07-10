@@ -12,6 +12,7 @@ import { useAtomValue } from 'jotai';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createAxios, url } from '@config/config';
 import { userAtom } from '../../atoms';
+import ImageSlider from '@components/ImageSlider';
 
 const OtherPlaceInfo = ({ place }) => {
   const { id } = useParams();
@@ -57,19 +58,7 @@ const OtherPlaceInfo = ({ place }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       {/* 큰 헤더 이미지 */}
-      <div className="relative h-72 bg-gray-200">
-        {place.images && place.images.length > 0 ? (
-          <img
-            src={`${url}/image?filename=${place.images[0]}`}
-            alt={place.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-            <p className="text-gray-400">이미지가 없습니다</p>
-          </div>
-        )}
-      </div>
+      <ImageSlider place={place} />
       <div className="p-6 space-y-6">
         {/* 장소명 + 태그 + 좋아요 */}
         <div className="flex justify-between items-start">

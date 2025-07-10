@@ -12,6 +12,7 @@ import {
 } from '@api/place';
 import { createAxios } from '@config/config';
 import { useParams } from 'react-router';
+import ImageSlider from '@components/ImageSlider';
 
 function formatTimeRanges(times) {
   if (!times || times.length === 0) return '';
@@ -75,19 +76,7 @@ const PlaceInfo = ({ place }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       {/* 이미지 슬라이더 */}
-      <div className="relative h-80 bg-gray-200">
-        {place.images && place.images.length > 0 ? (
-          <img
-            src={`${url}/image?filename=${place.images[0]}`}
-            alt={place.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-            <p className="text-gray-400">이미지가 없습니다</p>
-          </div>
-        )}
-      </div>
+      <ImageSlider place={place} />
       {/* 장소 정보 */}
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
