@@ -431,28 +431,38 @@ const ClassCreate = () => {
               <div className="flex gap-4 mb-4">
                 <button
                   type="button"
-                  onClick={async () => {
-                    try{
-                      const res = await axios.get(`${url}/my/reservations`);
-                      const { venueName, venueAddress, lat, log, dates} = res.data;
-                      setForm((prev) => ({
-                      ...prev,
-                      venue: "읽담",
-                      venueName,
-                      venueAddress,
-                      lat,
-                      log,
-                      dates,
-                    }))
-                    }catch(err) {
-                      console.error("읽담 예약 정보 불러오기 실패: ", err);
-                    }
-                  }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     form.venue === "읽담"
                       ? "bg-[#006989] text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
+                  onClick={async () => {
+                    try {
+                      const res = await axios.get(`${url}/my/reservations`);
+                      const { venueName, venueAddress, lat, log, dates } = res.data;
+                      // 날짜 수에 맞춰 sessionCount와 sessionDetails 동기화
+                      const count = dates.length;
+
+                      setForm((prev) => ({
+                        ...prev,
+                        venue: "읽담",
+                        venueName,
+                        venueAddress,
+                        lat,
+                        log,
+                        sessionCount: count,
+                        sessionDetails: Array(count).fill({ description: "" }),
+                        dates: [...dates],
+                        // 아래 항목들은 유지됨: title, tags, leaderDescription 등
+                      }));
+                    } catch (err) {
+                      if (err.response?.status === 404) {
+                        alert("읽담 예약 정보가 없습니다. 먼저 읽담 공간을 예약해 주세요.");
+                      } else {
+                        console.error("읽담 예약 정보 불러오기 실패", err);
+                      }
+                    }
+                  }}
                 >
                   읽담
                 </button>
