@@ -431,12 +431,23 @@ const ClassCreate = () => {
               <div className="flex gap-4 mb-4">
                 <button
                   type="button"
-                  onClick={() =>
-                    setForm({
-                      ...form,
+                  onClick={async () => {
+                    try{
+                      const res = await axios.get(`${url}/my/reservations`);
+                      const { venueName, venueAddress, lat, log, dates} = res.data;
+                      setForm((prev) => ({
+                      ...prev,
                       venue: "읽담",
-                    })
-                  }
+                      venueName,
+                      venueAddress,
+                      lat,
+                      log,
+                      dates,
+                    }))
+                    }catch(err) {
+                      console.error("읽담 예약 정보 불러오기 실패: ", err);
+                    }
+                  }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     form.venue === "읽담"
                       ? "bg-[#006989] text-white"
@@ -466,9 +477,9 @@ const ClassCreate = () => {
                 <input
                   type="text"
                   placeholder="장소 이름"
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg ${
-                    form.venue === "읽담" ? "bg-gray-100" : ""
-                  }`}
+                  // className={`w-full px-4 py-2 border border-gray-300 rounded-lg ${
+                  //   form.venue === "읽담" ? "bg-gray-100" : ""
+                  // }`}
                   disabled={form.venue === "읽담"}
                   value={form.venueName}
                   onChange={(e) =>
@@ -481,19 +492,13 @@ const ClassCreate = () => {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="검색 버튼을 눌러 주소 선택"
-                    className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg ${
-                      form.venue === "읽담" ? "bg-gray-100" : ""
-                    }`}
+                    placeholder="주소(외부 장소의 경우 검색버튼을 눌러주세요)"
+                    // className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg ${
+                    //   form.venue === "읽담" ? "bg-gray-100" : ""
+                    // }`}
                     disabled={form.venue === "읽담"}
                     value={form.venueAddress}
                     readOnly
-                    // onChange={(e) =>
-                    //   setForm({
-                    //     ...form,
-                    //     venueAddress: e.target.value,
-                    //   })
-                    // }
                   />
                   <button
                     type="button"
@@ -531,9 +536,10 @@ const ClassCreate = () => {
                       </span>
                       <input
                         type="date"
-                        disabled={index > 0 && !form.dates[index - 1]}
+                        disabled={form.venue === "읽담" || (index > 0 && !form.dates[index - 1])}
                         className="px-4 py-2 border border-gray-300 rounded-lg"
                         value={form.dates[index] || ""}
+                        readOnly={form.venue === "읽담"}
                         min={minDate}
                         onChange={(e) => {
                           const newDates = [...form.dates];
