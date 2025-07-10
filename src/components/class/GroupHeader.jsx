@@ -10,10 +10,11 @@ import {
 import { url } from "../../config/config";
 import { useAtomValue } from "jotai";
 import { userAtom, tokenAtom } from "../../atoms";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 import { useNavigate } from "react-router-dom";
 
 const GroupHeader = ({ group }) => {
+  const axios = useAxios();
   const user = useAtomValue(userAtom);
   const token = useAtomValue(tokenAtom);
 
@@ -134,7 +135,8 @@ const GroupHeader = ({ group }) => {
             </div>
             <div className="flex items-center text-gray-600">
               <MapPinIcon className="w-5 h-5 mr-2" />
-              <span>{group.round1PlaceName}</span>
+              <p className="text-gray-700 mb-1">{group.round1PlaceName}</p>&nbsp;&nbsp;
+              <p className="text-gray-400 text-sm">{group.round1PlaceLoc}</p>
             </div>
             {/* <div className="flex items-center text-gray-600">
               <ClockIcon className="w-5 h-5 mr-2" />
