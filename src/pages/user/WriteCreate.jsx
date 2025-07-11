@@ -75,14 +75,55 @@ const WriteCreate = () => {
       });
   };
 
-  const SpellCheck = () => {
-    setIsSpellchecking(true)
-    // 맞춤법 검사 로직 구현 필요
-    setTimeout(() => {
-      setIsSpellchecking(false)
-      alert('맞춤법 검사가 완료되었습니다.')
-    }, 1500)
-  }
+  const SpellCheck = async () => {
+      if (!formData.content.trim()) {
+      alert("본문을 작성해주세요.");
+      return;
+    }
+
+    // 너무 긴 글 검사 방어
+    if (formData.content.length > 5000) {
+      alert("본문이 너무 깁니다. 5000자 이하로 나누어 검사해주세요.");
+      return;
+    }
+
+     console.log("[SpellCheck] 요청 보낼 text:", formData.content);
+     console.log("[SpellCheck] URI 인코딩 후:", encodeURIComponent(formData.content));
+
+
+    setIsSpellchecking(true);
+
+    try {
+      const res = await axios.post(`${url}/write-spellcheck`, {
+        text: formData.content,
+      });
+
+      console.log("[SpellCheck] API 응답:", res.data);
+
+      if (res.data?.errorMessage) {
+        alert(res.data.errorMessage);
+      } else if (res.data?.corrections?.length === 0) {
+        alert("맞춤법 오류가 없습니다.");
+      } else {
+        const message = res.data.corrections
+          .map((c) =>
+            `${c.orgStr} → ${c.candWord} (${c.errorType})\n→ ${c.help}`
+          )
+          .join("\n\n");
+        alert("맞춤법 검사 결과:\n\n" + message);
+      }
+    } catch (error) {
+      console.error("맞춤법 검사 중 오류", error);
+        if (error.response) {
+        console.error("서버 응답 에러 데이터:", error.response.data);
+      }
+      alert("맞춤법 검사 중 오류가 발생했습니다.");
+    } finally {
+      setIsSpellchecking(false);
+    }
+  };
+
+  
     const readURL = (input) => {
       const file = input.target.files[0]; 
       const reader = new FileReader();
@@ -339,7 +380,7 @@ const WriteCreate = () => {
                 className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-2"
               >
                 <CheckCircleIcon className="w-5 h-5" />
-                맞춤법 검사
+                  {isSpellchecking ? "검사 중..." : "맞춤법 검사"}
               </button>
             </div>
             <div className="flex items-center gap-4">

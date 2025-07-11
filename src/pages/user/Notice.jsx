@@ -82,7 +82,7 @@ const Notice = () => {
   const notices = [...fixedNotices, ...normalNotices];
 
   return (
-    <div className="w-full bg-gray-50 py-8">
+    <div className="w-full bg-[#F9F9F7] py-8">
       <div className="w-[80%] mx-auto px-4 max-w-5xl">
         {/* 상단 타이틀 */}
         <div className="text-center mb-8">
