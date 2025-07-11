@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAtom } from "jotai";
 import { tokenAtom, userAtom } from "../../atoms";
 import { useAxios } from "@hooks/useAxios";
@@ -393,6 +393,8 @@ const ClassCreate = () => {
                       ))}
                   </select>
                 </div>
+
+                
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -438,11 +440,14 @@ const ClassCreate = () => {
                   }`}
                   onClick={async () => {
                     try {
-                      const res = await axios.get(`${url}/my/reservations`);
+                      const res = await axios.get(`${url}/my/placeReservationInfo`,{
+                        headers: {
+                          Authorization: token.access_token,
+                        },
+                      });
                       const { venueName, venueAddress, lat, log, dates } = res.data;
                       // 날짜 수에 맞춰 sessionCount와 sessionDetails 동기화
                       const count = dates.length;
-
                       setForm((prev) => ({
                         ...prev,
                         venue: "읽담",
