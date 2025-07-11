@@ -1,4 +1,5 @@
 // src/config/config.jsx
+// 맞춤법 api 딜레이 고려해서 전역 timeout 5000->15000으로 조정함
 import axios from "axios";
 import { isTokenExpiringSoon } from "../lib/jwtUtils";
 
@@ -8,7 +9,7 @@ export const reactUrl = "http://localhost:5173";
 export const createAxios = (_unused, setToken) => {
   const instance = axios.create({
     baseURL: url,
-    timeout: 5000,
+    timeout: 15000,
     withCredentials: true,
   });
 
