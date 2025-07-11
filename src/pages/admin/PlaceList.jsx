@@ -144,7 +144,7 @@ export default function PlaceList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {places.map((place) => (
+                {places?.map((place) => (
                   <tr key={place.placeId} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-start gap-4">
@@ -207,7 +207,7 @@ export default function PlaceList() {
                     </td>
                   </tr>
                 ))}
-                {places.length === 0 && (
+                {places?.length === 0 && (
                   <tr>
                     <td colSpan={7} className="text-center py-4 text-gray-400">
                       등록된 장소가 없습니다
