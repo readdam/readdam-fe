@@ -7,6 +7,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getReviews, writeReview, updateReview, deleteReview } from '@api/book';
 import { createAxios } from '@config/config';
 import { useAxios } from '@hooks/useAxios';
+import singoIcon from '@assets/singo.png';
+import { useReportModal } from '@hooks/useReportModal';
+import { REPORT_CATEGORY } from '@constants/reportCategory';
 
 const BookReviewSection = ({ isbn }) => {
   const user = useAtomValue(userAtom);
@@ -39,6 +42,13 @@ const BookReviewSection = ({ isbn }) => {
         axios: createAxios(),
       }),
     enabled: !!isbn,
+  });
+
+  const { openReportModal, ReportModalComponent } = useReportModal({
+    defaultCategory: REPORT_CATEGORY.BOOK_REVIEW, // 책 리뷰용
+    onSuccess: () => {
+      // 신고 성공 후 처리 (선택사항)
+    },
   });
 
   const handleAddReview = async () => {
@@ -243,21 +253,39 @@ const BookReviewSection = ({ isbn }) => {
                           </span>
                         </div>
                       </div>
-                      {user?.username === r.username && (
+                      {user?.username === r.username ? (
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleEdit(r)}
-                            className="text-gray-500 hover:text-[#006989]"
+                            className="text-gray-500 hover:text-[#006989] cursor-pointer"
                           >
                             <EditIcon className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(r.bookReviewId)}
-                            className="text-gray-500 hover:text-red-500"
+                            className="text-gray-500 hover:text-red-500 cursor-pointer"
                           >
                             <TrashIcon className="w-4 h-4" />
                           </button>
                         </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() =>
+                              openReportModal({
+                                id: r.bookReviewId,
+                                username: r.username,
+                              })
+                            }
+                            className="cursor-pointer"
+                          >
+                            <img
+                              src={singoIcon}
+                              alt="신고"
+                              className="w-6 h-6"
+                            />
+                          </button>
+                        </>
                       )}
                     </div>
                     <p className="text-gray-700">{r.comment}</p>
@@ -267,6 +295,7 @@ const BookReviewSection = ({ isbn }) => {
             </div>
           ))
         )}
+        {ReportModalComponent}
       </div>
 
       {/* 페이징 */}

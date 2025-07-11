@@ -9,10 +9,13 @@ import {
   getOtherPlaceReviews,
   updateOtherPlaceReview,
   writeOtherPlaceReview,
-} from '@api/otherplace';
+} from '@api/otherPlace';
 import { useParams } from 'react-router';
 import { createAxios } from '@config/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useReportModal } from '@hooks/useReportModal';
+import { REPORT_CATEGORY } from '@constants/reportCategory';
+import singoIcon from '@assets/singo.png';
 
 const OtherPlaceReviewSection = () => {
   const [newReview, setNewReview] = useState({
@@ -43,6 +46,13 @@ const OtherPlaceReviewSection = () => {
         axios: createAxios(),
       }),
     enabled: !!id,
+  });
+
+  const { openReportModal, ReportModalComponent } = useReportModal({
+    defaultCategory: REPORT_CATEGORY.OTHER_PLACE_REVIEW,
+    onSuccess: () => {
+      alert('신고가 접수되었습니다.');
+    },
   });
 
   // 로그인 체크
@@ -259,7 +269,7 @@ const OtherPlaceReviewSection = () => {
                         </span>
                       </p>
                     </div>
-                    {user.username === review.username && (
+                    {user.username === review.username ? (
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEdit(review)}
@@ -274,6 +284,20 @@ const OtherPlaceReviewSection = () => {
                           className="text-gray-500 hover:text-red-500"
                         >
                           <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <button
+                          onClick={() =>
+                            openReportModal({
+                              id: review.otherPlaceReviewId,
+                              username: review.username,
+                            })
+                          }
+                          className="cursor-pointer"
+                        >
+                          <img src={singoIcon} alt="신고" className="w-6 h-6" />
                         </button>
                       </div>
                     )}
@@ -320,6 +344,7 @@ const OtherPlaceReviewSection = () => {
           </button>
         </nav>
       </div>
+      {ReportModalComponent}
     </div>
   );
 };
