@@ -5,7 +5,7 @@ import { useAtomValue } from 'jotai';
 import { userAtom } from '../../atoms';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getReviews, writeReview, updateReview, deleteReview } from '@api/book';
-import { createAxios } from '@config/config';
+import { createAxios, url } from '@config/config';
 import { useAxios } from '@hooks/useAxios';
 import singoIcon from '@assets/singo.png';
 import { useReportModal } from '@hooks/useReportModal';
@@ -190,8 +190,8 @@ const BookReviewSection = ({ isbn }) => {
               <img
                 src={
                   r.profileImg
-                    ? `http://localhost:8080/image?filename=${r.profileImg}`
-                    : 'https://i.ibb.co/X8xG7VG/dog1.png'
+                    ? `${url}/image?filename=${r.profileImg}`
+                    : `${url}/image?filename=defaultProfile.jpg`
                 }
                 alt="avatar"
                 className="w-14 h-14 rounded-full object-cover"

@@ -269,7 +269,7 @@ const OtherPlaceReviewSection = () => {
                         </span>
                       </p>
                     </div>
-                    {user.username === review.username ? (
+                    {user?.username === review?.username ? (
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEdit(review)}

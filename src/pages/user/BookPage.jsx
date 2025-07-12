@@ -1,42 +1,42 @@
 // src/pages/BookPage.jsx
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   SearchIcon,
   BookOpenIcon,
   TrendingUpIcon,
   StarIcon,
   ChevronDownIcon,
-} from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useAxios } from '../../hooks/useAxios'
-import { useAtom } from 'jotai'
-import { tokenAtom } from '../../atoms'
-import LibraryModal from '../../components/book/LibraryModal'
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAxios } from '../../hooks/useAxios';
+import { useAtom } from 'jotai';
+import { tokenAtom } from '../../atoms';
+import LibraryModal from '../../components/book/LibraryModal';
 
 const BookPage = () => {
-  const axios    = useAxios()
-  const navigate = useNavigate()
-  const [token]  = useAtom(tokenAtom)
+  const axios = useAxios();
+  const navigate = useNavigate();
+  const [token] = useAtom(tokenAtom);
 
   // ── 검색 & 기간 드롭다운 ──────────────────
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState('');
   const periods = [
-    { label: '일간',   value: 'DAILY'   },
-    { label: '주간',   value: 'WEEKLY'  },
-    { label: '월간',   value: 'MONTHLY' },
-  ]
-  const [period, setPeriod] = useState(periods[0].value)
-  const selectedLabel = periods.find(p => p.value === period)?.label
+    { label: '일간', value: 'DAILY' },
+    { label: '주간', value: 'WEEKLY' },
+    { label: '월간', value: 'MONTHLY' },
+  ];
+  const [period, setPeriod] = useState(periods[0].value);
+  const selectedLabel = periods.find((p) => p.value === period)?.label;
 
   // ── 페이징 상태 ───────────────────────────
-  const [page, setPage] = useState(1)
-  const size            = 20
-  const [pageInfo, setPageInfo] = useState({ totalPages: 0, hasNext: false })
-  const [books, setBooks]       = useState([])
+  const [page, setPage] = useState(1);
+  const size = 20;
+  const [pageInfo, setPageInfo] = useState({ totalPages: 0, hasNext: false });
+  const [books, setBooks] = useState([]);
 
   // ── 서재 추가 모달 상태 ───────────────────
-  const [modalOpen, setModalOpen]     = useState(false)
-  const [currentBook, setCurrentBook] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentBook, setCurrentBook] = useState(null);
 
   // ── 도서 데이터 로드 ─────────────────────
   useEffect(() => {
@@ -44,40 +44,41 @@ const BookPage = () => {
       try {
         const { data } = await axios.get('/api/books/bestsellers', {
           params: { period, page, size },
-        })
-        setBooks(data.content || [])
-        setPageInfo(data.pageInfo || { totalPages: 0, hasNext: false })
+        });
+        setBooks(data.content || []);
+        setPageInfo(data.pageInfo || { totalPages: 0, hasNext: false });
       } catch {
-        setBooks([])
-        setPageInfo({ totalPages: 0, hasNext: false })
+        setBooks([]);
+        setPageInfo({ totalPages: 0, hasNext: false });
+        console.log('err');
       }
-    }
-    fetchBestsellers()
-  }, [period, page, size, axios])
+    };
+    fetchBestsellers();
+  }, [period, page, size, axios]);
 
   // ── “서재에 추가” 클릭 핸들러 ─────────────────
   const onAddClick = (e, book) => {
-    e.stopPropagation()
+    e.stopPropagation();
     if (!token?.access_token) {
-      alert('로그인이 필요한 서비스입니다.')
-      return navigate('/login')
+      alert('로그인이 필요한 서비스입니다.');
+      return navigate('/login');
     }
-    setCurrentBook(book)
-    setModalOpen(true)
-  }
+    setCurrentBook(book);
+    setModalOpen(true);
+  };
 
   // ── 그룹 페이징 계산 (1-5, 6-10, ...) ─────────────
-  const maxBtn    = 5
-  const total     = pageInfo.totalPages
-  const groupIdx  = Math.floor((page - 1) / maxBtn)
-  const startPage = groupIdx * maxBtn + 1
-  const endPage   = Math.min(startPage + maxBtn - 1, total)
-  const numbers   = Array.from(
+  const maxBtn = 5;
+  const total = pageInfo.totalPages;
+  const groupIdx = Math.floor((page - 1) / maxBtn);
+  const startPage = groupIdx * maxBtn + 1;
+  const endPage = Math.min(startPage + maxBtn - 1, total);
+  const numbers = Array.from(
     { length: endPage - startPage + 1 },
     (_, i) => startPage + i
-  )
-  const canPrevGroup = startPage > 1
-  const canNextGroup = endPage < total
+  );
+  const canPrevGroup = startPage > 1;
+  const canNextGroup = endPage < total;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F9F9F7]">
@@ -86,20 +87,18 @@ const BookPage = () => {
         <div className="rounded-lg">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-4 text-[#006989]">읽담 베스트셀러</h1>
-              <p>
-                독자들이 가장 많이 읽고 있는 인기 도서를 만나보세요
-              </p>
+              <h1 className="text-3xl font-bold mb-4 text-[#006989]">
+                읽담 베스트셀러
+              </h1>
+              <p>독자들이 가장 많이 읽고 있는 인기 도서를 만나보세요</p>
             </div>
             <form
               className="mt-4 md:mt-0"
-              onSubmit={e => {
-                e.preventDefault()
+              onSubmit={(e) => {
+                e.preventDefault();
                 navigate(
-                  `/bookSearch?query=${encodeURIComponent(
-                    searchQuery
-                  )}&page=1`
-                )
+                  `/bookSearch?query=${encodeURIComponent(searchQuery)}&page=1`
+                );
               }}
             >
               <div className="flex gap-2">
@@ -109,7 +108,7 @@ const BookPage = () => {
                     placeholder="도서, 작가, 출판사 검색하세요"
                     className="w-full md:w-80 px-4 py-2 pl-10 bg-white/20 border border-[#E88D67] border-opacity-30 rounded focus:outline-none"
                     value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
                 </div>
@@ -130,13 +129,13 @@ const BookPage = () => {
             <div className="relative">
               <select
                 value={period}
-                onChange={e => {
-                  setPeriod(e.target.value)
-                  setPage(1)
+                onChange={(e) => {
+                  setPeriod(e.target.value);
+                  setPage(1);
                 }}
                 className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-[#006989]"
               >
-                {periods.map(p => (
+                {periods.map((p) => (
                   <option key={p.value} value={p.value}>
                     {p.label}
                   </option>
@@ -154,7 +153,7 @@ const BookPage = () => {
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-            {books.map(book => (
+            {books.map((book) => (
               <div
                 key={book.id}
                 className="relative w-64 bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
@@ -192,10 +191,10 @@ const BookPage = () => {
 
                 {/* 서재 추가 버튼 (정보 바로 위, 우측 아래에서 한 칸 올림) */}
                 <button
-                  onClick={e => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    onAddClick(e, book)
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onAddClick(e, book);
                   }}
                   className="absolute bottom-3 right-3 bg-white w-10 h-10 flex items-center justify-center rounded-lg shadow hover:bg-gray-50"
                 >
@@ -216,7 +215,7 @@ const BookPage = () => {
             >
               이전
             </button>
-            {numbers.map(num => (
+            {numbers.map((num) => (
               <button
                 key={num}
                 onClick={() => setPage(num)}
@@ -247,7 +246,7 @@ const BookPage = () => {
         />
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default BookPage
+export default BookPage;

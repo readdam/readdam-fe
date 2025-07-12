@@ -68,239 +68,243 @@ export default function PlaceReservationList() {
   if (isLoading) return <div>로딩 중...</div>;
   if (error) return <div>에러 발생</div>;
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-6">예약 내역</h1>
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6 max-w-7xl mx-auto">
+        <h1 className="text-xl font-bold mb-6">예약 내역</h1>
 
-      {/* 필터 & 검색 */}
-      <form
-        className="flex items-center gap-2 mb-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSearch();
-        }}
-      >
-        {/* 날짜 달력 */}
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 text-sm"
-        />
-
-        <input
-          type="text"
-          placeholder="주소, 장소명, 방이름으로 검색하기"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
-        />
-        <button
-          onClick={handleSearch}
-          className="bg-[#006989] text-white text-sm px-4 py-2 rounded hover:bg-[#005470]"
+        {/* 필터 & 검색 */}
+        <form
+          className="flex items-center gap-2 mb-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSearch();
+          }}
         >
-          검색
-        </button>
-      </form>
-
-      {/* 상태 라디오 버튼 */}
-      <div className="flex items-center gap-4 mb-8 mt-2">
-        <label className="flex items-center gap-1 text-sm">
+          {/* 날짜 달력 */}
           <input
-            type="radio"
-            name="status"
-            value=""
-            checked={status === ''}
-            onChange={(e) => {
-              const newStatus = e.target.value;
-              setStatus(newStatus);
-              setQueryParams((prev) => ({
-                ...prev,
-                page: 1,
-                status: newStatus,
-              }));
-            }}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm"
           />
-          전체
-        </label>
-        <label className="flex items-center gap-1 text-sm">
+
           <input
-            type="radio"
-            name="status"
-            value="PENDING"
-            checked={status === 'PENDING'}
-            onChange={(e) => {
-              const newStatus = e.target.value;
-              setStatus(newStatus);
-              setQueryParams((prev) => ({
-                ...prev,
-                page: 1,
-                status: newStatus,
-              }));
-            }}
+            type="text"
+            placeholder="주소, 장소명, 방이름으로 검색하기"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
           />
-          예약중
-        </label>
-        <label className="flex items-center gap-1 text-sm">
-          <input
-            type="radio"
-            name="status"
-            value="CONFIRMED"
-            checked={status === 'CONFIRMED'}
-            onChange={(e) => {
-              const newStatus = e.target.value;
-              setStatus(newStatus);
-              setQueryParams((prev) => ({
-                ...prev,
-                page: 1,
-                status: newStatus,
-              }));
-            }}
-          />
-          예약확정
-        </label>
-        <label className="flex items-center gap-1 text-sm">
-          <input
-            type="radio"
-            name="status"
-            value="CANCELLED"
-            checked={status === 'CANCELLED'}
-            onChange={(e) => {
-              const newStatus = e.target.value;
-              setStatus(newStatus);
-              setQueryParams((prev) => ({
-                ...prev,
-                page: 1,
-                status: newStatus,
-              }));
-            }}
-          />
-          취소완료
-        </label>
-      </div>
+          <button
+            onClick={handleSearch}
+            className="bg-[#006989] text-white text-sm px-4 py-2 rounded hover:bg-[#005470]"
+          >
+            검색
+          </button>
+        </form>
 
-      {/* 테이블 */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              {[
-                '장소명',
-                '주소',
-                '방이름',
-                '일시',
-                '모임장',
-                '인원',
-                '상태',
-              ].map((head) => (
-                <th
-                  key={head}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500"
-                >
-                  {head}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-gray-200">
-            {data?.content?.map((r) => (
-              <tr key={`${r.reservationId}-${r.date}-${r.startTime}`}>
-                <td className="px-6 py-4 text-gray-500 text-sm">
-                  {r.placeName}
-                </td>
-                <td className="px-6 py-4 text-gray-500 text-sm">
-                  {r.placeAddress}
-                </td>
-                <td className="px-6 py-4 text-gray-500 text-sm">
-                  {r.roomName}
-                </td>
-                <td className="px-6 py-4 text-gray-500 text-sm">
-                  <div>
-                    {r.date} {r.time}
-                  </div>
-                  <div>
-                    {r.startTime.slice(0, 5)} - {r.endTime.slice(0, 5)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-gray-500 text-sm">
-                  {r.reserverName}
-                </td>
-                <td className="px-6 py-4 text-gray-500 text-sm">
-                  {r.participantCount}명
-                </td>
-                <td className="px-6 py-4 text-gray-500 text-sm">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      r.status === 'CANCELLED'
-                        ? 'bg-gray-200 text-gray-600'
-                        : r.status === 'CONFIRMED'
-                        ? 'bg-green-100 text-green-700'
-                        : r.status === 'PENDING'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {r.status === 'CANCELLED' && '취소완료'}
-                    {r.status === 'CONFIRMED' && '예약확정'}
-                    {r.status === 'PENDING' && '예약중'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* 페이지네이션 */}
-      {data?.pageInfo && (
-        <div className="flex justify-center mt-6">
-          <nav className="flex items-center gap-2">
-            {/* 이전 버튼 (항상 표시, 첫 페이지면 비활성화) */}
-            <button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-              className={`border px-3 py-1 rounded ${
-                page === 1
-                  ? 'bg-white text-gray-300 border-gray-200 cursor-not-allowed'
-                  : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
-              }`}
-            >
-              이전
-            </button>
-
-            {/* 페이지 번호 버튼 */}
-            {Array.from({ length: data.pageInfo.totalPages }).map((_, idx) => {
-              const pageNumber = idx + 1;
-              return (
-                <button
-                  key={pageNumber}
-                  className={`px-3 py-1 text-sm border rounded ${
-                    pageNumber === page
-                      ? 'bg-[#006989] text-white border-[#006989]'
-                      : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
-                  }`}
-                  onClick={() => handlePageChange(pageNumber)}
-                >
-                  {pageNumber}
-                </button>
-              );
-            })}
-
-            {/* 다음 버튼 (항상 표시, 마지막 페이지면 비활성화) */}
-            <button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === data.pageInfo.totalPages}
-              className={`border px-3 py-1 rounded ${
-                page === data.pageInfo.totalPages
-                  ? 'bg-white text-gray-300 border-gray-200 cursor-not-allowed'
-                  : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
-              }`}
-            >
-              다음
-            </button>
-          </nav>
+        {/* 상태 라디오 버튼 */}
+        <div className="flex items-center gap-4 mb-8 mt-2">
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="radio"
+              name="status"
+              value=""
+              checked={status === ''}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                setStatus(newStatus);
+                setQueryParams((prev) => ({
+                  ...prev,
+                  page: 1,
+                  status: newStatus,
+                }));
+              }}
+            />
+            전체
+          </label>
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="radio"
+              name="status"
+              value="PENDING"
+              checked={status === 'PENDING'}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                setStatus(newStatus);
+                setQueryParams((prev) => ({
+                  ...prev,
+                  page: 1,
+                  status: newStatus,
+                }));
+              }}
+            />
+            예약중
+          </label>
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="radio"
+              name="status"
+              value="CONFIRMED"
+              checked={status === 'CONFIRMED'}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                setStatus(newStatus);
+                setQueryParams((prev) => ({
+                  ...prev,
+                  page: 1,
+                  status: newStatus,
+                }));
+              }}
+            />
+            예약확정
+          </label>
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="radio"
+              name="status"
+              value="CANCELLED"
+              checked={status === 'CANCELLED'}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                setStatus(newStatus);
+                setQueryParams((prev) => ({
+                  ...prev,
+                  page: 1,
+                  status: newStatus,
+                }));
+              }}
+            />
+            취소완료
+          </label>
         </div>
-      )}
+
+        {/* 테이블 */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                {[
+                  '장소명',
+                  '주소',
+                  '방이름',
+                  '일시',
+                  '모임장',
+                  '인원',
+                  '상태',
+                ].map((head) => (
+                  <th
+                    key={head}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500"
+                  >
+                    {head}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-gray-200">
+              {data?.content?.map((r) => (
+                <tr key={`${r.reservationId}-${r.date}-${r.startTime}`}>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.placeName}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.placeAddress}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.roomName}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    <div>
+                      {r.date} {r.time}
+                    </div>
+                    <div>
+                      {r.startTime.slice(0, 5)} - {r.endTime.slice(0, 5)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.reserverName}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.participantCount}명
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        r.status === 'CANCELLED'
+                          ? 'bg-gray-200 text-gray-600'
+                          : r.status === 'CONFIRMED'
+                          ? 'bg-green-100 text-green-700'
+                          : r.status === 'PENDING'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {r.status === 'CANCELLED' && '취소완료'}
+                      {r.status === 'CONFIRMED' && '예약확정'}
+                      {r.status === 'PENDING' && '예약중'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* 페이지네이션 */}
+        {data?.pageInfo && (
+          <div className="flex justify-center mt-6">
+            <nav className="flex items-center gap-2">
+              {/* 이전 버튼 (항상 표시, 첫 페이지면 비활성화) */}
+              <button
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+                className={`border px-3 py-1 rounded ${
+                  page === 1
+                    ? 'bg-white text-gray-300 border-gray-200 cursor-not-allowed'
+                    : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
+                }`}
+              >
+                이전
+              </button>
+
+              {/* 페이지 번호 버튼 */}
+              {Array.from({ length: data.pageInfo.totalPages }).map(
+                (_, idx) => {
+                  const pageNumber = idx + 1;
+                  return (
+                    <button
+                      key={pageNumber}
+                      className={`px-3 py-1 text-sm border rounded ${
+                        pageNumber === page
+                          ? 'bg-[#006989] text-white border-[#006989]'
+                          : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
+                      }`}
+                      onClick={() => handlePageChange(pageNumber)}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                }
+              )}
+
+              {/* 다음 버튼 (항상 표시, 마지막 페이지면 비활성화) */}
+              <button
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === data.pageInfo.totalPages}
+                className={`border px-3 py-1 rounded ${
+                  page === data.pageInfo.totalPages
+                    ? 'bg-white text-gray-300 border-gray-200 cursor-not-allowed'
+                    : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
+                }`}
+              >
+                다음
+              </button>
+            </nav>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

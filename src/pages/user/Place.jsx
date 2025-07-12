@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchPlaces } from '@api/place';
 import PlaceCard from '@components/place/PlaceCard';
@@ -12,7 +12,7 @@ import {
 import { useAtomValue } from 'jotai';
 import { userAtom } from '../../atoms';
 import { useNavigate } from 'react-router';
-import { createAxios } from '@config/config';
+import { useAxios } from '@hooks/useAxios';
 import { useSearchParams } from 'react-router-dom';
 
 const Place = () => {
@@ -20,10 +20,12 @@ const Place = () => {
   const [searchParams] = useSearchParams();
   const keywordParam = searchParams.get('keyword') || '';
   const [searchQuery, setSearchQuery] = useState(keywordParam);
-  //const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('latest');
   const user = useAtomValue(userAtom);
-  const axios = createAxios();
+  const axios = useAxios();
+  useEffect(() => {
+    console.log(user);
+  }, [user]);
 
   // 핵심: queryKey에 모든 파라미터를 넣는다.
   const {
@@ -44,8 +46,8 @@ const Place = () => {
         keyword: searchQuery,
         placeType: selectedCategory === '읽담' ? 'PLACE' : 'ALL',
         sortBy,
-        lat: user.lat,
-        lng: user.lng,
+        lat: user?.lat,
+        lng: user?.lng,
       });
       return res;
     },
@@ -173,7 +175,7 @@ const Place = () => {
             </button>
             <button
               onClick={() => {
-                if (user.lat == null || user.lng == null) {
+                if (user === null || user?.lat === 0 || user?.lng === 0) {
                   alert('위치를 설정해주세요.');
                   return;
                 }

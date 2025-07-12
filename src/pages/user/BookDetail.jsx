@@ -213,30 +213,6 @@ export default function BookDetail() {
           </div>
         </div>
         <BookReviewSection isbn={isbnParam} />
-
-        {/* 모임 목록 */}
-        {/* <div ref={meetingRef} id="meetingSection" className="mt-12">
-          <h2 className="text-lg font-bold mb-4">📚 이 책을 주제로 한 모임</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((id) => (
-              <div key={id} className="border rounded-xl p-4 shadow-sm">
-                <img
-                  src="https://source.unsplash.com/300x180/?book"
-                  alt=""
-                  className="w-full h-40 object-cover rounded-md mb-2"
-                />
-                <div className="text-sm font-semibold">함께 읽는 독서모임</div>
-                <div className="text-gray-500 text-xs">
-                  2025.06.14 ~ 2025.07.14
-                </div>
-                <button className="mt-2 bg-[#006989] text-white px-3 py-1 rounded-md text-xs font-semibold">
-                  참여하기
-                </button>
-              </div>
-            ))}
-          </div>
-        </div> */}
-
         <BookClassList title={book.title} authors={book.authors} />
 
         {/* 이 책이 인생책인 회원 */}

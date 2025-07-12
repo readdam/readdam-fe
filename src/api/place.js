@@ -76,9 +76,13 @@ export async function fetchPlaces(
     params.lng = lng;
   }
   if (radiusKm) params.radiusKm = radiusKm;
-
-  const response = await axios.get('/place/search', { params });
-  return response.data;
+  try {
+    const response = await axios.get('/place/search', { params });
+    return response.data;
+  } catch (err) {
+    console.error('🔥 장소 불러오기 실패:', err.response?.data || err.message);
+    throw err;
+  }
 }
 
 export const writePlaceReview = async ({

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getClassesByBook } from '@api/book';
 import { createAxios } from '@config/config';
+import ClassCard from '@components/class/ClassCard';
 
 const BookClassList = ({ title, authors }) => {
   const [classes, setClasses] = useState([]);
@@ -40,28 +41,19 @@ const BookClassList = ({ title, authors }) => {
           이 책으로 등록된 모임이 없습니다.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {classes.map((c) => (
-            <div key={c.classId} className="border rounded-xl p-4 shadow-sm">
-              <img
-                src={c.imageUrl || 'https://source.unsplash.com/300x180/?book'}
-                alt={c.title}
-                className="w-full h-40 object-cover rounded-md mb-2"
-              />
-              <div className="text-sm font-semibold text-[#006989]">
-                {c.title}
-              </div>
-              <div className="text-gray-500 text-xs">
-                {c.round1Date?.replace(/-/g, '.')} ~{' '}
-                {c.roundEndDate?.replace(/-/g, '.')}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">{c.shortIntro}</p>
-              <button className="mt-2 bg-[#006989] text-white px-3 py-1 rounded-md text-xs font-semibold">
-                참여하기
-              </button>
+        <>
+          {classes.length === 0 ? (
+            <div className="text-sm text-gray-500">
+              이 책으로 등록된 모임이 없습니다.
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {classes.map((group) => (
+                <ClassCard key={group.classId} group={group} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
