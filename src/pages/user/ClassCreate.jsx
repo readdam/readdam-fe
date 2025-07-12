@@ -4,6 +4,7 @@ import { tokenAtom, userAtom } from "../../atoms";
 import { useAxios } from "@hooks/useAxios";
 import { url } from "../../config/config";
 import AddrSearchModal from "@components/class/AddrSearchModal";
+import ReservationSelectModal from "@components/class/ReservationSelectModal";
 import {
   CalendarIcon,
   ImageIcon,
@@ -27,7 +28,7 @@ const ClassCreate = () => {
     venueName: "",
     venueAddress: "",
     lat: 0,
-    lag: 0,
+    log: 0,
     dates: [],
     sessionDetails: Array(3).fill({
       description: "",
@@ -47,8 +48,6 @@ const ClassCreate = () => {
       log: place.x,
     }));
   };
-
-  const [reservationList, setReservationList] = useState([]);
 
   // 이미지(미리보기용 포함)
   const [mainImgF, setMainImgF] = useState("");
@@ -235,6 +234,60 @@ const ClassCreate = () => {
       }),
       dates: [],
     });
+  };
+
+  // 예약한 읽담장소 불러오기 관련 상태
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+  const [reservationList, setReservationList] = useState([]);
+
+  // 예약 모달에서 선택 시 호출될 핸들러
+  const handleReservationApply = (selected) => {
+    if (
+      !selected ||
+      !Array.isArray(selected.dates) ||
+      selected.dates.length === 0
+    ) {
+      alert("유효한 예약 정보가 아닙니다.");
+      return;
+    }
+
+    const sessionCount = selected.dates.length;
+
+    // 날짜가 빠졌거나 값이 이상하면 경고
+    const isValidDates = selected.dates.every(
+      (date) => typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}$/)
+    );
+    if (!isValidDates) {
+      alert("잘못된 날짜 형식입니다.");
+      return;
+    }
+
+    // venue 정보 필수 항목 확인
+    if (
+      !selected.venueName ||
+      !selected.venueAddress ||
+      !selected.lat ||
+      !selected.log
+    ) {
+      alert("장소 정보가 누락되었습니다.");
+      return;
+    }
+
+    // form 상태 업데이트
+    setForm((prev) => ({
+      ...prev,
+      venue: "읽담", // 예약 기반이므로 자동 설정
+      sessionCount: sessionCount,
+      dates: [...selected.dates], // 예약된 날짜로 복사
+      sessionDetails: Array(sessionCount).fill({ description: "" }), // 회차수만큼 초기화
+      venueName: selected.venueName,
+      venueAddress: selected.venueAddress,
+      lat: selected.lat,
+      log: selected.log,
+    }));
+
+    // 모달 닫기
+    setIsReservationModalOpen(false);
   };
 
   // 모임 회차별 북커버 이미지 불러오기
@@ -463,7 +516,7 @@ const ClassCreate = () => {
                       }
                       console.log("✅ 예약 데이터:", res.data);
                       setReservationList(res.data);
-                      // setIsModalOpen(true); // 모달 띄우기
+                      setIsReservationModalOpen(true); // 모달 띄우기
                     } catch (err) {
                       console.error("읽담 예약 정보 불러오기 실패", err);
                       alert("예약 정보를 불러오지 못했습니다.");
@@ -490,32 +543,47 @@ const ClassCreate = () => {
                 </button>
               </div>
               <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="장소 이름"
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg ${
-                    form.venue === "읽담" ? "bg-gray-100" : ""
-                  }`}
-                  disabled={form.venue === "읽담"}
-                  value={form.venueName}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      venueName: e.target.value,
-                    })
-                  }
-                />
-                <div className="flex gap-2">
+                {form.venue === "읽담" ? (
                   <input
+                    placeholder="장소 이름"
                     type="text"
-                    placeholder="주소(외부 장소의 경우 검색버튼을 눌러주세요)"
-                    className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg ${
-                      form.venue === "읽담" ? "bg-gray-100" : ""
-                    }`}
-                    disabled={form.venue === "읽담"}
-                    value={form.venueAddress}
+                    value={form.venueName || ""}
                     readOnly
                   />
+                ) : (
+                  <input
+                    type="text"
+                    value={form.venueName}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        venueName: e.target.value,
+                      }))
+                    }
+                  />
+                )}
+                <div className="flex gap-2">
+                  {form.venue === "읽담" ? (
+                    <input
+                      type="text"
+                      placeholder="주소(외부 장소의 경우 검색버튼을 눌러주세요)"
+                      value={form.venueAddress || ""}
+                      readOnly
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="주소(외부 장소의 경우 검색버튼을 눌러주세요)"
+                      value={form.venueAddress}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          venueAddress: e.target.value,
+                        }))
+                      }
+                      readOnly
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
@@ -527,6 +595,33 @@ const ClassCreate = () => {
                 </div>
               </div>
 
+              {/* '읽담' 예약내역 불러오는 모달 */}
+              {isReservationModalOpen && (
+                <ReservationSelectModal
+                  reservations={reservationList}
+                  sessionCount={form.sessionCount}
+                  onApply={(selected) => {
+                    const { dates, venueName, venueAddress, lat, log } =
+                      selected;
+
+                    setForm((prev) => ({
+                      ...prev,
+                      venue: "읽담",
+                      venueName,
+                      venueAddress,
+                      lat,
+                      log,
+                      dates,
+                      sessionDetails: Array(dates.length).fill({
+                        description: "",
+                      }),
+                    }));
+                  }}
+                  onClose={() => setIsReservationModalOpen(false)}
+                />
+              )}
+
+              {/* '외부' 장소(주소) 선택 창 */}
               {isModalOpen && (
                 <AddrSearchModal
                   onSelect={handlePlaceSelect}
