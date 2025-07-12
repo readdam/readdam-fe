@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAtom } from "jotai";
 import { tokenAtom, userAtom } from "../../atoms";
 import { useAxios } from "@hooks/useAxios";
@@ -47,6 +47,8 @@ const ClassCreate = () => {
       log: place.x,
     }));
   };
+
+  const [reservationList, setReservationList] = useState([]);
 
   // 이미지(미리보기용 포함)
   const [mainImgF, setMainImgF] = useState("");
@@ -132,7 +134,6 @@ const ClassCreate = () => {
     submitData.append("leaderIntro", form.leaderDescription);
     submitData.append("leaderUsername", user.username);
     submitData.append("isReaddam", form.venue === "읽담" ? "0" : "1");
-
 
     //태그 파싱
     const tagArray = form.tags.map((tag) => tag.trim()).filter((tag) => tag); // 공백 제거 + 빈 문자열 제거
@@ -253,7 +254,15 @@ const ClassCreate = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-[1200px]">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+            }
+          }}
+          className="space-y-8"
+        >
           <div className="bg-white p-8 rounded-lg shadow">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">
               모임 만들기
@@ -393,8 +402,6 @@ const ClassCreate = () => {
                       ))}
                   </select>
                 </div>
-
-                
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -440,32 +447,26 @@ const ClassCreate = () => {
                   }`}
                   onClick={async () => {
                     try {
-                      const res = await axios.get(`${url}/my/placeReservationInfo`,{
-                        headers: {
-                          Authorization: token.access_token,
-                        },
-                      });
-                      const { venueName, venueAddress, lat, log, dates } = res.data;
-                      // 날짜 수에 맞춰 sessionCount와 sessionDetails 동기화
-                      const count = dates.length;
-                      setForm((prev) => ({
-                        ...prev,
-                        venue: "읽담",
-                        venueName,
-                        venueAddress,
-                        lat,
-                        log,
-                        sessionCount: count,
-                        sessionDetails: Array(count).fill({ description: "" }),
-                        dates: [...dates],
-                        // 아래 항목들은 유지됨: title, tags, leaderDescription 등
-                      }));
-                    } catch (err) {
-                      if (err.response?.status === 404) {
-                        alert("읽담 예약 정보가 없습니다. 먼저 읽담 공간을 예약해 주세요.");
-                      } else {
-                        console.error("읽담 예약 정보 불러오기 실패", err);
+                      const res = await axios.get(
+                        `${url}/my/placeReservationInfo`,
+                        {
+                          headers: {
+                            Authorization: token.access_token,
+                          },
+                        }
+                      );
+                      if (!Array.isArray(res.data) || res.data.length === 0) {
+                        alert(
+                          "읽담 예약 정보가 없습니다. 먼저 읽담 공간을 예약해주세요."
+                        );
+                        return;
                       }
+                      console.log("✅ 예약 데이터:", res.data);
+                      setReservationList(res.data);
+                      // setIsModalOpen(true); // 모달 띄우기
+                    } catch (err) {
+                      console.error("읽담 예약 정보 불러오기 실패", err);
+                      alert("예약 정보를 불러오지 못했습니다.");
                     }
                   }}
                 >
@@ -551,7 +552,10 @@ const ClassCreate = () => {
                       </span>
                       <input
                         type="date"
-                        disabled={form.venue === "읽담" || (index > 0 && !form.dates[index - 1])}
+                        disabled={
+                          form.venue === "읽담" ||
+                          (index > 0 && !form.dates[index - 1])
+                        }
                         className="px-4 py-2 border border-gray-300 rounded-lg"
                         value={form.dates[index] || ""}
                         readOnly={form.venue === "읽담"}
