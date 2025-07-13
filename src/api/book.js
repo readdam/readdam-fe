@@ -72,3 +72,10 @@ export const fetchLifeBookUsers = async ({ isbn, axios }) => {
   });
   return response.data; // User[] - nickname, profileImg 포함
 };
+
+export const getClassesByBook = async ({ title, author, axios }) => {
+  const response = await axios.get('/api/bookClass/byBook', {
+    params: { title, author },
+  });
+  return response.data;
+};
