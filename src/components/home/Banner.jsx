@@ -1,37 +1,70 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-// 임시 베너 데이터 추가
+import { useAxios } from '@hooks/useAxios';
+import { url } from '../../config/config';
+
 const Banner = () => {
+  const axios = useAxios();
+  const [banner, setBanner] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get('/banner')
+      .then((res) => {
+        setBanner(res.data);
+      })
+      .catch((err) => {
+        console.error(err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [axios]);
+
+  if (loading) {
+    return null;
+  }
+
+  if (!banner) {
+    return <div>배너 정보를 불러올 수 없습니다.</div>;
+  }
+
+  const imgUrl = banner.img
+  ? `${url}/image?filename=${encodeURIComponent(banner.img)}`
+  : `${url}/image?filename=homeDefaultBanner.png`;
+
   return (
     <section className="w-full py-20 bg-[#F3F7EC]">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center">
           <div className="w-full md:w-1/2 mb-8 md:mb-0">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800">
-              읽고, 담고, 나누는 이야기
+              {banner.title}
             </h1>
             <p className="text-lg md:text-xl mb-8 text-gray-600">
-              당신의 기록이 누군가의 공감이 됩니다.
+              {banner.content}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
                 to="/writeList"
                 className="px-6 py-3 bg-[#006989] text-white rounded-xl hover:bg-[#005C78] transition-colors"
               >
-                글 쓰러 가기
+                {banner.button1.text}
               </Link>
-              <Link
-                to="/classList"
-                className="px-6 py-3 bg-[#E88D67] text-white rounded-xl hover:opacity-90 transition-opacity"
-              >
-                모임 참여하기
-              </Link>
+              {banner.button2?.show && (
+                <Link
+                  to={banner.button2.link}
+                  className="px-6 py-3 bg-[#E88D67] text-white rounded-xl hover:opacity-90 transition-opacity"
+                >
+                  {banner.button2.text}
+                </Link>
+              )}
             </div>
           </div>
           <div className="w-full md:w-1/2 flex justify-end pr-4"> {/* 오른쪽 여백 맞춤 */}
             <img
-              src="https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80"
-              alt="독서하는 사람"
+              src={imgUrl}
+              alt={banner.title}
               className="rounded-xl max-w-full h-auto shadow-lg"
               style={{ maxHeight: '400px', width: '90%' }}  // 좌측 여백과 균형 맞춤
             />

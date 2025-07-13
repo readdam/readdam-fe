@@ -587,7 +587,7 @@ const AdminBannerList = () => {
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-400">
-                현재 메인에 노출되는 배너가 없습니다.
+                미설정 시, 메인에 읽담 기본 배너가 노출됩니다.
               </div>
             )}
           </div>
