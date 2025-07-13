@@ -11,15 +11,15 @@ const typeMap = {
 };
 
 const getReviewStatus = (endDate) => {
-  if (!endDate) return '첨삭 제외';
+  if (!endDate) return '첨삭 없음';
   const now = new Date();
-  return new Date(endDate) > now ? '첨삭 가능' : '첨삭 종료';
+  return new Date(endDate) > now ? '첨삭 요청' : '첨삭 종료';
 };
 
 const WriteCard = ({ post, variant = 'list', onClick }) => {
   const tags = [post.tag1, post.tag2, post.tag3, post.tag4, post.tag5].filter(Boolean);
   const reviewStatus = getReviewStatus(post.endDate);
-  const statusClass = reviewStatus === '첨삭 가능' ? 'text-[#006989] font-semibold' : 'text-gray-400 font-semibold';
+  const statusClass = reviewStatus === '첨삭 요청' ? 'text-[#006989] font-semibold' : 'text-gray-400 font-semibold';
   const isUrl = (path) => path?.startsWith('http://') || path?.startsWith('https://');
 
   return (

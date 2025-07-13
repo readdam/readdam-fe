@@ -35,9 +35,9 @@ const WriteList = () => {
   };
 
   const statusMap = {
-    active: '첨삭 가능',
+    active: '첨삭 요청',
     closed: '첨삭 종료',
-    none: '첨삭 제외',
+    none: '첨삭 없음',
   };
 
   const sortMap = {
@@ -47,9 +47,9 @@ const WriteList = () => {
   };
 
   const getReviewStatus = (endDate) => {
-    if (!endDate) return '첨삭 제외';
+    if (!endDate) return '첨삭 없음';
     const now = new Date();
-    return new Date(endDate) > now ? '첨삭 가능' : '첨삭 종료';
+    return new Date(endDate) > now ? '첨삭 요청' : '첨삭 종료';
   };
 
   // 모든 페이지를 순차 호출하는 fetch

@@ -80,10 +80,10 @@ const WriteDetail = () => {
   }, [post, user]);
 
   const getReviewStatus = (endDate) => {
-    if (!endDate) return '첨삭 제외';
+    if (!endDate) return '첨삭 없음';
     const now = new Date();
     const deadline = new Date(endDate);
-    return deadline > now ? '첨삭 가능' : '첨삭 종료';
+    return deadline > now ? '첨삭 요청' : '첨삭 종료';
   };
 
 
@@ -334,10 +334,10 @@ const WriteDetail = () => {
 
               {/* 첨삭 상태 */}
               <div className="mt-6 flex items-center gap-3 text-sm text-gray-500">
-                <span className={`font-bold ${getReviewStatus(post.endDate) === '첨삭 가능' ? 'text-[#006989]' : 'text-gray-500'}`}>
+                <span className={`font-bold ${getReviewStatus(post.endDate) === '첨삭 요청' ? 'text-[#006989]' : 'text-gray-500'}`}>
                   {getReviewStatus(post.endDate)}
                 </span>
-                {getReviewStatus(post.endDate) === '첨삭 가능' && (
+                {getReviewStatus(post.endDate) === '첨삭 요청' && (
                   <>
                     <span>•</span>
                     <TimeRemainingText endDate={post.endDate} autoUpdate={true} />
@@ -355,8 +355,8 @@ const WriteDetail = () => {
           <div className="prose max-w-none text-gray-600 whitespace-pre-line">{post.content}</div>
         </div>
 
-        {/* 첨삭 제외가 아닐 때만 댓글 영역 표시 */}
-        {getReviewStatus(post.endDate) !== '첨삭 제외' && (
+        {/* 첨삭 없음 아닐 때만 댓글 영역 표시 */}
+        {getReviewStatus(post.endDate) !== '첨삭 없음' && (
           <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
             <h2 className="flex items-center gap-2 text-xl font-bold text-gray-800 mb-6">
               <MessageSquareIcon className="w-5 h-5 text-[#006989]" />
@@ -365,9 +365,9 @@ const WriteDetail = () => {
               </span>
             </h2>
 
-            {/* 첨삭 가능할 때만 작성 폼 노출 */}
+            {/* 첨삭 요청 때만 작성 폼 노출 */}
             {isLoggedIn &&
-              getReviewStatus(post.endDate) === '첨삭 가능' &&
+              getReviewStatus(post.endDate) === '첨삭 요청' &&
               post.username !== user?.username &&
               (!comments.some(c => c.username === user?.username) || editingCommentId) && (
                 <div className="mb-8">
@@ -425,7 +425,7 @@ const WriteDetail = () => {
 
             {/* 내 글 안내 문구 */}
             {isLoggedIn &&
-              getReviewStatus(post.endDate) === '첨삭 가능' &&
+              getReviewStatus(post.endDate) === '첨삭 요청' &&
               post.username === user?.username && (
                 <p className="text-sm text-gray-500 mt-4 mb-4">
                   본인이 작성한 글에는 댓글을 작성할 수 없습니다.
@@ -434,7 +434,7 @@ const WriteDetail = () => {
 
             {/* 이미 댓글 작성했을 때 안내문구 */}
             {isLoggedIn &&
-              getReviewStatus(post.endDate) === '첨삭 가능' &&
+              getReviewStatus(post.endDate) === '첨삭 요청' &&
               post.username !== user?.username &&
               comments.some(c => c.username === user?.username) && (
                 <p className="text-sm text-gray-500 mt-4 mb-4">
