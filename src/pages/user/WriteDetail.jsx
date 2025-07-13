@@ -218,6 +218,18 @@ const WriteDetail = () => {
   return (
     <div className="w-full bg-gray-50 py-8">
       <div className="container mx-auto px-4">
+        <nav className="flex text-sm text-gray-500 mb-8">
+          <a href="/" className="hover:text-[#006989]">
+            홈
+          </a>
+          <span className="mx-2">&gt;</span>
+          <a href="/writeList" className="hover:text-[#006989]">
+            글쓰기
+          </a>
+          <span className="mx-2">&gt;</span>
+          <span className="text-gray-700">{post?.title}</span>
+        </nav>
+        
         {/* 상단 섹션: 이미지와 메타 정보 */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
           <div className="flex">

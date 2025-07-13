@@ -90,7 +90,7 @@ const BookPage = () => {
               <h1 className="text-3xl font-bold mb-4 text-[#006989]">
                 읽담 베스트셀러
               </h1>
-              <p>독자들이 가장 많이 읽고 있는 인기 도서를 만나보세요</p>
+              <p className="text-gray-600"> 독자들이 가장 많이 읽고 있는 인기 도서를 만나보세요</p>
             </div>
             <form
               className="mt-4 md:mt-0"

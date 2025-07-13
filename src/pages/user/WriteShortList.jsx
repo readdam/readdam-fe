@@ -161,10 +161,10 @@ const WriteShortList = () => {
     <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
       <div className="container mx-auto px-4">
         {/* 탭 & 작성 버튼 */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex gap-6">
-            <button onClick={() => navigate('/writeList')} className="text-xl font-bold text-gray-400">전체 글</button>
-            <button className="text-xl font-bold text-[#006989]">읽담한줄</button>
+            <button onClick={() => navigate('/writeList')} className="text-3xl font-bold text-gray-400">전체 글</button>
+            <button className="text-3xl font-bold text-[#006989]">읽담한줄</button>
           </div>
           {hasWritten !== null && (
             <button
@@ -177,6 +177,13 @@ const WriteShortList = () => {
             </button>
           )}
         </div>
+
+        <div className="mb-8">
+          <p className="text-gray-600">
+            한 문장으로 마음을 나눠요. 좋아요를 많이 주고 받아보세요. 좋은 일이 생길거에요!
+          </p>
+        </div>
+
 
         {/* 이벤트 정보 */}
         <div className="bg-white rounded-lg p-6 mb-8 shadow-sm border-2 border-[#E88D67]">

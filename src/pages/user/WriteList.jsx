@@ -186,12 +186,12 @@ const WriteList = () => {
     <div className="w-full min-h-screen bg-[#F9F9F7] py-8">
       <div className="container mx-auto px-4">
         {/* 탭 */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex gap-6">
-            <button className="text-xl font-bold text-[#006989]">전체 글</button>
+            <button className="text-3xl font-bold text-[#006989]">전체 글</button>
             <button
               onClick={() => navigate('/writeShortList')}
-              className="text-xl font-bold text-gray-400"
+              className="text-3xl font-bold text-gray-400"
             >
               읽담한줄
             </button>
@@ -210,6 +210,12 @@ const WriteList = () => {
             <PenIcon className="w-5 h-5 mr-2" />
             글쓰기
           </button>
+        </div>
+
+        <div className="mb-8">
+          <p className="text-gray-600">
+            다양한 글을 탐색하고, 글쓰기의 즐거움을 경험해보세요. 첨삭 서비스도 이용가능해요! 
+          </p>
         </div>
 
         {/* 필터/검색 */}
