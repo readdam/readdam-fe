@@ -74,183 +74,185 @@ export default function PlaceList() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto overflow-x-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">장소 관리</h1>
-        <button
-          className="flex items-center gap-2 px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78]"
-          onClick={() => navigate('/admin/placeAdd')}
-        >
-          <PlusIcon className="w-5 h-5" />새 장소 추가
-        </button>
-      </div>
-
-      <form className="flex gap-4 mb-6" onSubmit={handleSearch}>
-        <select
-          className="px-4 py-2 border rounded-lg text-sm"
-          value={filterField}
-          onChange={(e) => setFilterField(e.target.value)}
-        >
-          <option value="name">장소명</option>
-          <option value="basic_address">주소</option>
-        </select>
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder="장소명 또는 주소로 검색"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 pl-10 border rounded-lg"
-          />
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6 max-w-7xl mx-auto overflow-x-auto ">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800">장소 관리</h1>
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] cursor-pointer"
+            onClick={() => navigate('/admin/placeAdd')}
+          >
+            <PlusIcon className="w-5 h-5" />새 장소 추가
+          </button>
         </div>
-        <button
-          type="submit"
-          className="bg-[#E88D67] text-white w-16 h-10 rounded text-sm"
-        >
-          검색
-        </button>
-      </form>
 
-      {loading ? (
-        <div className="p-6">로딩 중...</div>
-      ) : (
-        <>
-          <div className="bg-white rounded-lg shadow min-w-[1000px]">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">
-                    장소 정보
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">
-                    연락처
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">
-                    운영시간
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">
-                    태그
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">
-                    방 개수
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">
-                    좋아요
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">
-                    관리
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {places.map((place) => (
-                  <tr key={place.placeId} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-start gap-4">
-                        <img
-                          src={`${url}/image?filename=${place.thumbnailImage}`}
-                          className="w-16 h-16 rounded-lg object-cover"
-                          alt="썸네일"
-                        />
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {place.name}
-                          </div>
-                          <div className="text-gray-500 text-sm">
-                            {place.basicAddress} {place.detailAddress}
-                          </div>
-                          <div className="text-gray-500 text-sm">
-                            {place.introduce}
+        <form className="flex gap-4 mb-6" onSubmit={handleSearch}>
+          <select
+            className="px-4 py-2 border rounded-lg text-sm"
+            value={filterField}
+            onChange={(e) => setFilterField(e.target.value)}
+          >
+            <option value="name">장소명</option>
+            <option value="basic_address">주소</option>
+          </select>
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="장소명 또는 주소로 검색"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 pl-10 border rounded-lg"
+            />
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          </div>
+          <button
+            type="submit"
+            className="bg-[#E88D67] text-white w-16 h-10 rounded text-sm cursor-pointer"
+          >
+            검색
+          </button>
+        </form>
+
+        {loading ? (
+          <div className="p-6">로딩 중...</div>
+        ) : (
+          <>
+            <div className="bg-white rounded-lg shadow min-w-[1000px]">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                      장소 정보
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                      연락처
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                      운영시간
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                      태그
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                      방 개수
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                      좋아요
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                      관리
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {places?.map((place) => (
+                    <tr key={place.placeId} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="flex items-start gap-4">
+                          <img
+                            src={`${url}/image?filename=${place.thumbnailImage}`}
+                            className="w-16 h-16 rounded-lg object-cover"
+                            alt="썸네일"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {place.name}
+                            </div>
+                            <div className="text-gray-500 text-sm">
+                              {place.basicAddress} {place.detailAddress}
+                            </div>
+                            <div className="text-gray-500 text-sm">
+                              {place.introduce}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">{place.phone}</td>
-                    <td className="px-6 py-4 text-gray-500">
-                      평일: {formatTimeRanges(place.weekdayTime)}
-                      <br />
-                      주말: {formatTimeRanges(place.weekendTime)}
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">
-                      <div className="flex flex-wrap gap-2">
-                        {place.tags.map((tag, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-1 bg-[#F3F7EC] text-[#006989] text-xs rounded-full"
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">{place.phone}</td>
+                      <td className="px-6 py-4 text-gray-500">
+                        평일: {formatTimeRanges(place.weekdayTime)}
+                        <br />
+                        주말: {formatTimeRanges(place.weekendTime)}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        <div className="flex flex-wrap gap-2">
+                          {place.tags.map((tag, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-1 bg-[#F3F7EC] text-[#006989] text-xs rounded-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {place.roomCount}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {place.likeCount}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded whitespace-nowrap cursor-pointer"
+                            onClick={() =>
+                              navigate(`/admin/placeEdit/${place.placeId}`)
+                            }
                           >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">
-                      {place.roomCount}
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">
-                      {place.likeCount}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <button
-                          className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded whitespace-nowrap"
-                          onClick={() =>
-                            navigate(`/admin/placeEdit/${place.placeId}`)
-                          }
-                        >
-                          수정
-                        </button>
-                        <button className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-600 hover:text-white rounded whitespace-nowrap">
-                          삭제
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {places.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="text-center py-4 text-gray-400">
-                      등록된 장소가 없습니다
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                            수정
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {places?.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="text-center py-4 text-gray-400"
+                      >
+                        등록된 장소가 없습니다
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-          <div className="flex justify-center mt-6">
-            <nav className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 0}
-                className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
-              >
-                이전
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => (
+            <div className="flex justify-center mt-6">
+              <nav className="flex items-center gap-2">
                 <button
-                  key={i}
-                  onClick={() => handlePageChange(i)}
-                  className={`px-3 py-1 text-sm rounded ${
-                    page === i
-                      ? 'bg-[#006989] text-white'
-                      : 'border hover:bg-gray-50'
-                  }`}
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 0}
+                  className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
                 >
-                  {i + 1}
+                  이전
                 </button>
-              ))}
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page + 1 >= totalPages}
-                className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
-              >
-                다음
-              </button>
-            </nav>
-          </div>
-        </>
-      )}
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i)}
+                    className={`px-3 py-1 text-sm rounded ${
+                      page === i
+                        ? 'bg-[#006989] text-white'
+                        : 'border hover:bg-gray-50'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page + 1 >= totalPages}
+                  className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+                >
+                  다음
+                </button>
+              </nav>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

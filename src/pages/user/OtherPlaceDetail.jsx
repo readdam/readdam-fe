@@ -192,11 +192,11 @@ const OtherPlaceDetail = () => {
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-8">
           <nav className="flex text-sm text-gray-500">
-            <a href="#" className="hover:text-[#006989]">
+            <a href="/" className="hover:text-[#006989]">
               홈
             </a>
             <span className="mx-2">&gt;</span>
-            <a href="#" className="hover:text-[#006989]">
+            <a href="/place" className="hover:text-[#006989]">
               장소
             </a>
             <span className="mx-2">&gt;</span>
@@ -208,7 +208,7 @@ const OtherPlaceDetail = () => {
             <OtherPlaceInfo place={placeData} />
             <OtherPlaceReviewSection
               placeId={placeData.id}
-              initialReviews={reviewsData}
+              // initialReviews={reviewsData}
               isLoggedIn={isLoggedIn}
             />
           </div>

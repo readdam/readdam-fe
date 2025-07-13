@@ -10,6 +10,7 @@ import { url } from '@config/config';
 import LibraryModal from '@components/book/LibraryModal';
 import { useAtomValue } from 'jotai';
 import { tokenAtom } from '../../atoms';
+import BookClassList from '@components/book/BookClassList';
 
 export default function BookDetail() {
   const param = useParams();
@@ -82,6 +83,19 @@ export default function BookDetail() {
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 py-10">
+        <div className="mb-8">
+          <nav className="flex text-sm text-gray-500">
+            <a href="/" className="hover:text-[#006989]">
+              홈
+            </a>
+            <span className="mx-2">&gt;</span>
+            <a href="/book" className="hover:text-[#006989]">
+              책
+            </a>
+            <span className="mx-2">&gt;</span>
+            <span className="text-gray-700">{book?.title}</span>
+          </nav>
+        </div>
         {/* 책 정보 */}
         <div className="flex gap-8">
           <div className="w-80 h-80 flex justify-center items-center bg-[#F6F6F6]">
@@ -199,29 +213,7 @@ export default function BookDetail() {
           </div>
         </div>
         <BookReviewSection isbn={isbnParam} />
-
-        {/* 추천 도서 */}
-        <div ref={meetingRef} id="meetingSection" className="mt-12">
-          <h2 className="text-lg font-bold mb-4">📚 이 책을 주제로 한 모임</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((id) => (
-              <div key={id} className="border rounded-xl p-4 shadow-sm">
-                <img
-                  src="https://source.unsplash.com/300x180/?book"
-                  alt=""
-                  className="w-full h-40 object-cover rounded-md mb-2"
-                />
-                <div className="text-sm font-semibold">함께 읽는 독서모임</div>
-                <div className="text-gray-500 text-xs">
-                  2025.06.14 ~ 2025.07.14
-                </div>
-                <button className="mt-2 bg-[#006989] text-white px-3 py-1 rounded-md text-xs font-semibold">
-                  참여하기
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <BookClassList title={book.title} authors={book.authors} />
 
         {/* 이 책이 인생책인 회원 */}
         <div ref={lifeBookRef} id="lifeBookSection" className="mt-12">

@@ -14,6 +14,9 @@ import {
 import { useParams } from 'react-router';
 import { createAxios } from '@config/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useReportModal } from '@hooks/useReportModal';
+import { REPORT_CATEGORY } from '@constants/reportCategory';
+import singoIcon from '@assets/singo.png';
 
 const ReviewSection = () => {
   const [newReview, setNewReview] = useState({
@@ -45,10 +48,12 @@ const ReviewSection = () => {
     enabled: !!id,
   });
 
-  useEffect(() => {
-    console.log(user);
-    console.log(reviewPage);
-  }, [user, reviewPage]);
+  const { openReportModal, ReportModalComponent } = useReportModal({
+    defaultCategory: REPORT_CATEGORY.PLACE_REVIEW,
+    onSuccess: () => {
+      alert('신고가 접수되었습니다.');
+    },
+  });
 
   // 로그인 체크 핸들러
   const handleCheckLogin = () => {
@@ -288,7 +293,7 @@ const ReviewSection = () => {
                         </span>
                       </p>
                     </div>
-                    {user.username === review.username && (
+                    {user?.username === review.username ? (
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEdit(review)}
@@ -301,6 +306,20 @@ const ReviewSection = () => {
                           className="text-gray-500 hover:text-red-500"
                         >
                           <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <button
+                          onClick={() =>
+                            openReportModal({
+                              id: review.placeReviewId,
+                              username: review.username,
+                            })
+                          }
+                          className="cursor-pointer"
+                        >
+                          <img src={singoIcon} alt="신고" className="w-6 h-6" />
                         </button>
                       </div>
                     )}
@@ -346,6 +365,7 @@ const ReviewSection = () => {
           </button>
         </nav>
       </div>
+      {ReportModalComponent}
     </div>
   );
 };
