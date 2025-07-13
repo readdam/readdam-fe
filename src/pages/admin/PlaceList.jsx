@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PlusIcon, SearchIcon } from 'lucide-react';
+import { HeartIcon, PlusIcon, SearchIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { tokenAtom } from '../../atoms';
@@ -121,25 +121,25 @@ export default function PlaceList() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
                       장소 정보
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
                       연락처
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
                       운영시간
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
                       태그
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap flex justify-center">
                       방 개수
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
                       좋아요
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 ">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap flex justify-center">
                       관리
                     </th>
                   </tr>
@@ -185,11 +185,14 @@ export default function PlaceList() {
                           ))}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-500">
+                      <td className="px-6 py-4 text-gray-500 flex-col">
                         {place.roomCount}
                       </td>
-                      <td className="px-6 py-4 text-gray-500">
-                        {place.likeCount}
+                      <td className="px-6 py-">
+                        <div className="text-red-600 flex items-center gap-1">
+                          <HeartIcon className="w-4 h-4" />
+                          <span>{place.likeCount}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
