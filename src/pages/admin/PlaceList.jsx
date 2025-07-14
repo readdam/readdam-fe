@@ -222,37 +222,42 @@ export default function PlaceList() {
               </table>
             </div>
 
-            <div className="flex justify-center mt-6">
-              <nav className="flex items-center gap-2">
+            {totalPages > 0 && (
+              <div className="flex justify-center items-center gap-2 mt-12">
+                {/* 이전 버튼 */}
                 <button
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page === 0}
-                  className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+                  className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
                 >
                   이전
                 </button>
+
+                {/* 페이지 번호 버튼 */}
                 {Array.from({ length: totalPages }, (_, i) => (
                   <button
                     key={i}
                     onClick={() => handlePageChange(i)}
-                    className={`px-3 py-1 text-sm rounded ${
+                    className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${
                       page === i
                         ? 'bg-[#006989] text-white'
-                        : 'border hover:bg-gray-50'
+                        : 'bg-white text-gray-700 border border-gray-300'
                     }`}
                   >
                     {i + 1}
                   </button>
                 ))}
+
+                {/* 다음 버튼 */}
                 <button
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page + 1 >= totalPages}
-                  className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+                  className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
                 >
                   다음
                 </button>
-              </nav>
-            </div>
+              </div>
+            )}
           </>
         )}
       </div>

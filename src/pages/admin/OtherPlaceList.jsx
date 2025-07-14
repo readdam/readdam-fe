@@ -199,35 +199,39 @@ export default function OtherPlaceList() {
         </div>
 
         {/* ✅ 페이징 */}
-        <div className="flex justify-center mt-6">
-          <nav className="flex items-center gap-2">
+        {totalPages > 0 && (
+          <div className="flex justify-center items-center gap-2 mt-12">
             <button
-              className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+              className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
               disabled={page === 0}
               onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
             >
               이전
             </button>
+
             {[...Array(totalPages)].map((_, i) => (
               <button
                 key={i}
-                className={`px-3 py-1 text-sm border rounded ${
-                  page === i ? 'bg-[#006989] text-white' : 'hover:bg-gray-50'
-                }`}
                 onClick={() => setPage(i)}
+                className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${
+                  page === i
+                    ? 'bg-[#006989] text-white'
+                    : 'bg-white text-gray-700 border border-gray-300'
+                }`}
               >
                 {i + 1}
               </button>
             ))}
+
             <button
-              className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+              className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
               disabled={page >= totalPages - 1}
               onClick={() => setPage((prev) => prev + 1)}
             >
               다음
             </button>
-          </nav>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

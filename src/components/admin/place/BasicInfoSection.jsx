@@ -46,7 +46,7 @@ export default function BasicInfoSection({
         }&libraries=services&autoload=false`
       );
 
-      if(window.kakao && window.kakao.maps) {
+      if (window.kakao && window.kakao.maps) {
         window.kakao.maps.load(() => {
           setSdkReady(true);
           console.log('🟢 Kakao Maps SDK fully loaded');
@@ -164,10 +164,10 @@ export default function BasicInfoSection({
               type="button"
               onClick={handleSearchAddress}
               disabled={!postcodeReady}
-              className={`px-4 py-2 rounded-lg text-white ${
+              className={`px-4 py-2 rounded-lg text-white cursor-pointer ${
                 postcodeReady
-                ? 'bg-[#006989] hover:bg-[#005c78]'
-                : 'bg-gray-400 cursor-not-allowd'
+                  ? 'bg-[#006989] hover:bg-[#005c78]'
+                  : 'bg-gray-400 cursor-not-allowd'
               }`}
             >
               주소 검색

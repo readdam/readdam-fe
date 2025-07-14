@@ -98,7 +98,7 @@ export default function BasicInfoSection({ form, onChange }) {
             <button
               type="button"
               onClick={handleSearchAddress}
-              className="px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005c78]"
+              className="px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005c78] cursor-pointer"
             >
               주소 검색
             </button>
