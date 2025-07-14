@@ -211,7 +211,7 @@ const ReviewSection = () => {
             </label>
             <button
               disabled={isSubmitting}
-              className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] disabled:opacity-50"
+              className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? '등록 중...' : '작성하기'}
             </button>
@@ -267,13 +267,13 @@ const ReviewSection = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={handleUpdateReview}
-                        className="px-3 py-1 bg-[#006989] text-white rounded-md text-sm hover:bg-[#005C78]"
+                        className="px-3 py-1 bg-[#006989] text-white rounded-md text-sm hover:bg-[#005C78] cursor-pointer"
                       >
                         저장
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-sm hover:bg-gray-300"
+                        className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-sm hover:bg-gray-300 cursor-pointer"
                       >
                         취소
                       </button>
@@ -297,13 +297,13 @@ const ReviewSection = () => {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEdit(review)}
-                          className="text-gray-500 hover:text-[#006989]"
+                          className="text-gray-500 hover:text-[#006989] cursor-pointer"
                         >
                           <EditIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(review.placeReviewId)}
-                          className="text-gray-500 hover:text-red-500"
+                          className="text-gray-500 hover:text-red-500 cursor-pointer"
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -332,39 +332,45 @@ const ReviewSection = () => {
         )}
       </div>
 
-      <div className="flex justify-center mt-6">
-        <nav className="flex items-center gap-2">
+      {reviewPage?.pageInfo && (
+        <div className="flex justify-center items-center gap-2 mt-12">
+          {/* 이전 버튼 */}
           <button
             onClick={() => setCurrentPage(currentPage - 1)}
             disabled={currentPage === 0}
-            className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
           >
             이전
           </button>
-          {[...Array(reviewPage?.pageInfo?.totalPages || 0)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i)}
-              className={`px-3 py-1 text-sm rounded border ${
-                currentPage === i
-                  ? 'bg-[#006989] text-white'
-                  : 'hover:bg-gray-50'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+
+          {/* 페이지 번호 버튼 */}
+          {Array.from({ length: reviewPage.pageInfo.totalPages }).map(
+            (_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i)}
+                className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${
+                  currentPage === i
+                    ? 'bg-[#006989] text-white'
+                    : 'bg-white text-gray-700 border border-gray-300'
+                }`}
+              >
+                {i + 1}
+              </button>
+            )
+          )}
+
+          {/* 다음 버튼 */}
           <button
             onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={
-              currentPage === (reviewPage?.pageInfo?.totalPages || 1) - 1
-            }
-            className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            disabled={currentPage === reviewPage.pageInfo.totalPages - 1}
+            className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
           >
             다음
           </button>
-        </nav>
-      </div>
+        </div>
+      )}
+
       {ReportModalComponent}
     </div>
   );

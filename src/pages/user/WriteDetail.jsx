@@ -339,7 +339,7 @@ const WriteDetail = () => {
                   )}
                   <div>
                     <h3 className="font-medium text-gray-800 mb-1">{post.nickname}</h3>
-                    <p className="text-sm text-gray-600">{post.introduce || '자기소개가 없습니다.'}</p>
+                    <p className="text-sm text-gray-600 whitespace-pre-line">{post.introduce || '자기소개가 없습니다.'}</p>
                   </div>
                 </div>
               </div>
