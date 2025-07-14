@@ -133,17 +133,19 @@ export default function OtherPlaceList() {
                         <div className="font-medium text-gray-900">
                           {place.name}
                         </div>
-                        <div className="text-gray-500 text-sm">
+                        <div className="text-gray-500 text-sm text-nowrap">
                           {place.basicAddress} {place.detailAddress}
                         </div>
-                        <div className="text-gray-500 text-sm">
+                        <div className="text-gray-500 text-sm text-nowrap">
                           {place.introduce}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-500">{place.phone}</td>
-                  <td className="px-6 py-4 text-gray-500">
+                  <td className="px-6 py-4 text-gray-500 text-nowrap">
+                    {place.phone}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-nowrap">
                     <div>
                       평일: {formatTime(place.weekdayStime)} -{' '}
                       {formatTime(place.weekdayEtime)}

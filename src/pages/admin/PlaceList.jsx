@@ -161,14 +161,16 @@ export default function PlaceList() {
                             <div className="text-gray-500 text-sm">
                               {place.basicAddress} {place.detailAddress}
                             </div>
-                            <div className="text-gray-500 text-sm">
+                            <div className="text-gray-500 text-sm text-nowrap">
                               {place.introduce}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-500">{place.phone}</td>
-                      <td className="px-6 py-4 text-gray-500">
+                      <td className="px-6 py-4 text-gray-500 text-nowrap">
+                        {place.phone}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500 text-nowrap">
                         평일: {formatTimeRanges(place.weekdayTime)}
                         <br />
                         주말: {formatTimeRanges(place.weekendTime)}
