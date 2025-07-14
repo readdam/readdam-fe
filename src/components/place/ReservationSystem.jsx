@@ -37,25 +37,28 @@ const ReservationSystem = ({ rooms = [] }) => {
     console.log(selectedRanges);
   }, [selectedRanges]);
 
-  const handleDateChange = async () => {
-    // if (!selectedRoomId || !date) return;
-    if (!date) return;
-    try {
-      setIsLoading(true);
-      const response = await axios.get('/my/reservations/availableTimes', {
+const handleDateChange = async () => {
+  if (!selectedRoomId || !date) return;
+  try {
+    setIsLoading(true);
+    const response = await axios.get(
+      `${url}/reservations/times`,
+      {
         params: {
           placeRoomId: selectedRoomId,
           date: dayjs(date).format('YYYY-MM-DD'),
         },
-      });
-      console.log('예약 가능 시간 응답:', response.data);
-      setTimeData(response.data);
-    } catch (error) {
-      console.error('예약 가능 시간 조회 실패', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      }
+    );
+    console.log('예약 가능 시간 응답:', response.data);
+    setTimeData(response.data);
+  } catch (error) {
+    console.error('예약 가능 시간 조회 실패', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   useEffect(() => {
     setPhone(user?.phone || '');
@@ -103,7 +106,7 @@ const ReservationSystem = ({ rooms = [] }) => {
     console.log('예약 데이터:', payload);
 
     try {
-      await axios.post('/my/reservations', payload);
+      await axios.post('${url}/reservations', payload);
       alert('예약이 완료되었습니다.');
       // 상태 초기화
       setIsSubmitted(true);
@@ -325,6 +328,7 @@ const ReservationSystem = ({ rooms = [] }) => {
                   onChange={(e) => {
                     setDate(e.target.value);
                     setSelectedTime([]);
+                    handleDateChange();
                     // handleDateChange(e.target.value);
                   }}
                   min={getTomorrow()}

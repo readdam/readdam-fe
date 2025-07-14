@@ -1,28 +1,45 @@
-import React, { Fragment, useState, useEffect } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import {
   Heart,
   ShareIcon,
   MapPinIcon,
   CalendarIcon,
-  ClockIcon,
   UsersIcon,
 } from "lucide-react";
-import { url } from "../../config/config";
-import { useAtomValue } from "jotai";
-import { userAtom, tokenAtom } from "../../atoms";
 import { useAxios } from "@hooks/useAxios";
+import { useAtomValue, useSetAtom } from "jotai";
+import { userAtom, tokenAtom } from "../../atoms";
 import { useNavigate } from "react-router-dom";
+import { url } from "../../config/config";
 
 const GroupHeader = ({ group }) => {
   const axios = useAxios();
   const user = useAtomValue(userAtom);
+  const setUserAtom = useSetAtom(userAtom);
   const token = useAtomValue(tokenAtom);
-
-  const [liked, setLiked] = useState(group.isLikedByMe);
-  const [likeCount, setLikeCount] = useState(group.likes);
-  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
+  // 좋아요 상태
+  const [liked, setLiked] = useState(group.isLikedByMe);
+  const [likeCount, setLikeCount] = useState(group.likes);
+
+  // 모달 열림 여부
+  const [showModal, setShowModal] = useState(false);
+
+  // 참여 상태
+  const [joined, setJoined] = useState(false);
+  const [canCancel, setCanCancel] = useState(false);
+
+  // 헤더에 표시할 현재 참여 인원
+  const [participants, setParticipants] = useState(
+    group.currentParticipants ?? 0
+  );
+
+  // 모달 표시용 데이터
+  const [usedPoints, setUsedPoints] = useState(0);
+  const [cancelDeadline, setCancelDeadline] = useState("");
+
+  // 태그, 날짜 목록
   const tagList = [group.tag1, group.tag2, group.tag3].filter(Boolean);
   const dateList = [
     group.round1Date,
@@ -31,173 +48,250 @@ const GroupHeader = ({ group }) => {
     group.round4Date,
   ]
     .filter(Boolean)
-    .map((date) => date.split("T")[0]);
+    .map((dt) => dt.split("T")[0]);
 
+  // 1) 컴포넌트 마운트 시, 내 참여 상태 + 현재 참여자 수 가져오기
   useEffect(() => {
-    const fetchLikeStatus = async () => {
-      try {
-        const res = await axios.get(
-          `${url}/classDetail/${group.classId}/like-status`,
-          {
-            headers: {
-              Authorization: token.access_token,
-            },
-          }
-        );
-        setLiked(res.data.liked);
-        setLikeCount(res.data.likeCount);
-      } catch (err) {
-        console.error("좋아요 상태 조회 실패: ", err);
-      }
-    };
+    if (!user?.username) return;
+    axios
+      .get(`${url}/classDetail/${group.classId}/participation-info`, {
+        headers: { Authorization: token.access_token },
+      })
+      .then((res) => {
+        setJoined(res.data.joined);
+        setCanCancel(res.data.canCancel);
+        setParticipants(res.data.currentParticipants);
+      })
+      .catch(console.error);
+  }, [group.classId, user, axios, token.access_token]);
 
-    if (user && user.username) fetchLikeStatus();
-  }, [group.classId, user]);
-
-  const HandleLikeToggle = async () => {
-    if (!user.username) {
-      alert("로그인이 필요한 서비스입니다.");
-      navigate("/login");
-      return;
-    }
-
-    try {
-      // 좋아요 토글 API 호출
-      const response = await axios.post(
-        `${url}/classDetail/${group.classId}/like`,
-        {},
-        {
-          headers: {
-            Authorization: token.access_token,
-          },
-        }
-      );
-
-      setLiked(response.data.liked);
-      setLikeCount(response.data.likeCount);
-    } catch (err) {
-      console.error("좋아요 실패:", err);
-      alert("좋아요 처리중 오류가 발생했습니다.");
-    }
-  };
-
-  const handleShare = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    alert("링크가 복사되었습니다!");
-  };
-
+  // 모달 열기 전, 포인트·마감일만 따로 다시 가져오기
   const openJoinModal = () => {
     if (!user?.username) {
       alert("참여하려면 로그인이 필요합니다.");
-      navigate("/login");
-      return;
+      return navigate("/login");
     }
-    setShowModal(true);
+    axios
+      .get(`${url}/classDetail/${group.classId}/participation-info`, {
+        headers: { Authorization: token.access_token },
+      })
+      .then((res) => {
+        setUsedPoints(res.data.usedPoints);
+        setCancelDeadline(res.data.cancelableUntil);
+        setShowModal(true);
+      })
+      .catch(() => {
+        alert("참여 정보 조회 중 오류가 발생했습니다.");
+      });
   };
 
-  const closeJoinModal = () => {
-    setShowModal(false);
+  // 참여 신청
+  const handleJoin = () => {
+    axios
+      .post(
+        `${url}/classDetail/${group.classId}/join`,
+        {},
+        { headers: { Authorization: token.access_token } }
+      )
+      .then(() => {
+        alert("참여 신청이 완료되었습니다.");
+        setShowModal(false);
+        setJoined(true);
+        setCanCancel(true);
+        setParticipants((prev) => prev + 1);
+        // userAtom의 totalPoint 갱신
+        setUserAtom((prev) => ({
+          ...prev,
+          totalPoint: prev.totalPoint - usedPoints,
+        }));
+      })
+      .catch((err) => {
+        const status = err.response?.status;
+        const data = err.response?.data;
+        if (data?.message) {
+          alert(data.message);
+          return;
+        }
+        if (
+          status === 500 &&
+          typeof data === "string" &&
+          data.includes("포인트가 부족합니다")
+        ) {
+          alert(data);
+          return;
+        }
+        alert("참여 신청 중 오류가 발생했습니다.");
+      });
+  };
+
+  // 참여 취소
+  const handleCancelJoin = () => {
+    axios
+      .delete(`${url}/classDetail/${group.classId}/join`, {
+        headers: { Authorization: token.access_token },
+      })
+      .then(() => {
+        alert("참여가 취소되었습니다.");
+        setJoined(false);
+        setCanCancel(false);
+        setParticipants((prev) => prev - 1);
+      })
+      .catch(() => alert("참여 취소 중 오류가 발생했습니다."));
+  };
+
+  // 좋아요 토글
+  const toggleLike = () => {
+    if (!user?.username) {
+      alert("로그인이 필요한 서비스입니다.");
+      return navigate("/login");
+    }
+    axios
+      .post(
+        `${url}/classDetail/${group.classId}/like`,
+        {},
+        { headers: { Authorization: token.access_token } }
+      )
+      .then((res) => {
+        setLiked(res.data.liked);
+        setLikeCount(res.data.likeCount);
+      })
+      .catch(() => alert("좋아요 처리 중 오류가 발생했습니다."));
   };
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
       <div className="flex flex-col md:flex-row gap-8">
+        {/* 이미지 */}
+        <img
+          src={`${url}/image?filename=${group.mainImg}`}
+          alt={group.title}
+          className="md:w-1/2 w-full h-[400px] object-cover rounded-lg"
+        />
         <div className="md:w-1/2">
-          <img
-            src={`${url}/image?filename=${group.mainImg}`}
-            alt={group.title}
-            className="w-full h-[400px] object-cover rounded-lg"
-          />
-        </div>
-        <div className="md:w-1/2">
-          <div className="flex justify-between items-start mb-4">
-            <h1 className="text-2xl font-bold text-gray-800">{group.title}</h1>
-          </div>
+          {/* 제목/소개 */}
+          <h1 className="text-2xl font-bold mb-4">{group.title}</h1>
           <p className="text-gray-600 mb-6">{group.classIntro}</p>
+
+          {/* 태그 */}
           <div className="flex flex-wrap gap-2 mb-6">
-            {tagList.map((tag, index) => (
+            {tagList.map((tag, i) => (
               <span
-                key={index}
+                key={i}
                 className="px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm rounded-full"
               >
                 {tag}
               </span>
             ))}
           </div>
+
+          {/* 정보 */}
           <div className="space-y-4 mb-8">
             <div className="flex items-center text-gray-600">
               <UsersIcon className="w-5 h-5 mr-2" />
-              <span>
-                현재 {group.currentParticipants ?? 0}명 /
-                최소 {group.minPerson}명 ~ 최대 {group.maxPerson}명
-              </span>
+              현재 {participants}명 / 최소 {group.minPerson}명 ~ 최대 {group.maxPerson}명
             </div>
             <div className="flex items-center text-gray-600">
               <MapPinIcon className="w-5 h-5 mr-2" />
-              <p className="text-gray-700 mb-1">{group.round1PlaceName}</p>&nbsp;&nbsp;
-              <p className="text-gray-400 text-sm">{group.round1PlaceLoc}</p>
+              {group.round1PlaceName} (
+              <span className="text-sm text-gray-400">
+                {group.round1PlaceLoc}
+              </span>
+              )
             </div>
-            {/* <div className="flex items-center text-gray-600">
-              <ClockIcon className="w-5 h-5 mr-2" />
-              <span>{group.schedule}</span>
-            </div> */}
             <div className="flex items-center text-gray-600">
               <CalendarIcon className="w-5 h-5 mr-2" />
-              <div className="flex gap-2">
-                {dateList.map((date, index) => (
-                  <Fragment key={index}>
-                    <span>{date}</span>
-                    {index < dateList.length - 1 && <span>|</span>}
-                  </Fragment>
-                ))}
-              </div>
+              {dateList.map((d, i) => (
+                <Fragment key={i}>
+                  <span>{d}</span>
+                  {i < dateList.length - 1 && <span className="mx-1">|</span>}
+                </Fragment>
+              ))}
             </div>
           </div>
+
+          {/* 참여/취소/참여중 & 좋아요/공유 */}
           <div className="flex gap-2">
+            {!joined ? (
+              <button
+                onClick={openJoinModal}
+                className="px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78]"
+              >
+                참여하기
+              </button>
+            ) : canCancel ? (
+              <button
+                onClick={handleCancelJoin}
+                className="px-6 py-3 bg-[#E88D67] text-white rounded-lg hover:opacity-90"
+              >
+                참여 취소
+              </button>
+            ) : (
+              <span className="px-6 py-3 bg-gray-200 text-gray-600 rounded-lg">
+                참여중
+              </span>
+            )}
+
             <button
-              onClick={openJoinModal}
-              className="flex justify-between px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
-            >
-              참여하기
-            </button>
-            <button
-              onClick={HandleLikeToggle}
+              onClick={toggleLike}
               disabled={!user?.username}
               className="p-2 hover:bg-gray-100 rounded-full"
             >
-              {liked ? (
-                <Heart className="w-6 h-6 text-red-500 fill-red-500" />
-              ) : (
-                <Heart className="w-6 h-6 text-gray-600" />
-              )}
+              <Heart
+                className={`w-6 h-6 ${
+                  liked ? "text-red-500 fill-red-500" : "text-gray-600"
+                }`}
+              />
             </button>
-            <span className="flex items-center text-gray-600">{likeCount}</span>
+            <span className="flex items-center text-gray-600">
+              {likeCount}
+            </span>
             <button
-              onClick={handleShare}
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                alert("링크가 복사되었습니다!");
+              }}
               className="p-2 hover:bg-gray-100 rounded-full"
             >
               <ShareIcon className="w-6 h-6 text-gray-600" />
             </button>
           </div>
-
-          {showModal && (
-            <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-40 flex justify-center items-center z-50">
-              <div className="bg-white p-6 rounded-xl w-[400px]">
-                <h2 className="text-xl font-bold mb-4">모임 신청</h2>
-                {/* 여기에 신청 폼 내용 추가 */}
-                <button
-                  onClick={closeJoinModal}
-                  className="mt-4 bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
-                >
-                  닫기
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* 모달 */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[400px]">
+            <h2 className="text-xl font-bold mb-4">모임 신청</h2>
+            <p>
+              사용 포인트: <strong>{usedPoints} P</strong>
+            </p>
+            <p className="mb-4">
+              취소 가능 마감: <strong>{cancelDeadline}</strong>
+            </p>
+
+            <button
+              onClick={handleJoin}
+              disabled={user.totalPoint < usedPoints}
+              className={`w-full py-2 rounded mb-2 ${
+                user.totalPoint < usedPoints
+                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  : "bg-[#006989] text-white hover:bg-[#005C78]"
+              }`}
+            >
+              {user.totalPoint < usedPoints ? "포인트 부족" : "신청하기"}
+            </button>
+            <button
+              onClick={() => setShowModal(false)}
+              className="w-full py-2 bg-gray-300 text-gray-700 rounded"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
 export default GroupHeader;
