@@ -38,28 +38,41 @@ const Place = () => {
     refetch,
   } = useInfiniteQuery({
     queryKey: ['places', { selectedCategory, searchQuery, sortBy }],
+
     queryFn: async ({ pageParam = 0 }) => {
-      const res = await fetchPlaces(axios, {
-        page: pageParam,
-        size: 12,
-        tag: selectedCategory === '읽담' ? null : selectedCategory,
-        keyword: searchQuery,
-        placeType: selectedCategory === '읽담' ? 'PLACE' : 'ALL',
-        sortBy,
-        lat: user?.lat,
-        lng: user?.lng,
-      });
-      return res;
+      try {
+        if (sortBy === 'distance' && (!user?.lat || !user?.lng)) {
+          throw new Error('위치 미설정');
+        }
+
+        const res = await fetchPlaces(axios, {
+          page: pageParam,
+          size: 12,
+          tag: selectedCategory === '읽담' ? null : selectedCategory,
+          keyword: searchQuery,
+          placeType: selectedCategory === '읽담' ? 'PLACE' : 'ALL',
+          sortBy,
+          lat: user?.lat,
+          lng: user?.lng,
+        });
+        return res;
+      } catch (err) {
+        if (err.message === '위치 미설정') {
+          alert('위치를 설정해주세요.');
+        } else {
+          alert('장소 목록을 불러오는 중 오류가 발생했습니다.');
+          console.error(err);
+        }
+        throw err; // 에러는 react-query 쪽에도 전달
+      }
     },
 
     getNextPageParam: (lastPage) => {
       const { currentPage, totalPages } = lastPage.pageInfo;
-      if (currentPage + 1 >= totalPages) {
-        return undefined;
-      }
+      if (currentPage + 1 >= totalPages) return undefined;
       return currentPage + 1;
     },
-
+    retry: false,
     keepPreviousData: true,
   });
 
@@ -175,7 +188,12 @@ const Place = () => {
             </button>
             <button
               onClick={() => {
-                if (user === null || user?.lat === 0 || user?.lng === 0) {
+                console.log(user);
+                if (
+                  user === null ||
+                  user?.lat === undefined ||
+                  user?.lng === undefined
+                ) {
                   alert('위치를 설정해주세요.');
                   return;
                 }

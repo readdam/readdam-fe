@@ -214,6 +214,7 @@ const ReservationSystem = ({ rooms = [] }) => {
                     console.log(room);
                     setSelectedRoom(room);
                     setSelectedRoomId(room.roomId);
+                    setPeople(room.minPerson);
                   }}
                   className={`border rounded-lg p-4 cursor-pointer transition-all ${
                     selectedRoom === null
@@ -340,7 +341,7 @@ const ReservationSystem = ({ rooms = [] }) => {
                     시간 선택
                   </label>
                   <div className="grid grid-cols-6 gap-2">
-                    {timeData.allTimes.map((time) => {
+                    {timeData?.allTimes?.map((time) => {
                       const isReserved = timeData.reservedTimes.includes(time);
                       const isSelected = selectedTime.includes(time);
 

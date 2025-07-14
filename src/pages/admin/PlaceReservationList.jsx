@@ -195,7 +195,7 @@ export default function PlaceReservationList() {
                 ].map((head) => (
                   <th
                     key={head}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap"
                   >
                     {head}
                   </th>
@@ -205,7 +205,10 @@ export default function PlaceReservationList() {
 
             <tbody className="divide-y divide-gray-200">
               {data?.content?.map((r) => (
-                <tr key={`${r.reservationId}-${r.date}-${r.startTime}`}>
+                <tr
+                  key={`${r.reservationId}-${r.date}-${r.startTime}`}
+                  className="text-nowrap"
+                >
                   <td className="px-6 py-4 text-gray-500 text-sm">
                     {r.placeName}
                   </td>
@@ -231,7 +234,7 @@ export default function PlaceReservationList() {
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-sm">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs ${
+                      className={`px-2 py-1 rounded-full text-xs text-nowrap ${
                         r.status === 'CANCELLED'
                           ? 'bg-gray-200 text-gray-600'
                           : r.status === 'CONFIRMED'
