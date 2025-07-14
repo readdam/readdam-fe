@@ -171,7 +171,7 @@ const BookReviewSection = ({ isbn }) => {
           </label>
           <button
             onClick={handleAddReview}
-            className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78]"
+            className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] cursor-pointer"
           >
             작성하기
           </button>
@@ -228,13 +228,13 @@ const BookReviewSection = ({ isbn }) => {
                       <div className="flex gap-2">
                         <button
                           onClick={handleUpdateReview}
-                          className="px-3 py-1 bg-[#006989] text-white rounded-md text-sm"
+                          className="px-3 py-1 bg-[#006989] text-white rounded-md text-sm cursor-pointer"
                         >
                           저장
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-sm"
+                          className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-sm cursor-pointer"
                         >
                           취소
                         </button>
@@ -300,40 +300,44 @@ const BookReviewSection = ({ isbn }) => {
 
       {/* 페이징 */}
       {reviewPage && (
-        <div className="flex justify-center mt-6">
-          <nav className="flex items-center gap-2">
-            <button
-              onClick={() =>
-                setCurrentPage(reviewPage.pageInfo.currentPage - 2)
-              }
-              disabled={reviewPage.pageInfo.currentPage === 1}
-              className="px-3 py-1 text-sm border rounded disabled:opacity-50"
-            >
-              이전
-            </button>
-            {Array.from({ length: reviewPage.pageInfo.totalPages }).map(
-              (_, i) => (
+        <div className="flex justify-center items-center gap-2 mt-12">
+          {/* 이전 버튼 */}
+          <button
+            disabled={reviewPage.pageInfo.currentPage === 1}
+            onClick={() => setCurrentPage(reviewPage.pageInfo.currentPage - 2)}
+            className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+          >
+            이전
+          </button>
+
+          {/* 페이지 번호 버튼 */}
+          {Array.from({ length: reviewPage.pageInfo.totalPages }).map(
+            (_, i) => {
+              const pageNum = i + 1;
+              return (
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i)}
-                  className={`px-3 py-1 text-sm rounded border ${
-                    reviewPage.pageInfo.currentPage - 1 === i
+                  className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${
+                    reviewPage.pageInfo.currentPage === pageNum
                       ? 'bg-[#006989] text-white'
-                      : 'hover:bg-gray-50'
+                      : 'bg-white text-gray-700 border border-gray-300'
                   }`}
                 >
-                  {i + 1}
+                  {pageNum}
                 </button>
-              )
-            )}
-            <button
-              onClick={() => setCurrentPage(reviewPage.pageInfo.currentPage)}
-              disabled={reviewPage.pageInfo.isLastPage}
-              className="px-3 py-1 text-sm border rounded disabled:opacity-50"
-            >
-              다음
-            </button>
-          </nav>
+              );
+            }
+          )}
+
+          {/* 다음 버튼 */}
+          <button
+            disabled={!reviewPage.pageInfo.hasNext}
+            onClick={() => setCurrentPage(reviewPage.pageInfo.currentPage)}
+            className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+          >
+            다음
+          </button>
         </div>
       )}
     </div>

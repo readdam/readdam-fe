@@ -107,7 +107,7 @@ export default function BookDetail() {
           </div>
           <div className="flex-1 relative">
             <HeartIcon
-              className={`w-6 h-6 ${
+              className={`w-6 h-6 cursor-pointer ${
                 isLiked ? 'fill-[#E88D67] text-[#E88D67]' : 'text-gray-400'
               } absolute top-2 right-2`}
               onClick={() => handleToggleLike()}

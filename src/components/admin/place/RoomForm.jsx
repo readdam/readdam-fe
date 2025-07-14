@@ -46,7 +46,7 @@ export default function RoomForm({
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(index)}
-                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -204,7 +204,7 @@ export default function RoomForm({
           <button
             type="button"
             onClick={handleAddRoom}
-            className="flex-1 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center justify-center gap-2 cursor-pointer"
           >
             <Plus className="w-5 h-5" />
             {editingRoom ? '수정 완료' : '방 추가하기'}
@@ -213,7 +213,7 @@ export default function RoomForm({
             <button
               type="button"
               onClick={handleCancelEdit}
-              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
             >
               수정 취소
             </button>

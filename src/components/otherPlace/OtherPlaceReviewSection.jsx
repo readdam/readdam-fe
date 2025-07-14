@@ -311,39 +311,41 @@ const OtherPlaceReviewSection = () => {
       </div>
 
       {/* 페이지네이션 */}
-      <div className="flex justify-center mt-6">
-        <nav className="flex items-center gap-2">
+      <div className="flex justify-center items-center gap-2 mt-12">
+        {/* 이전 버튼 */}
+        <button
+          onClick={() => setCurrentPage(currentPage - 1)}
+          disabled={currentPage === 0}
+          className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+        >
+          이전
+        </button>
+
+        {/* 페이지 번호 버튼 */}
+        {[...Array(reviewPage?.pageInfo?.totalPages || 0)].map((_, i) => (
           <button
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 0}
-            className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            key={i}
+            onClick={() => setCurrentPage(i)}
+            className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${
+              currentPage === i
+                ? 'bg-[#006989] text-white'
+                : 'bg-white text-gray-700 border border-gray-300'
+            }`}
           >
-            이전
+            {i + 1}
           </button>
-          {[...Array(reviewPage?.pageInfo?.totalPages || 0)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i)}
-              className={`px-3 py-1 text-sm rounded border ${
-                currentPage === i
-                  ? 'bg-[#006989] text-white'
-                  : 'hover:bg-gray-50'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={
-              currentPage === (reviewPage?.pageInfo?.totalPages || 1) - 1
-            }
-            className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
-          >
-            다음
-          </button>
-        </nav>
+        ))}
+
+        {/* 다음 버튼 */}
+        <button
+          onClick={() => setCurrentPage(currentPage + 1)}
+          disabled={currentPage === (reviewPage?.pageInfo?.totalPages || 1) - 1}
+          className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+        >
+          다음
+        </button>
       </div>
+
       {ReportModalComponent}
     </div>
   );
