@@ -8,7 +8,7 @@ const PlaceCard = ({ place, size = 'large' }) => {
     <div
       className={`
         border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow
-        ${place.isPromoted ? 'border-[#E88D67] shadow-md' : ''}
+ 
         ${isSmall ? 'h-full' : ''}
       `}
     >
@@ -46,15 +46,17 @@ const PlaceCard = ({ place, size = 'large' }) => {
           <MapPinIcon className="w-3 h-3 mr-1 flex-shrink-0" />
           <span className="line-clamp-1">{place.address}</span>
         </div>
-        <div className="flex flex-wrap gap-1">
-          {place.tags.map((tag, index) => (
-            <span
-              key={index}
-              className="px-2 py-0.5 bg-[#F3F7EC] text-[#006989] text-xs rounded-full"
-            >
-              {tag}
-            </span>
-          ))}
+        <div className="overflow-hidden whitespace-nowrap text-ellipsis">
+          <div className="inline-flex gap-1">
+            {place.tags.map((tag, index) => (
+              <span
+                key={index}
+                className="inline-block px-2 py-0.5 bg-[#F3F7EC] text-[#006989] text-xs rounded-full whitespace-nowrap"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>

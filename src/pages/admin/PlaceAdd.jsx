@@ -335,7 +335,7 @@ export default function PlaceAdd() {
     <div className="min-h-screen bg-gray-50">
       <div className="p-6 max-w-4xl mx-auto space-y-8">
         <div className="flex items-center gap-4 mb-8">
-          <button className="p-2 hover:bg-gray-100 rounded-lg">
+          <button className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
             <ArrowLeft
               className="w-6 h-6"
               onClick={() => navigate('/admin/placeList')}
@@ -402,14 +402,14 @@ export default function PlaceAdd() {
         <div className="flex gap-4">
           <button
             type="submit"
-            className="flex-1 px-6 py-3 bg-[#006989] text-white rounded-lg"
+            className="flex-1 px-6 py-3 bg-[#006989] text-white rounded-lg cursor-pointer"
             onClick={handleSubmit}
           >
             저장하기
           </button>
           <button
             type="button"
-            className="flex-1 px-6 py-3 border border-gray-300 rounded-lg"
+            className="flex-1 px-6 py-3 border border-gray-300 rounded-lg cursor-pointer"
             onClick={() => navigate(-1)}
           >
             취소

@@ -496,14 +496,14 @@ export default function PlaceEdit() {
         <div className="flex gap-4">
           <button
             type="button"
-            className="flex-1 px-6 py-3 bg-[#006989] text-white rounded-lg"
+            className="flex-1 px-6 py-3 bg-[#006989] text-white rounded-lg cursor-pointer"
             onClick={handleSubmit}
           >
             저장하기
           </button>
           <button
             type="button"
-            className="flex-1 px-6 py-3 border border-gray-300 rounded-lg"
+            className="flex-1 px-6 py-3 border border-gray-300 rounded-lg cursor-pointer"
             onClick={() => navigate(-1)}
           >
             취소
