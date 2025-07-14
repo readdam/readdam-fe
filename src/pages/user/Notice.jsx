@@ -85,8 +85,8 @@ const Notice = () => {
     <div className="w-full bg-[#F9F9F7] py-8">
       <div className="w-[80%] mx-auto px-4 max-w-5xl">
         {/* 상단 타이틀 */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">공지사항</h1>
+        <div className="container mx-auto mb-8">
+          <h1 className="text-3xl font-bold text-[#006989] mb-4">공지사항</h1>
           <p className="text-gray-600">
             읽담 서비스의 새로운 소식과 중요한 안내사항을 확인하세요.
           </p>
@@ -178,7 +178,7 @@ const Notice = () => {
               </button>
               {expandedItems.includes(notice.noticeId) && (
                 <div className="px-6 pb-4 pt-2 bg-[#F3F7EC]/30">
-                  <p className="text-gray-700 leading-relaxed">
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                     {notice.content}
                   </p>
                 </div>

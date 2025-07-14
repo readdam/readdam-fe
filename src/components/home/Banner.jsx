@@ -39,14 +39,14 @@ const Banner = () => {
         <div className="flex flex-col md:flex-row items-center">
           <div className="w-full md:w-1/2 mb-8 md:mb-0">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800">
-              {banner.title}
+              {banner.titleText}
             </h1>
             <p className="text-lg md:text-xl mb-8 text-gray-600">
               {banner.content}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                to="/writeList"
+                to={banner.button1.link}
                 className="px-6 py-3 bg-[#006989] text-white rounded-xl hover:bg-[#005C78] transition-colors"
               >
                 {banner.button1.text}
