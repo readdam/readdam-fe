@@ -38,6 +38,7 @@ const Place = () => {
     refetch,
   } = useInfiniteQuery({
     queryKey: ['places', { selectedCategory, searchQuery, sortBy }],
+
     queryFn: async ({ pageParam = 0 }) => {
       try {
         if (sortBy === 'distance' && (!user?.lat || !user?.lng)) {
@@ -71,7 +72,7 @@ const Place = () => {
       if (currentPage + 1 >= totalPages) return undefined;
       return currentPage + 1;
     },
-
+    retry: false,
     keepPreviousData: true,
   });
 
@@ -187,7 +188,12 @@ const Place = () => {
             </button>
             <button
               onClick={() => {
-                if (user === null || user?.lat === 0 || user?.lng === 0) {
+                console.log(user);
+                if (
+                  user === null ||
+                  user?.lat === undefined ||
+                  user?.lng === undefined
+                ) {
                   alert('위치를 설정해주세요.');
                   return;
                 }
