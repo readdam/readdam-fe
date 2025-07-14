@@ -7,6 +7,7 @@ import {
   CalendarIcon,
 } from 'lucide-react';
 import { useAxios } from '@hooks/useAxios';
+import { useNavigate } from 'react-router';
 
 // statusFilter 변환 함수
 const mapStatus = (value) => {
@@ -57,6 +58,7 @@ const AdminClassList = () => {
   const [groups, setGroups] = useState([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
   const fetchClassList = async () => {
     if (currentPage < 1) return;
@@ -84,8 +86,7 @@ const AdminClassList = () => {
 
   const handlePageChange = (pageNumber) => {
     if (pageNumber >= 1 && pageNumber <= Math.ceil(total / 10)) {
-      setCurrentPage(pageNumber);
-      fetchClassList(); // 변경된 페이지로 요청
+      setCurrentPage(pageNumber); // 이거만 남겨
     }
   };
 
@@ -98,15 +99,15 @@ const AdminClassList = () => {
         </div>
         {/* Search and Filters */}
         <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-          <div className="grid grid-cols-4 gap-4">
-            {/* Search */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                fetchClassList();
-              }}
-              className="col-span-2 relative"
-            >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              fetchClassList();
+            }}
+            className="flex flex-wrap lg:flex-nowrap items-center gap-4"
+          >
+            {/* 검색창 */}
+            <div className="relative flex-1 min-w-[200px]">
               <input
                 type="text"
                 placeholder="모임명, 개설자 이름 검색"
@@ -115,40 +116,42 @@ const AdminClassList = () => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
               />
               <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-            </form>
-            {/* Status Filter */}
+            </div>
+
+            {/* 상태 필터 */}
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
+              className="min-w-[120px] px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
             >
               <option value="all">전체 상태</option>
               <option value="recruiting">모집중</option>
               <option value="in_progress">진행중</option>
               <option value="completed">종료</option>
             </select>
-            {/* Date Filter */}
+
+            {/* 기간 필터 */}
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
+              className="min-w-[120px] px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
             >
               <option value="all">전체 기간</option>
               <option value="week">최근 일주일</option>
               <option value="three_months">최근 3개월</option>
               <option value="six_months">최근 6개월</option>
             </select>
-            {/* Search Button */}
-            <div className="col-span-4 flex justify-end">
-              <button
-                className="px-6 py-2 bg-[#E88D67] text-white rounded-lg hover:bg-opacity-90 transition-colors cursor-pointer"
-                onClick={fetchClassList}
-              >
-                검색
-              </button>
-            </div>
-          </div>
+
+            {/* 검색 버튼 */}
+            <button
+              type="submit"
+              className="px-6 py-2 bg-[#E88D67] text-white rounded-lg hover:bg-opacity-90 transition-colors whitespace-nowrap"
+            >
+              검색
+            </button>
+          </form>
         </div>
+
         {/* Groups Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <table className="w-full">
@@ -183,9 +186,7 @@ const AdminClassList = () => {
                 <tr
                   key={group.classId}
                   className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => {
-                    window.location.href = `/adminClassDetail/${group.classId}`;
-                  }}
+                  onClick={() => navigate(`/classDetail/${group.classId}`)}
                 >
                   <td className="px-4 py-4 text-sm text-gray-900">
                     {group.no}
@@ -233,11 +234,7 @@ const AdminClassList = () => {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`border px-3 py-1 rounded cursor-pointer ${
-                    currentPage === 1
-                      ? 'bg-white text-gray-300 border-gray-200 cursor-not-allowed'
-                      : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
-                  }`}
+                  className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
                 >
                   이전
                 </button>
@@ -248,12 +245,12 @@ const AdminClassList = () => {
                   return (
                     <button
                       key={pageNumber}
-                      className={`px-3 py-1 text-sm border rounded cursor-pointer ${
-                        pageNumber === currentPage
-                          ? 'bg-[#006989] text-white border-[#006989]'
-                          : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
-                      }`}
                       onClick={() => handlePageChange(pageNumber)}
+                      className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${
+                        currentPage === pageNumber
+                          ? 'bg-[#006989] text-white'
+                          : 'bg-white text-gray-700 border border-gray-300'
+                      }`}
                     >
                       {pageNumber}
                     </button>
@@ -264,11 +261,7 @@ const AdminClassList = () => {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage >= Math.ceil(total / 10)}
-                  className={`border px-3 py-1 rounded cursor-pointer ${
-                    currentPage >= Math.ceil(total / 10)
-                      ? 'bg-white text-gray-300 border-gray-200 cursor-not-allowed'
-                      : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
-                  }`}
+                  className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
                 >
                   다음
                 </button>
