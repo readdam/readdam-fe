@@ -98,10 +98,10 @@ const Place = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#F9F9F7]">
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">장소 찾기</h1>
+          <h1 className="text-3xl font-bold text-[#006989] mb-4">장소 찾기</h1>
           <p className="text-gray-600">
             독서와 함께하는 공간을 찾아보세요. 카페, 서점, 독서모임 장소 등
             다양한 공간을 만나볼 수 있습니다.
