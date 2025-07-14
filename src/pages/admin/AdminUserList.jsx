@@ -5,6 +5,7 @@ import { url } from "../../config/config";
 import SearchFilter from "../../components/admin/user/SearchFilter";
 import Pagination from "../../components/admin/user/Pagination";
 import UserTable from "../../components/admin/user/UserTable";
+import AdminUserModal from "@components/admin/user/AdminUserModal";
 
 const AdminUserList = () => {
   const axios = useAxios();
