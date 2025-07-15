@@ -33,7 +33,7 @@ const ClassCard = ({ group }) => {
           <h3 className="text-lg font-semibold text-gray-800">{group.title}</h3>
           <button className="flex items-center gap-1 text-gray-500">
             <HeartIcon className="w-5 h-5 text-red-500" />
-            <span>{group.likeCnt ?? 0}</span>
+            <span>{group.likeCnt ?? group.likeCount ?? 0}</span>
           </button>
         </div>
 
