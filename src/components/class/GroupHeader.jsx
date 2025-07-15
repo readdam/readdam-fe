@@ -36,6 +36,7 @@ const GroupHeader = ({ group }) => {
   );
 
   // 모달 표시용 데이터
+  const [totalPoint, setTotalPoint]   = useState(0);
   const [usedPoints, setUsedPoints] = useState(0);
   const [cancelDeadline, setCancelDeadline] = useState("");
 
@@ -76,6 +77,7 @@ const GroupHeader = ({ group }) => {
         headers: { Authorization: token.access_token },
       })
       .then((res) => {
+        setTotalPoint(res.data.totalPoint); 
         setUsedPoints(res.data.usedPoints);
         setCancelDeadline(res.data.cancelableUntil);
         setShowModal(true);
@@ -259,37 +261,44 @@ const GroupHeader = ({ group }) => {
       </div>
 
       {/* 모달 */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-xl w-[400px]">
-            <h2 className="text-xl font-bold mb-4">모임 신청</h2>
-            <p>
-              사용 포인트: <strong>{usedPoints} P</strong>
-            </p>
-            <p className="mb-4">
-              취소 가능 마감: <strong>{cancelDeadline}</strong>
-            </p>
+{showModal && (() => {
+  // 모달 안에서 바로 계산
+  const currentPoint   = Number(totalPoint) || 0;
+  const neededPoint    = Number(usedPoints)    || 0;
+  const remainingPoint = currentPoint - neededPoint;
+  const isDisabled     = remainingPoint < 0;
 
-            <button
-              onClick={handleJoin}
-              disabled={user.totalPoint < usedPoints}
-              className={`w-full py-2 rounded mb-2 ${
-                user.totalPoint < usedPoints
-                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                  : "bg-[#006989] text-white hover:bg-[#005C78]"
-              }`}
-            >
-              {user.totalPoint < usedPoints ? "포인트 부족" : "신청하기"}
-            </button>
-            <button
-              onClick={() => setShowModal(false)}
-              className="w-full py-2 bg-gray-300 text-gray-700 rounded"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-xl w-[400px]">
+        <h2 className="text-xl font-bold mb-4">모임 신청</h2>
+
+        <p>내 포인트: <strong>{currentPoint} P</strong></p>
+        <p>사용 포인트: <strong>{neededPoint} P</strong></p>
+        <p className="mb-4">잔여 포인트: <strong>{remainingPoint} P</strong></p>
+
+        <button
+          onClick={handleJoin}
+          disabled={isDisabled}
+          className={`w-full py-2 rounded mb-2 ${
+            isDisabled
+              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+              : "bg-[#006989] text-white hover:bg-[#005C78]"
+          }`}
+        >
+          {isDisabled ? "포인트 부족" : "신청하기"}
+        </button>
+        <button
+          onClick={() => setShowModal(false)}
+          className="w-full py-2 bg-gray-300 text-gray-700 rounded"
+        >
+          닫기
+        </button>
+      </div>
+    </div>
+  );
+})()}
+
     </div>
   );
 };

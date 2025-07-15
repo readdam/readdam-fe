@@ -37,6 +37,8 @@ const ClassCreate = () => {
     leaderDescription: "",
   });
 
+  const [reservationIds, setReservationIds] = useState([]);
+
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -151,6 +153,16 @@ const ClassCreate = () => {
       submitData.append("leaderImgF", leaderImgF);
       submitData.append("leaderImg", leaderImgF.name);
     }
+
+    reservationIds
+  .filter(id => id != null && !isNaN(id)) 
+  .forEach(id => {
+    submitData.append("reservationId", id);
+  });
+  console.log("▶️ reservationIds state:", reservationIds);
+  for (let [key, value] of submitData.entries()) {
+  console.log(`▶️ FormData ${key}:`, value);
+}
     // 회차 이미지들
     Object.entries(roundImgs).forEach(([key, file]) => {
       if (file) {
@@ -600,23 +612,32 @@ const ClassCreate = () => {
                 <ReservationSelectModal
                   reservations={reservationList}
                   sessionCount={form.sessionCount}
-                  onApply={(selected) => {
-                    const { dates, venueName, venueAddress, lat, log } =
-                      selected;
+    onApply={(selected) => {
+      const {
+        dates,
+        venueName,
+        venueAddress,
+        lat,
+        log,
+        reservationIds,    // ← 여기를 추가로 꺼내서
+      } = selected;
 
-                    setForm((prev) => ({
-                      ...prev,
-                      venue: "읽담",
-                      venueName,
-                      venueAddress,
-                      lat,
-                      log,
-                      dates,
-                      sessionDetails: Array(dates.length).fill({
-                        description: "",
-                      }),
-                    }));
-                  }}
+      // 1) form 정보 업데이트
+     setForm(prev => ({
+        ...prev,
+        venue: "읽담",
+        venueName,
+        venueAddress,
+        lat,
+        log,
+        dates,
+        sessionDetails: Array(dates.length).fill({ description: "" }),
+      }));
+      // 2) reservationIds state에 저장 (이 값이 handleSubmit 때 FormData에 붙임)
+      setReservationIds(reservationIds);
+
+      setIsReservationModalOpen(false);
+    }}
                   onClose={() => setIsReservationModalOpen(false)}
                 />
               )}
