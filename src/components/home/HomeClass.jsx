@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import { userAtom } from '../../atoms';
 import { useAxios } from '../../hooks/useAxios';
 import { url } from '../../config/config';
 import ClassCard from '@components/class/ClassCard';
@@ -7,25 +9,51 @@ import ClassCard from '@components/class/ClassCard';
 const HomeClass = () => {
   const axios = useAxios();
   const [groups, setGroups] = useState([]);
+  const [user] = useAtom(userAtom);
 
   useEffect(() => {
-    axios
-      .get('/classes') 
-      .then((res) => {
-        setGroups(res.data);
-      })
-      .catch((err) => {
-        console.error('모임 데이터를 불러오지 못했습니다.', err);
-      });
-  }, []);
-   
+    const fetchClasses = async () => {
+      try {
+        let params = {
+          limit: 4,
+        };
+
+      if (user?.lat !== undefined && user?.lng !== undefined) {
+        if (user.lat != null && user.lng != null) {
+          // 로그인했고 좌표 있는 경우 → 거리순
+          params.sort = 'distance';
+          params.lat = user.lat;
+          params.lng = user.lng;
+        } else {
+          // 로그인했지만 좌표 없는 경우 → 최신순
+          params.sort = 'latest';
+        }
+      } else {
+        // user 자체가 아직 undefined → 무조건 latest
+        params.sort = 'latest';
+      }
+
+      const res = await axios.get('/classes', { params });
+      setGroups(res.data);
+    } catch (err) {
+      console.error('모임 데이터를 불러오지 못했습니다.', err);
+      setGroups([]);
+    }
+  };
+
+    fetchClasses();
+  }, [user?.lat, user?.lng, axios]);
+
   return (
     <section className="w-full py-16 bg-white">
       <div className="container mx-auto px-4">
         {/* ✅ 상단 타이틀 + 링크 */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            <span role="img" aria-label="books">📚</span> 나와 취향이 맞는 독서모임을 찾아보세요!
+            <span role="img" aria-label="books">📚</span> 
+            {user?.lat && user?.lng
+              ? '내 근처 독서모임을 찾아보세요!'
+              : '최근 등록된 독서모임을 찾아보세요!'}
           </h2>
           <Link
             to="/classList"
