@@ -217,6 +217,7 @@ const handleDateChange = async () => {
                     console.log(room);
                     setSelectedRoom(room);
                     setSelectedRoomId(room.roomId);
+                    setPeople(room.minPerson);
                   }}
                   className={`border rounded-lg p-4 cursor-pointer transition-all ${
                     selectedRoom === null
@@ -344,7 +345,7 @@ const handleDateChange = async () => {
                     시간 선택
                   </label>
                   <div className="grid grid-cols-6 gap-2">
-                    {timeData.allTimes.map((time) => {
+                    {timeData?.allTimes?.map((time) => {
                       const isReserved = timeData.reservedTimes.includes(time);
                       const isSelected = selectedTime.includes(time);
 
@@ -546,7 +547,7 @@ const handleDateChange = async () => {
               <button
                 type="submit"
                 disabled={!selectedRoom || !date || selectedRanges.length === 0}
-                className="w-full py-3 bg-[#E88D67] text-white font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-[#E88D67] text-white font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 예약하기
               </button>

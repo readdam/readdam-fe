@@ -22,7 +22,7 @@ export function RoomList({
           <div key={room.id} className="border rounded-lg p-4 relative">
             <button
               onClick={() => handleDeleteRoom(room.id)}
-              className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 cursor-pointer"
             >
               <Trash2 className="w-5 h-5" />
             </button>
@@ -69,7 +69,7 @@ export function RoomList({
               </div>
               <button
                 onClick={() => handleEditRoom(room)}
-                className="text-sm text-[#006989] hover:underline"
+                className="text-sm text-[#006989] hover:underline cursor-pointer"
               >
                 수정하기
               </button>

@@ -97,7 +97,7 @@ export default function PlaceReservationList() {
           />
           <button
             onClick={handleSearch}
-            className="bg-[#006989] text-white text-sm px-4 py-2 rounded hover:bg-[#005470]"
+            className="bg-[#006989] text-white text-sm px-4 py-2 rounded hover:bg-[#005470] cursor-pointer"
           >
             검색
           </button>
@@ -195,7 +195,7 @@ export default function PlaceReservationList() {
                 ].map((head) => (
                   <th
                     key={head}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap"
                   >
                     {head}
                   </th>
@@ -205,7 +205,10 @@ export default function PlaceReservationList() {
 
             <tbody className="divide-y divide-gray-200">
               {data?.content?.map((r) => (
-                <tr key={`${r.reservationId}-${r.date}-${r.startTime}`}>
+                <tr
+                  key={`${r.reservationId}-${r.date}-${r.startTime}`}
+                  className="text-nowrap"
+                >
                   <td className="px-6 py-4 text-gray-500 text-sm">
                     {r.placeName}
                   </td>
@@ -231,7 +234,7 @@ export default function PlaceReservationList() {
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-sm">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs ${
+                      className={`px-2 py-1 rounded-full text-xs text-nowrap ${
                         r.status === 'CANCELLED'
                           ? 'bg-gray-200 text-gray-600'
                           : r.status === 'CONFIRMED'
@@ -254,54 +257,42 @@ export default function PlaceReservationList() {
 
         {/* 페이지네이션 */}
         {data?.pageInfo && (
-          <div className="flex justify-center mt-6">
-            <nav className="flex items-center gap-2">
-              {/* 이전 버튼 (항상 표시, 첫 페이지면 비활성화) */}
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-                className={`border px-3 py-1 rounded ${
-                  page === 1
-                    ? 'bg-white text-gray-300 border-gray-200 cursor-not-allowed'
-                    : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
-                }`}
-              >
-                이전
-              </button>
+          <div className="flex justify-center items-center gap-2 mt-12">
+            {/* 이전 버튼 */}
+            <button
+              disabled={page === 1}
+              onClick={() => handlePageChange(page - 1)}
+              className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+            >
+              이전
+            </button>
 
-              {/* 페이지 번호 버튼 */}
-              {Array.from({ length: data.pageInfo.totalPages }).map(
-                (_, idx) => {
-                  const pageNumber = idx + 1;
-                  return (
-                    <button
-                      key={pageNumber}
-                      className={`px-3 py-1 text-sm border rounded ${
-                        pageNumber === page
-                          ? 'bg-[#006989] text-white border-[#006989]'
-                          : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
-                      }`}
-                      onClick={() => handlePageChange(pageNumber)}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                }
-              )}
+            {/* 페이지 번호 버튼 */}
+            {Array.from({ length: data.pageInfo.totalPages }).map((_, idx) => {
+              const pageNumber = idx + 1;
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${
+                    pageNumber === page
+                      ? 'bg-[#006989] text-white'
+                      : 'bg-white text-gray-700 border border-gray-300'
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
 
-              {/* 다음 버튼 (항상 표시, 마지막 페이지면 비활성화) */}
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === data.pageInfo.totalPages}
-                className={`border px-3 py-1 rounded ${
-                  page === data.pageInfo.totalPages
-                    ? 'bg-white text-gray-300 border-gray-200 cursor-not-allowed'
-                    : 'hover:bg-gray-50 border-[#e5e7eb] text-gray-700'
-                }`}
-              >
-                다음
-              </button>
-            </nav>
+            {/* 다음 버튼 */}
+            <button
+              disabled={page === data.pageInfo.totalPages}
+              onClick={() => handlePageChange(page + 1)}
+              className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+            >
+              다음
+            </button>
           </div>
         )}
       </div>

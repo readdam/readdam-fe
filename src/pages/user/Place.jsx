@@ -38,28 +38,41 @@ const Place = () => {
     refetch,
   } = useInfiniteQuery({
     queryKey: ['places', { selectedCategory, searchQuery, sortBy }],
+
     queryFn: async ({ pageParam = 0 }) => {
-      const res = await fetchPlaces(axios, {
-        page: pageParam,
-        size: 12,
-        tag: selectedCategory === '읽담' ? null : selectedCategory,
-        keyword: searchQuery,
-        placeType: selectedCategory === '읽담' ? 'PLACE' : 'ALL',
-        sortBy,
-        lat: user?.lat,
-        lng: user?.lng,
-      });
-      return res;
+      try {
+        if (sortBy === 'distance' && (!user?.lat || !user?.lng)) {
+          throw new Error('위치 미설정');
+        }
+
+        const res = await fetchPlaces(axios, {
+          page: pageParam,
+          size: 12,
+          tag: selectedCategory === '읽담' ? null : selectedCategory,
+          keyword: searchQuery,
+          placeType: selectedCategory === '읽담' ? 'PLACE' : 'ALL',
+          sortBy,
+          lat: user?.lat,
+          lng: user?.lng,
+        });
+        return res;
+      } catch (err) {
+        if (err.message === '위치 미설정') {
+          alert('위치를 설정해주세요.');
+        } else {
+          alert('장소 목록을 불러오는 중 오류가 발생했습니다.');
+          console.error(err);
+        }
+        throw err; // 에러는 react-query 쪽에도 전달
+      }
     },
 
     getNextPageParam: (lastPage) => {
       const { currentPage, totalPages } = lastPage.pageInfo;
-      if (currentPage + 1 >= totalPages) {
-        return undefined;
-      }
+      if (currentPage + 1 >= totalPages) return undefined;
       return currentPage + 1;
     },
-
+    retry: false,
     keepPreviousData: true,
   });
 
@@ -98,10 +111,10 @@ const Place = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#F9F9F7]">
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">장소 찾기</h1>
+          <h1 className="text-3xl font-bold text-[#006989] mb-4">장소 찾기</h1>
           <p className="text-gray-600">
             독서와 함께하는 공간을 찾아보세요. 카페, 서점, 독서모임 장소 등
             다양한 공간을 만나볼 수 있습니다.
@@ -125,7 +138,7 @@ const Place = () => {
             </div>
             <button
               onClick={handleSearch}
-              className="px-6 py-2 bg-[#E88D67] text-white rounded-lg hover:opacity-90"
+              className="px-6 py-2 bg-[#E88D67] text-white rounded-lg hover:opacity-90 cursor-pointer"
             >
               검색
             </button>
@@ -138,7 +151,7 @@ const Place = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat === '전체' ? null : cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium ${
+              className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer ${
                 selectedCategory === (cat === '전체' ? null : cat)
                   ? 'bg-[#006989] text-white'
                   : 'bg-white text-gray-700 border border-gray-200'
@@ -155,7 +168,7 @@ const Place = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setSortBy('latest')}
-              className={`px-3 py-1 text-sm rounded ${
+              className={`px-3 py-1 text-sm rounded cursor-pointer ${
                 sortBy === 'latest'
                   ? 'bg-[#006989] text-white'
                   : 'bg-white text-gray-700 border border-gray-200'
@@ -165,7 +178,7 @@ const Place = () => {
             </button>
             <button
               onClick={() => setSortBy('likes')}
-              className={`px-3 py-1 text-sm rounded ${
+              className={`px-3 py-1 text-sm rounded cursor-pointer ${
                 sortBy === 'likes'
                   ? 'bg-[#006989] text-white'
                   : 'bg-white text-gray-700 border border-gray-200'
@@ -175,13 +188,18 @@ const Place = () => {
             </button>
             <button
               onClick={() => {
-                if (user === null || user?.lat === 0 || user?.lng === 0) {
+                console.log(user);
+                if (
+                  user === null ||
+                  user?.lat === undefined ||
+                  user?.lng === undefined
+                ) {
                   alert('위치를 설정해주세요.');
                   return;
                 }
                 setSortBy('distance');
               }}
-              className={`px-3 py-1 text-sm rounded ${
+              className={`px-3 py-1 text-sm rounded cursor-pointer ${
                 sortBy === 'distance'
                   ? 'bg-[#006989] text-white'
                   : 'bg-white text-gray-700 border border-gray-200'
@@ -224,7 +242,7 @@ const Place = () => {
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="px-6 py-2 bg-[#E88D67] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+              className="px-6 py-2 bg-[#E88D67] text-white rounded-lg hover:opacity-90 disabled:opacity-50 cursor-pointer"
             >
               {isFetchingNextPage ? '로딩중...' : '더보기'}
             </button>
