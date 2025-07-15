@@ -1,35 +1,25 @@
 // src/components/admin/AdminReportDetailModal.jsx
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import { X, ExternalLink } from 'lucide-react'
-import { useAxios } from '../../../hooks/useAxios'
-import PropTypes from 'prop-types'
-
-const ROUTES = {
-  write_short: () => '/writeShortList',
-  write: id => `/writeDetail/${id}`,
-  write_comment: id => `/writeDetail/${id}`,
-  book_review: isbn => `/bookDetail/${isbn}`,
-  class_qna: id => `/classDetail/${id}`,
-  class_review: id => `/classDetail/${id}`,
-  other_place_review: id => `/otherPlaceDetail/${id}`,       // 기존 매핑 유지
-  place_review: id => `/placeDetail/${id}`,  // 기존 매핑 유지
-}
-
-const STATUS_STYLES = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  RESOLVED: 'bg-green-100 text-green-800',
-  REJECTED: 'bg-red-100 text-red-800',
-}
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { X, ExternalLink } from 'lucide-react';
+import { useAxios } from '../../../hooks/useAxios';
+import PropTypes from 'prop-types';
+import {
+  CATEGORY_LABELS,
+  REASON_LABELS,
+  REPORT_ROUTES,
+  STATUS_LABELS,
+  STATUS_STYLES,
+} from '@constants/report';
 
 export default function AdminReportDetailModal({ detail, onClose, onUpdated }) {
-  const navigate = useNavigate()
-  const axios = useAxios()
+  const navigate = useNavigate();
+  const axios = useAxios();
 
   const {
     reportId,
     category,
-    contentPk,           // 리뷰 ID가 들어있습니다
+    contentPk, // 리뷰 ID가 들어있습니다
     reporterUsername,
     reportedUsername,
     reason,
@@ -38,17 +28,17 @@ export default function AdminReportDetailModal({ detail, onClose, onUpdated }) {
     status,
     reportedAt,
     processedAt,
-  } = detail
+  } = detail;
 
   // contentPk 그대로 사용
-  const linkUrl = ROUTES[category]?.(contentPk) ?? '#'
+  const linkUrl = REPORT_ROUTES[category]?.(contentPk) ?? '#';
 
   const action = async (type) => {
     await axios.post('/admin/report/bulk-' + type, null, {
-      params: { category, categoryId: detail.categoryId }
-    })
-    onUpdated()
-  }
+      params: { category, categoryId: detail.categoryId },
+    });
+    onUpdated();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
@@ -64,7 +54,9 @@ export default function AdminReportDetailModal({ detail, onClose, onUpdated }) {
 
         {/* 헤더 */}
         <div className="px-8 py-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-800">신고 상세 (ID: {reportId})</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            신고 상세 (ID: {reportId})
+          </h2>
         </div>
 
         {/* 본문 */}
@@ -81,12 +73,16 @@ export default function AdminReportDetailModal({ detail, onClose, onUpdated }) {
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">카테고리</dt>
-              <dd className="mt-1 text-gray-900">{category}</dd>
+              <dd className="mt-1 text-gray-900">
+                {CATEGORY_LABELS[category]}
+              </dd>
             </div>
             <div className="flex items-center space-x-2">
               <dt className="text-sm font-medium text-gray-500">상태</dt>
-              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${STATUS_STYLES[status]}`}>
-                {status}
+              <span
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${STATUS_STYLES[status]}`}
+              >
+                {STATUS_LABELS[status]}
               </span>
             </div>
             <div>
@@ -105,9 +101,11 @@ export default function AdminReportDetailModal({ detail, onClose, onUpdated }) {
 
           {/* 신고 이유 */}
           <div>
-            <dt className="text-sm font-medium text-gray-500 mb-2">신고 이유</dt>
+            <dt className="text-sm font-medium text-gray-500 mb-2">
+              신고 이유
+            </dt>
             <dd className="p-4 bg-gray-50 rounded whitespace-pre-wrap text-gray-800">
-              {reason}
+              {REASON_LABELS[reason]}
             </dd>
           </div>
 
@@ -119,11 +117,13 @@ export default function AdminReportDetailModal({ detail, onClose, onUpdated }) {
                 <h3 className="font-semibold text-gray-800">{title}</h3>
               </div>
               <div className="p-4 bg-white">
-                <p className="mb-4 whitespace-pre-wrap text-gray-700">{content}</p>
+                <p className="mb-4 whitespace-pre-wrap text-gray-700">
+                  {content}
+                </p>
                 <button
                   onClick={() => {
-                    onClose()           // 모달 닫고
-                    navigate(linkUrl)   // 원래 주소로 이동
+                    onClose(); // 모달 닫고
+                    navigate(linkUrl); // 원래 주소로 이동
                   }}
                   className="inline-flex items-center font-medium text-blue-600 hover:underline"
                 >
@@ -149,11 +149,10 @@ export default function AdminReportDetailModal({ detail, onClose, onUpdated }) {
           >
             숨김
           </button>
-
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 AdminReportDetailModal.propTypes = {
@@ -172,4 +171,4 @@ AdminReportDetailModal.propTypes = {
   }).isRequired,
   onClose: PropTypes.func.isRequired,
   onUpdated: PropTypes.func.isRequired,
-}
+};
