@@ -2,18 +2,6 @@ import React from "react";
 import { HeartIcon } from "lucide-react";
 import singoIcon from "@assets/singo.png";
 
-  /**
-   * PostItCard Component
-   * @param {{
-   *   color: string,
-   *   nickname: string,
-   *   content: string,
-   *   likes: number,
-   *   isLiked: boolean,
-   *   onLikeClick: () => void,
-   *   onReportClick: () => void,
-   * }} props
-   */
   const PostItCard = ({
     color,
     nickname,

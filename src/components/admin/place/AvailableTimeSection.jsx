@@ -62,7 +62,7 @@ export function AvailableTimeSection({
           key={`${type}-${slot}`}
           type="button"
           onClick={() => handleTimeSelection(slot, type)}
-          className={`py-2 rounded-md text-sm font-medium border transition ${
+          className={`py-2 rounded-md text-sm font-medium border transition cursor-pointer ${
             selectedSlots.includes(slot)
               ? 'bg-[#006989] text-white border-[#006989]'
               : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
@@ -83,7 +83,7 @@ export function AvailableTimeSection({
           <button
             type="button"
             onClick={() => toggleAllSlots('weekday')}
-            className="flex items-center gap-1 text-sm bg-[#006989] text-white px-3 py-1 rounded hover:bg-[#005c78] transition"
+            className="flex items-center gap-1 text-sm bg-[#006989] text-white px-3 py-1 rounded hover:bg-[#005c78] transition cursor-pointer"
           >
             {selectedWeekdaySlots.length === weekdaySlots.length
               ? '모두 해제'
@@ -98,7 +98,7 @@ export function AvailableTimeSection({
           <button
             type="button"
             onClick={() => toggleAllSlots('weekend')}
-            className="flex items-center gap-1 text-sm bg-[#006989] text-white px-3 py-1 rounded hover:bg-[#005c78] transition"
+            className="flex items-center gap-1 text-sm bg-[#006989] text-white px-3 py-1 rounded hover:bg-[#005c78] transition cursor-pointer"
           >
             {selectedWeekendSlots.length === weekendSlots.length
               ? '모두 해제'

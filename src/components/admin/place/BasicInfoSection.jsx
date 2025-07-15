@@ -18,6 +18,7 @@ export default function BasicInfoSection({
   // const [detailAddress, setDetailAddress] = useState('');
   const [coords, setCoords] = useState(null);
   const [sdkReady, setSdkReady] = useState(false);
+  const [postcodeReady, setPostcodeReady] = useState(false);
 
   useEffect(() => {
     const loadScript = (src) => {
@@ -34,15 +35,23 @@ export default function BasicInfoSection({
       await loadScript(
         '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
       );
+      if (window.daum && window.daum.Postcode) {
+        setPostcodeReady(true);
+        console.log('🟢 Daum Postcode script loaded');
+      }
+
       await loadScript(
         `//dapi.kakao.com/v2/maps/sdk.js?appkey=${
           import.meta.env.VITE_KAKAO_API_KEY
         }&libraries=services&autoload=false`
       );
-      window.kakao.maps.load(() => {
-        setSdkReady(true);
-        console.log('🟢 Kakao Maps SDK fully loaded');
-      });
+
+      if (window.kakao && window.kakao.maps) {
+        window.kakao.maps.load(() => {
+          setSdkReady(true);
+          console.log('🟢 Kakao Maps SDK fully loaded');
+        });
+      }
     };
 
     loadScripts();
@@ -72,8 +81,8 @@ export default function BasicInfoSection({
   }, [sdkReady, lat, lng]);
 
   const handleSearchAddress = () => {
-    if (!sdkReady) {
-      alert('지도 로딩 중입니다.');
+    if (!postcodeReady) {
+      alert('주소 검색 API 로딩 중입니다.');
       return;
     }
 
@@ -81,6 +90,11 @@ export default function BasicInfoSection({
       oncomplete: (data) => {
         const full = data.address;
         setPlaceAddress(full);
+
+        if (!sdkReady) {
+          console.warn('지도 API 로딩 전이라 좌표 변환이 생략됩니다.');
+          return;
+        }
 
         const geocoder = new window.kakao.maps.services.Geocoder();
         geocoder.addressSearch(full, (results, status) => {
@@ -142,14 +156,19 @@ export default function BasicInfoSection({
               type="text"
               disabled
               value={placeAddress}
-              onChange={(e) => setPlaceAddress(e.target.value)}
+              // onChange={(e) => setPlaceAddress(e.target.value)}
               className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-[#006989]"
               placeholder="주소를 검색하세요"
             />
             <button
               type="button"
               onClick={handleSearchAddress}
-              className="px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005c78]"
+              disabled={!postcodeReady}
+              className={`px-4 py-2 rounded-lg text-white cursor-pointer ${
+                postcodeReady
+                  ? 'bg-[#006989] hover:bg-[#005c78]'
+                  : 'bg-gray-400 cursor-not-allowd'
+              }`}
             >
               주소 검색
             </button>

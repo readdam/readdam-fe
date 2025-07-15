@@ -6,6 +6,7 @@ import { useAxios } from "../hooks/useAxios";
 import { useEffect, useState } from 'react';
 
 const Header = () => {
+  const [searchKeyword, setSearchKeyword] = useState('');
   const axios = useAxios();
   const [token, setToken] = useAtom(tokenAtom);
   const [user, setUser] = useAtom(userAtom);
@@ -78,7 +79,14 @@ const Header = () => {
         });
     }
   }, [user?.lat, user?.lng, token]);
-  
+
+    const handleSearch = () => {
+    if (searchKeyword.trim() !== '') {
+      navigate(`/search?keyword=${encodeURIComponent(searchKeyword)}`);
+      setSearchKeyword('');
+    }
+  };
+
   return (
     <header className="w-full py-4 bg-white shadow-sm">
       <div className="container mx-auto px-4">
@@ -130,10 +138,18 @@ const Header = () => {
             <div className="relative w-full">
               <input
                 type="text"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
                 placeholder="모임, 장소, 책 검색하세요"
                 className="w-full px-4 py-2 pl-10 bg-gray-50 border border-[#E88D67] rounded-lg focus:outline-none focus:border-[#E88D67]"
               />
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" 
+              onClick={handleSearch} />
             </div>
           </div>
 

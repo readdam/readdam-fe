@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 
 const NoticeModal = ({
   notice,
@@ -11,12 +11,14 @@ const NoticeModal = ({
   onDelete,
   onFormatDate,
 }) => {
+  const axios = useAxios();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     title: notice.title,
     content: notice.content,
     topFix: notice.topFix,
   });
+
 
   const handleEditSubmit = async () => {
     const formData = new FormData();
@@ -57,7 +59,7 @@ const NoticeModal = ({
 
         {isEditing ? (
           <>
-            <h3 className="text-xl font-bold mb-4">공지 수정</h3>
+            <h3 className="text-xl font-bold mb-4">공지사항 수정</h3>
             <input
               className="w-full border px-3 py-2 rounded mb-2"
               value={form.title}

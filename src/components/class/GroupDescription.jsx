@@ -10,6 +10,8 @@ const GroupDescription = ({
     index: i,
     image: `${url}/image?filename=${group[`round${i}Img`]}`,  //실제 저장된 이미지 경로
     content: group[`round${i}Content`],
+    date: group[`round${i}Date`],
+    place: group[`round${i}PlaceName`],
   }));
 
   return (
@@ -31,12 +33,20 @@ const GroupDescription = ({
                 className="w-full h-48 object-cover rounded-lg" />
             </div>
             <div className="md:w-2/3">
-              <h4 className="text-lg font-medium text-gray-800 mb-2">
-                {session.index}회차
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              {session.index}회차 | 날짜: {session.date} | 장소: {session.place}
+            </p>
+            <p className="text-gray-600 whitespace-pre-line">
+              {session.content}
+            </p>
+              {/* <h4 className="text-lg font-medium text-gray-800 mb-2">
+                {session.index}회차 | 
               </h4>
+              <p className="text-sm text-gray-700">날짜: {session.date}</p>
+              <p className="text-sm text-gray-700">장소: {session.place}</p>
               <p className="text-gray-600 whitespace-pre-line">
                 {session.content}
-              </p>
+              </p> */}
             </div>
           </div>
         ))}

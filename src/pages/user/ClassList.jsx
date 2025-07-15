@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { PlusCircleIcon, SearchIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAtom } from "jotai";
 import { tokenAtom } from "../../atoms";
 import axios from "axios";
@@ -13,13 +13,17 @@ const ClassList = () => {
   const [page, setPage] = useState(0);
   const [hasNext, setHasNext] = useState(true);
   const pageSize = 8;
-  const [searchTerm, setSearchTerm] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [venueFilter, setVenueFilter] = useState("전체");
-  const [keyword, setKeyword] = useState("");
   const [tags, setTags] = useState("");
   const [place, setPlace] = useState("");
   const [sortBy, setSortBy] = useState("latest");
+  // const [keyword, setKeyword] = useState("");
+  // const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams();
+  const keywordParam = searchParams.get("keyword") || "";
+  const [keyword, setKeyword] = useState(keywordParam);
+  const [searchTerm, setSearchTerm] = useState(keywordParam);
 
   const navigate = useNavigate();
 
@@ -32,19 +36,19 @@ const ClassList = () => {
           keyword: keyword || "",
           tag: tags || "",
           place: place || "",
-          sort: sortBy || 'latest',
+          sort: sortBy || "latest",
         },
       });
       const classes = res?.data?.content || [];
-      
-      if(customPage === 0) {
+
+      if (customPage === 0) {
         // 첫 페이지이면 새로 설정
         setClassList(classes);
-      }else {
+      } else {
         // 이후 페이지는 누적
         setClassList((prev) => [...prev, ...classes]);
       }
-      
+
       setHasNext(!res.data.last); // Slice 리턴 구조 기준
       setPage(customPage + 1);
     } catch (err) {
@@ -70,7 +74,7 @@ const ClassList = () => {
   };
 
   const handleSortChange = (newSort) => {
-    if(sortBy !== newSort) {
+    if (sortBy !== newSort) {
       setSortBy(newSort);
       setClassList([]);
       setPage(0);
@@ -80,10 +84,18 @@ const ClassList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F7EC]">
+    <div className="min-h-screen bg-[#F9F9F7]">
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">전체 모임</h1>
+        {/* ⭐ 상단 타이틀 + 안내문구 + 버튼 */}
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-[#006989] mb-4">
+              전체 모임
+            </h1>
+            <p className="text-gray-600">
+              취향에 맞는 독서모임을 찾아보세요. 없다면 직접 개설해보세요!
+            </p>
+          </div>
           <button
             onClick={() => {
               if (!token?.access_token) {
@@ -93,14 +105,17 @@ const ClassList = () => {
               }
               navigate("/classCreate");
             }}
-            className="px-6 py-3 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors flex items-center"
+            className={`flex items-center px-6 py-2.5 rounded-lg transition-colors bg-[#006989] text-white hover:bg-[#005C78]}`}
           >
             <PlusCircleIcon className="w-5 h-5 mr-2" />
             모임 만들기
           </button>
         </div>
-        <div className="bg-white rounded-lg p-6 mb-8">
-          <div className="flex flex-wrap gap-4 mb-4">
+
+        {/* ⭐ 검색 영역 */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* ⭐ 원본 주석 유지 */}
             {/* <select
               className="px-4 py-2 border border-gray-300 rounded-lg"
               value={venueFilter}
@@ -110,68 +125,75 @@ const ClassList = () => {
               <option value="읽담">읽담에서 모임</option>
               <option value="타 장소">타 장소 모임</option>
             </select> */}
-            <div className="flex gap-2">
-               <button
-                className={`px-4 py-2 rounded-full ${
-                  sortBy === "latest"
-                    ? "bg-[#006989] text-white"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-                onClick={() => handleSortChange("latest")}
-              >
-                최신순
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full ${
-                  sortBy === "deadline"
-                    ? "bg-[#006989] text-white"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-                onClick={() => handleSortChange("deadline")}
-              >
-                마감 임박 순
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full ${
-                  sortBy === "likes"
-                    ? "bg-[#006989] text-white"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-                onClick={() => handleSortChange("likes")}
-              >
-                좋아요 순
-              </button>
-              {/* <button
-                className={`px-4 py-2 rounded-full ${
-                  sortBy === "distance"
-                    ? "bg-[#006989] text-white"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-                onClick={() => handleSortChange("distance")}
-              >
-                모임장소 가까운 순
-              </button> */}
+            <div className="flex-grow relative">
+              <form onSubmit={handleSearch}>
+                <input
+                  type="text"
+                  placeholder="모임 이름, 관심 있는 키워드로 검색"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 pl-10 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#006989]" // ⭐ 변경됨
+                />
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              </form>
             </div>
-          </div>
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <input
-              type="text"
-              placeholder="모임 이름, 관심 있는 키워드로 검색"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
             <button
-              type="submit"
-              className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
+              onClick={handleSearch}
+              className="px-6 py-2 bg-[#E88D67] text-white rounded-lg hover:opacity-90" // ⭐ 변경됨
             >
-              <SearchIcon className="w-5 h-5" />
+              검색
             </button>
-          </form>
+          </div>
+
+          {/* ⭐ 정렬칩 (검색칩) */}
+          <div className="flex justify-end gap-2 mt-8 mb-8">
+            <button
+              className={`px-3 py-1 text-sm rounded border ${
+                sortBy === "latest"
+                  ? "bg-[#006989] text-white"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              }`}
+              onClick={() => handleSortChange("latest")}
+            >
+              최신순
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded border ${
+                sortBy === "deadline"
+                  ? "bg-[#006989] text-white"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              }`}
+              onClick={() => handleSortChange("deadline")}
+            >
+              마감 임박 순
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded border ${
+                sortBy === "likes"
+                  ? "bg-[#006989] text-white"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              }`}
+              onClick={() => handleSortChange("likes")}
+            >
+              좋아요 순
+            </button>
+            {/* <button
+              className={`px-3 py-1 text-sm rounded border ${
+                sortBy === "distance"
+                  ? "bg-[#006989] text-white"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              }`}
+              onClick={() => handleSortChange("distance")}
+            >
+              모임장소 가까운 순
+            </button> */}
+          </div>
         </div>
+
         {hasSearched && (
           <p className="text-gray-600 mb-4">
-            모임 카테고리에서 '{searchTerm}' 검색 결과입니다. (검색결과 {classList.length}건)
+            모임 카테고리에서 '{searchTerm}' 검색 결과입니다. (검색결과{" "}
+            {classList.length}건)
           </p>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -195,4 +217,5 @@ const ClassList = () => {
     </div>
   );
 };
+
 export default ClassList;

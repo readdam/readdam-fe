@@ -189,44 +189,46 @@ export default function OtherPlaceAdd() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 mb-8">
-        <button className="p-2 hover:bg-gray-100 rounded-lg">
-          <ArrowLeft
-            className="w-6 h-6"
-            onClick={() => navigate('/admin/otherPlaceList')}
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex items-center gap-4 mb-8">
+          <button className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
+            <ArrowLeft
+              className="w-6 h-6"
+              onClick={() => navigate('/admin/otherPlaceList')}
+            />
+          </button>
+          <h1 className="text-2xl font-bold">외부 장소 추가</h1>
+        </div>
+        <div className="space-y-8">
+          <BasicInfoSection form={form} onChange={handleInputChange} />
+          <DetailInfoSection
+            form={form}
+            newKeyword={newKeyword}
+            setNewKeyword={setNewKeyword}
+            onChange={handleInputChange}
+            onAddKeyword={handleAddKeyword}
+            onRemoveKeyword={handleRemoveKeyword}
+            imagePreviews={imagePreviews}
+            onImageUpload={handleImageUpload}
+            onRemoveImage={handleRemoveImage}
           />
-        </button>
-        <h1 className="text-2xl font-bold">외부 장소 추가</h1>
-      </div>
-      <div className="space-y-8">
-        <BasicInfoSection form={form} onChange={handleInputChange} />
-        <DetailInfoSection
-          form={form}
-          newKeyword={newKeyword}
-          setNewKeyword={setNewKeyword}
-          onChange={handleInputChange}
-          onAddKeyword={handleAddKeyword}
-          onRemoveKeyword={handleRemoveKeyword}
-          imagePreviews={imagePreviews}
-          onImageUpload={handleImageUpload}
-          onRemoveImage={handleRemoveImage}
-        />
-        <div className="flex gap-4 mt-8">
-          <button
-            type="submit"
-            className="flex-1 bg-[#006989] text-white px-6 py-3 rounded-lg"
-            onClick={handleSubmit}
-          >
-            저장하기
-          </button>
-          <button
-            type="button"
-            className="flex-1 border px-6 py-3 rounded-lg"
-            onClick={() => navigate('/admin/otherPlaceList')}
-          >
-            취소
-          </button>
+          <div className="flex gap-4 mt-8">
+            <button
+              type="submit"
+              className="flex-1 bg-[#006989] text-white px-6 py-3 rounded-lg cursor-pointer"
+              onClick={handleSubmit}
+            >
+              저장하기
+            </button>
+            <button
+              type="button"
+              className="flex-1 border px-6 py-3 rounded-lg cursor-pointer"
+              onClick={() => navigate('/admin/otherPlaceList')}
+            >
+              취소
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { BookOpenIcon, HeartIcon, MessageSquareIcon, EyeIcon, ClockIcon } from 'lucide-react';
+import { BookIcon, HeartIcon, MessageSquareIcon, EyeIcon, ClockIcon } from 'lucide-react';
 import TimeRemainingText from './TimeRemainingText';
 import { url } from '../../config/config';
 
@@ -11,15 +11,16 @@ const typeMap = {
 };
 
 const getReviewStatus = (endDate) => {
-  if (!endDate) return '첨삭 제외';
+  if (!endDate) return '첨삭 없음';
   const now = new Date();
-  return new Date(endDate) > now ? '첨삭 가능' : '첨삭 종료';
+  return new Date(endDate) > now ? '첨삭 요청' : '첨삭 종료';
 };
 
 const WriteCard = ({ post, variant = 'list', onClick }) => {
   const tags = [post.tag1, post.tag2, post.tag3, post.tag4, post.tag5].filter(Boolean);
   const reviewStatus = getReviewStatus(post.endDate);
-  const statusClass = reviewStatus === '첨삭 가능' ? 'text-[#006989] font-semibold' : 'text-gray-400 font-semibold';
+  const statusClass = reviewStatus === '첨삭 요청' ? 'text-[#006989] font-semibold' : 'text-gray-400 font-semibold';
+  const isUrl = (path) => path?.startsWith('http://') || path?.startsWith('https://');
 
   return (
     <div
@@ -27,17 +28,33 @@ const WriteCard = ({ post, variant = 'list', onClick }) => {
       onClick={onClick}
     >
       {post.img ? (
-        <img src={`${url}/image?filename=${post.img}`} alt="" className="w-48 h-48 object-cover rounded-lg flex-shrink-0" />
+        isUrl(post.img) ? (
+          // 북커버 → URL 이미지
+          <div className="w-48 h-48 bg-[#FCD5C9] flex items-center justify-center rounded-lg flex-shrink-0">
+            <img
+              src={post.img}
+              alt=""
+              className="w-28 h-42 object-cover rounded-md"
+            />
+          </div>
+        ) : (
+          // 업로드 이미지
+          <img
+            src={`${url}/image?filename=${post.img}`}
+            alt=""
+            className="w-48 h-48 object-cover rounded-lg flex-shrink-0"
+          />
+        )
       ) : (
-        <div className="w-48 h-48 bg-[#F3D5C9] rounded-lg flex items-center justify-center flex-shrink-0">
-          <BookOpenIcon className="w-12 h-12 text-[#E88D67]" />
+        <div className="w-48 h-48 bg-[#FCD5C9] rounded-lg flex items-center justify-center flex-shrink-0">
+          <BookIcon className="w-12 h-12 text-white" />
         </div>
       )}
 
       <div className="flex-1">
         <div className="flex gap-2 mb-2">
           <span className="px-3 py-1 text-sm rounded-full bg-[#F3F7EC] text-[#006989]">
-            {typeMap[post.type]}
+            {typeMap[post.writeType]}
           </span>
           <span className={`px-3 py-1 text-sm ${statusClass}`}>{reviewStatus}</span>
         </div>

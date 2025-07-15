@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getLikeList, searchBook, toggleBookLike } from '@api/kakaoApi';
 import AddToLibraryModal from '@components/book/AddToLibraryModal';
 import { SearchIcon, StarIcon, HeartIcon } from 'lucide-react';
 import { useAtomValue } from 'jotai';
 import { tokenAtom } from '../../atoms';
+import LibraryModal from '@components/book/LibraryModal';
 
 export default function BookSearch() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +28,9 @@ export default function BookSearch() {
   const visiblePages = 5;
   const startPage = Math.floor((page - 1) / visiblePages) * visiblePages + 1;
   const endPage = Math.min(startPage + visiblePages - 1, totalPages);
+
+  const [currentBook, setCurrentBook] = useState(null);
+  const navigate = useNavigate();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['search_book', searchTerm, page, target, searchInput],
@@ -232,7 +236,22 @@ export default function BookSearch() {
                     />
                     <button
                       className="bg-[#006989] text-white w-24 h-10 rounded-lg text-xs font-bold cursor-pointer"
-                      onClick={() => setIsModalOpen(true)}
+                      onClick={() => {
+                        if (!token?.access_token) {
+                          alert('로그인이 필요한 서비스입니다.');
+                          return navigate('/login');
+                        }
+
+                        setCurrentBook({
+                          isbn: book.isbn,
+                          title: book.title,
+                          author: book.authors?.join(', '),
+                          imageName: book.thumbnail,
+                          publisher: book.publisher,
+                          pubDate: book.datetime?.split('T')[0],
+                        });
+                        setIsModalOpen(true);
+                      }}
                     >
                       서재에 담기
                     </button>
@@ -300,8 +319,15 @@ export default function BookSearch() {
         </div>
       </div>
 
-      {isModalOpen && (
-        <AddToLibraryModal onClose={() => setIsModalOpen(false)} />
+      {isModalOpen && currentBook && (
+        <LibraryModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setCurrentBook(null);
+          }}
+          book={currentBook}
+        />
       )}
     </>
   );

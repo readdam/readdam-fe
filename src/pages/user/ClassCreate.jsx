@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useAtom } from "jotai";
 import { tokenAtom, userAtom } from "../../atoms";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 import { url } from "../../config/config";
 import AddrSearchModal from "@components/class/AddrSearchModal";
+import ReservationSelectModal from "@components/class/ReservationSelectModal";
 import {
   CalendarIcon,
   ImageIcon,
@@ -15,6 +16,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const ClassCreate = () => {
+  const axios = useAxios();
   const [form, setForm] = useState({
     title: "",
     shortDescription: "",
@@ -22,9 +24,11 @@ const ClassCreate = () => {
     minParticipants: "",
     maxParticipants: "",
     sessionCount: 3,
-    venue: "읽담",
+    venue: "외부",
     venueName: "",
     venueAddress: "",
+    lat: 0,
+    log: 0,
     dates: [],
     sessionDetails: Array(3).fill({
       description: "",
@@ -32,7 +36,7 @@ const ClassCreate = () => {
     description: "",
     leaderDescription: "",
   });
-  
+
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -40,9 +44,8 @@ const ClassCreate = () => {
     setForm((prev) => ({
       ...prev,
       venueAddress: place.address_name,
-      venueName: place.place_name,
       lat: place.y,
-      lng: place.x,
+      log: place.x,
     }));
   };
 
@@ -93,7 +96,7 @@ const ClassCreate = () => {
       setMainImgFPreview(URL.createObjectURL(file));
     }
   };
-  
+
   const removeMainImgF = (e) => {
     e.preventDefault();
     setMainImgF("");
@@ -116,7 +119,6 @@ const ClassCreate = () => {
 
   const [token] = useAtom(tokenAtom);
   const [user] = useAtom(userAtom);
-  const [showTempSaveModal, setShowTempSaveModal] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -130,6 +132,7 @@ const ClassCreate = () => {
     submitData.append("classIntro", form.description);
     submitData.append("leaderIntro", form.leaderDescription);
     submitData.append("leaderUsername", user.username);
+    submitData.append("isReaddam", form.venue === "읽담" ? "0" : "1");
 
     //태그 파싱
     const tagArray = form.tags.map((tag) => tag.trim()).filter((tag) => tag); // 공백 제거 + 빈 문자열 제거
@@ -207,13 +210,6 @@ const ClassCreate = () => {
     return date.toISOString().split("T")[0];
   };
 
-  //임시저장
-  const handleTempSave = () => {
-    setShowTempSaveModal(true);
-    // 임시저장 로직 추가 예정
-    console.log("Temporary saved:", form);
-  };
-
   const handleTagToggle = (tag) => {
     if (form.tags.includes(tag)) {
       setForm({
@@ -240,10 +236,86 @@ const ClassCreate = () => {
     });
   };
 
+  // 예약한 읽담장소 불러오기 관련 상태
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+  const [reservationList, setReservationList] = useState([]);
+
+  // 예약 모달에서 선택 시 호출될 핸들러
+  const handleReservationApply = (selected) => {
+    if (
+      !selected ||
+      !Array.isArray(selected.dates) ||
+      selected.dates.length === 0
+    ) {
+      alert("유효한 예약 정보가 아닙니다.");
+      return;
+    }
+
+    const sessionCount = selected.dates.length;
+
+    // 날짜가 빠졌거나 값이 이상하면 경고
+    const isValidDates = selected.dates.every(
+      (date) => typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}$/)
+    );
+    if (!isValidDates) {
+      alert("잘못된 날짜 형식입니다.");
+      return;
+    }
+
+    // venue 정보 필수 항목 확인
+    if (
+      !selected.venueName ||
+      !selected.venueAddress ||
+      !selected.lat ||
+      !selected.log
+    ) {
+      alert("장소 정보가 누락되었습니다.");
+      return;
+    }
+
+    // form 상태 업데이트
+    setForm((prev) => ({
+      ...prev,
+      venue: "읽담", // 예약 기반이므로 자동 설정
+      sessionCount: sessionCount,
+      dates: [...selected.dates], // 예약된 날짜로 복사
+      sessionDetails: Array(sessionCount).fill({ description: "" }), // 회차수만큼 초기화
+      venueName: selected.venueName,
+      venueAddress: selected.venueAddress,
+      lat: selected.lat,
+      log: selected.log,
+    }));
+
+    // 모달 닫기
+    setIsReservationModalOpen(false);
+  };
+
+  // 모임 회차별 북커버 이미지 불러오기
+  // const [showBookModal, setShowBookModal] = useState(false);
+  // const handleSearchCover = () => {
+  //   setShowBookModal(true);
+  // };
+  // const handleSelectCover = (thumbnailUrl) => {
+  //   setFormData({
+  //     ...formData,
+  //     image: thumbnailUrl,
+  //   });
+  //   // setIfile(null); // 기존 업로드 파일 제거
+  //   setShowBookModal(false);
+  // };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-[1200px]">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+            }
+          }}
+          className="space-y-8"
+        >
           <div className="bg-white p-8 rounded-lg shadow">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">
               모임 만들기
@@ -421,17 +493,35 @@ const ClassCreate = () => {
               <div className="flex gap-4 mb-4">
                 <button
                   type="button"
-                  onClick={() =>
-                    setForm({
-                      ...form,
-                      venue: "읽담",
-                    })
-                  }
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     form.venue === "읽담"
                       ? "bg-[#006989] text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
+                  onClick={async () => {
+                    try {
+                      const res = await axios.get(
+                        `${url}/my/placeReservationInfo`,
+                        {
+                          headers: {
+                            Authorization: token.access_token,
+                          },
+                        }
+                      );
+                      if (!Array.isArray(res.data) || res.data.length === 0) {
+                        alert(
+                          "읽담 예약 정보가 없습니다. 먼저 읽담 공간을 예약해주세요."
+                        );
+                        return;
+                      }
+                      console.log("✅ 예약 데이터:", res.data);
+                      setReservationList(res.data);
+                      setIsReservationModalOpen(true); // 모달 띄우기
+                    } catch (err) {
+                      console.error("읽담 예약 정보 불러오기 실패", err);
+                      alert("예약 정보를 불러오지 못했습니다.");
+                    }
+                  }}
                 >
                   읽담
                 </button>
@@ -453,40 +543,50 @@ const ClassCreate = () => {
                 </button>
               </div>
               <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="장소 이름"
-                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg ${
-                    form.venue === "읽담" ? "bg-gray-100" : ""
-                  }`}
-                  disabled={form.venue === "읽담"}
-                  value={form.venueName}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      venueName: e.target.value,
-                    })
-                  }
-                />
-                <div className="flex gap-2">
+                {form.venue === "읽담" ? (
+                  <input
+                    placeholder="장소 이름"
+                    type="text"
+                    value={form.venueName || ""}
+                    readOnly
+                  />
+                ) : (
                   <input
                     type="text"
-                    placeholder="검색 버튼을 눌러 주소 선택"
-                    className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg ${
-                      form.venue === "읽담" ? "bg-gray-100" : ""
-                    }`}
-                    disabled={form.venue === "읽담"}
-                    value={form.venueAddress}
-                    readOnly
-                    // onChange={(e) =>
-                    //   setForm({
-                    //     ...form,
-                    //     venueAddress: e.target.value,
-                    //   })
-                    // }
+                    value={form.venueName}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        venueName: e.target.value,
+                      }))
+                    }
                   />
+                )}
+                <div className="flex gap-2">
+                  {form.venue === "읽담" ? (
+                    <input
+                      type="text"
+                      placeholder="주소(외부 장소의 경우 검색버튼을 눌러주세요)"
+                      value={form.venueAddress || ""}
+                      readOnly
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="주소(외부 장소의 경우 검색버튼을 눌러주세요)"
+                      value={form.venueAddress}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          venueAddress: e.target.value,
+                        }))
+                      }
+                      readOnly
+                    />
+                  )}
                   <button
-                    onClick={()=> setIsModalOpen(true)}
+                    type="button"
+                    onClick={() => setIsModalOpen(true)}
                     disabled={form.venue === "읽담"}
                     className={`px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -495,6 +595,33 @@ const ClassCreate = () => {
                 </div>
               </div>
 
+              {/* '읽담' 예약내역 불러오는 모달 */}
+              {isReservationModalOpen && (
+                <ReservationSelectModal
+                  reservations={reservationList}
+                  sessionCount={form.sessionCount}
+                  onApply={(selected) => {
+                    const { dates, venueName, venueAddress, lat, log } =
+                      selected;
+
+                    setForm((prev) => ({
+                      ...prev,
+                      venue: "읽담",
+                      venueName,
+                      venueAddress,
+                      lat,
+                      log,
+                      dates,
+                      sessionDetails: Array(dates.length).fill({
+                        description: "",
+                      }),
+                    }));
+                  }}
+                  onClose={() => setIsReservationModalOpen(false)}
+                />
+              )}
+
+              {/* '외부' 장소(주소) 선택 창 */}
               {isModalOpen && (
                 <AddrSearchModal
                   onSelect={handlePlaceSelect}
@@ -520,9 +647,13 @@ const ClassCreate = () => {
                       </span>
                       <input
                         type="date"
-                        disabled={index > 0 && !form.dates[index - 1]}
+                        disabled={
+                          form.venue === "읽담" ||
+                          (index > 0 && !form.dates[index - 1])
+                        }
                         className="px-4 py-2 border border-gray-300 rounded-lg"
                         value={form.dates[index] || ""}
+                        readOnly={form.venue === "읽담"}
                         min={minDate}
                         onChange={(e) => {
                           const newDates = [...form.dates];
@@ -568,14 +699,14 @@ const ClassCreate = () => {
                               <img
                                 src={roundImgPreviews[roundField]}
                                 alt="미리보기"
-                                className="w-32 h-32 object-cover mt-2"
+                                className="w-36 h-36 object-cover rounded-md"
                               />
                               <button
                                 onClick={removeRoundImgF}
                                 className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
                                 type="button"
                               >
-                                <XIcon className="w-4 h-4" />
+                                <XIcon className="w-3 h-3" />
                               </button>
                             </div>
                           )}
@@ -655,7 +786,7 @@ const ClassCreate = () => {
                       className="absolute top-2 right-2 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
                       type="button"
                     >
-                      <XIcon className="w-4 h-4" />
+                      <XIcon className="w-3 h-3" />
                     </button>
                   </div>
                 )}
@@ -708,14 +839,14 @@ const ClassCreate = () => {
                       <img
                         src={leaderImgFPreview}
                         alt="미리보기"
-                        className="w-32 h-32 object-cover rounded-md"
+                        className="w-36 h-36 object-cover rounded-md"
                       />
                       <button
                         onClick={removeLeaderImgF}
                         className="absolute top-1 right-1 bg-white text-gray-600 border rounded-full p-1 hover:text-red-500"
                         type="button"
                       >
-                        <XIcon className="w-4 h-4" />
+                        <XIcon className="w-3 h-3" />
                       </button>
                     </div>
                   )}
@@ -742,13 +873,13 @@ const ClassCreate = () => {
             </div>
           </div>
           <div className="flex justify-center gap-4">
-            <button
+            {/* <button
               type="button"
               onClick={handleTempSave}
               className="px-8 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
             >
-              임시저장
-            </button>
+              수정
+            </button> */}
             <button
               type="submit"
               className="px-8 py-3 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors"
@@ -758,20 +889,6 @@ const ClassCreate = () => {
           </div>
         </form>
       </main>
-      {/* 임시저장 모달 */}
-      {showTempSaveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl">
-            <p className="text-lg mb-4">작성하신 글이 임시저장 됐습니다.</p>
-            <button
-              onClick={() => setShowTempSaveModal(false)}
-              className="w-full px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-accent transition-colors"
-            >
-              확인
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,52 +1,74 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useAtomValue } from 'jotai';
-import { tokenAtom } from '../../atoms';
-import { url } from '../../config/config';
+// src/pages/my/MyWriteComment.jsx
+import React, { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAtomValue } from 'jotai'
+import { useAxios } from '../../hooks/useAxios'
+import { tokenAtom } from '../../atoms'
+import { url } from '../../config/config'
+import { BookOpenIcon } from 'lucide-react'
+
+const typeMap = {
+  bookreview: '독후감',
+  essay: '수필',
+  personal: '자기소개서',
+  assignment: '과제',
+  other: '기타',
+}
 
 const tabs = [
   { label: '내가 작성한 글', path: '/myWrite' },
   { label: '작성한 첨삭', path: '/myWriteComment' },
   { label: '읽담 한줄', path: '/myWriteShort' },
-];
+]
 
-const MyWriteComment = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const token = useAtomValue(tokenAtom);
+// 한 페이지당 보여줄 댓글 수
+const PAGE_SIZE = 10
 
-  const [comments, setComments] = useState([]);
-  const [expandedId, setExpandedId] = useState(null);
+export default function MyWriteComment() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const token = useAtomValue(tokenAtom)
+  const axios = useAxios()
+
+  const [comments, setComments] = useState([])
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
-    if (!token?.access_token) return;
+    if (!token?.access_token) return
     axios
-      .get(`${url}/my/myWriteComment`, {
+      .get('/my/myWriteComment', {
         headers: { Authorization: `Bearer ${token.access_token}` },
         withCredentials: true,
       })
-      .then((res) => setComments(res.data))
-      .catch((err) => console.error('작성한 첨삭 불러오기 실패:', err));
-  }, [token]);
+      .then(res => {
+        setComments(res.data)
+        setPage(0)
+      })
+      .catch(() => setComments([]))
+  }, [token, axios])
 
-  // 줄 수가 5줄 초과면 true
-  const isLongText = (text) => text.split('\n').length > 5;
+  // 화면에 보여줄 댓글
+  const visible = comments.slice(0, (page + 1) * PAGE_SIZE)
+  const hasMore = (page + 1) * PAGE_SIZE < comments.length
 
   return (
-    <div className="px-4 py-6 max-w-screen-xl mx-auto">
-      <h2 className="text-xl font-bold mb-6">나의 글쓰기</h2>
+    <div className="max-w-screen-xl mx-auto px-4 py-8 bg-[#F3F7EC]">
+      {/* 헤더 */}
+      <div className="space-y-2 mb-8">
+        <h1 className="text-3xl font-bold text-[#006989]">작성한 첨삭</h1>
+        <p className="text-gray-600">내가 남긴 첨삭 내역을 확인하세요</p>
+      </div>
 
       {/* 탭 */}
-      <div className="flex space-x-6 border-b mb-8">
-        {tabs.map((tab) => (
+      <div className="flex space-x-6 border-b mb-8 text-sm">
+        {tabs.map(tab => (
           <Link
             key={tab.path}
             to={tab.path}
             className={`pb-2 transition-all ${
               location.pathname === tab.path
-                ? 'text-black border-b-2 border-blue-500 font-semibold'
-                : 'text-gray-500 hover:text-blue-600'
+                ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
+                : 'text-gray-500 hover:text-[#006989]'
             }`}
           >
             {tab.label}
@@ -54,54 +76,86 @@ const MyWriteComment = () => {
         ))}
       </div>
 
-      {/* 첨삭 목록 (배경 제거) */}
-      <div className="space-y-4">
-        {comments.map((item) => {
-          const isExpanded = expandedId === item.writeCommentId;
-          const needMore = isLongText(item.content) && !isExpanded;
-
-          return (
-            <div
-              key={item.writeCommentId}
-              className="py-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50"
-              onClick={() => navigate(`/writeDetail/${item.writeId}`)}
-            >
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
-                  {item.category || item.type || '분류 없음'}
-                </span>
-                <h3 className="font-semibold text-sm">{item.title}</h3>
-                <span className="ml-auto text-xs text-gray-500">
-                  {item.postNickname} · {item.regDate?.split('T')[0]}
-                </span>
-              </div>
-
-              <p
-                className={`text-sm text-gray-700 leading-relaxed whitespace-pre-line ${
-                  isExpanded ? '' : 'line-clamp-5'
-                }`}
-                onClick={(e) => e.stopPropagation()}
+      {/* 리스트 또는 빈 상태 */}
+      {comments.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <p className="text-gray-500 mb-4">아직 작성한 첨삭이 없습니다.</p>
+          <button
+            onClick={() => navigate('/writeList')}
+            className="px-6 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] transition"
+          >
+            글 보러가기
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-6">
+            {visible.map(item => (
+              <div
+                key={item.writeCommentId}
+                className="bg-white rounded-lg p-6 shadow hover:shadow-md transition-shadow flex cursor-pointer"
+                onClick={() => navigate(`/writeDetail/${item.writeId}`)}
               >
-                {item.content}
-              </p>
+                {/* 원글 이미지 또는 아이콘 */}
+                <div className="w-28 h-28 flex-shrink-0 mr-4">
+                  {item.writeImage ? (
+                    <img
+                      src={`${url}/image?filename=${item.writeImage.trim()}`}
+                      alt="원글 이미지"
+                      className="w-full h-full object-cover"
+                      onError={e => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = '/static/default-thumbnail.png'
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#FCD5C9] flex items-center justify-center">
+                      <BookOpenIcon className="w-12 h-12 text-white" />
+                    </div>
+                  )}
+                </div>
 
-              {needMore && (
-                <button
-                  className="mt-2 text-blue-500 text-sm font-medium"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setExpandedId(item.writeCommentId);
-                  }}
-                >
-                  더보기
-                </button>
-              )}
+                <div className="flex-1 space-y-2">
+                  {/* 상단 정보 */}
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                      {typeMap[item.type] || '첨삭'}
+                    </span>
+                    <h2 className="text-lg font-semibold truncate">{item.title}</h2>
+                    <span className="ml-auto text-xs text-gray-500">
+                      {item.postNickname} · {item.regDate?.split('T')[0]}
+                    </span>
+                  </div>
+
+                  {/* 원글 내용 */}
+                  {item.writeContent && (
+                    <p className="text-sm text-gray-600 italic line-clamp-5 whitespace-pre-line">
+                      {item.writeContent}
+                    </p>
+                  )}
+
+                  {/* 내 첨삭 내용 */}
+                  <p className="text-sm text-gray-700 bg-[#FAFAFA] p-3 rounded-md whitespace-pre-line leading-relaxed">
+                    {item.content}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 더보기 버튼 */}
+          {hasMore && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setPage(prev => prev + 1)}
+                className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+              >
+                더보기
+              </button>
             </div>
-          );
-        })}
-      </div>
+          )}
+        </>
+      )}
     </div>
-  );
-};
-
-export default MyWriteComment;
+  )
+}

@@ -76,7 +76,77 @@ export async function fetchPlaces(
     params.lng = lng;
   }
   if (radiusKm) params.radiusKm = radiusKm;
-
-  const response = await axios.get('/place/search', { params });
-  return response.data;
+  try {
+    const response = await axios.get('/place/search', { params });
+    return response.data;
+  } catch (err) {
+    console.error('🔥 장소 불러오기 실패:', err.response?.data || err.message);
+    throw err;
+  }
 }
+
+export const writePlaceReview = async ({
+  content,
+  rating,
+  isHide,
+  placeId,
+  axios,
+}) => {
+  const res = await axios.post(`/place/reviews`, {
+    content,
+    rating,
+    isHide,
+    placeId,
+  });
+  return res.data;
+};
+
+export const getPlaceReviews = async ({ placeId, page, size, axios }) => {
+  const res = await axios.get(`/place/reviews`, {
+    params: {
+      placeId,
+      page,
+      size,
+    },
+  });
+  return res.data;
+  // { content: [...], pageInfo: {...} }
+};
+
+export const updatePlaceReview = async ({
+  reviewId,
+  content,
+  rating,
+  isHide,
+  axios,
+}) => {
+  const res = await axios.put(`/place/reviews/${reviewId}`, {
+    content,
+    rating,
+    isHide,
+  });
+  return res.data; // 수정된 리뷰 DTO 반환
+};
+
+export const deletePlaceReview = async ({ reviewId, axios }) => {
+  const res = await axios.delete(`/place/reviews/${reviewId}`);
+  return res.data;
+};
+
+// 좋아요 여부 조회
+export const getPlaceLikeStatus = async ({ placeId, axios }) => {
+  const res = await axios.get(`/place/likes/${placeId}`);
+  return res.data; // true or false
+};
+
+// 좋아요 토글
+export const togglePlaceLike = async ({ placeId, axios }) => {
+  const res = await axios.post(`/place/likes/${placeId}`);
+  return res.data; // "liked" or "unliked"
+};
+
+// 좋아요 수 조회
+export const getPlaceLikeCount = async ({ placeId, axios }) => {
+  const res = await axios.get(`/place/likes/${placeId}/count`);
+  return res.data; // number
+};

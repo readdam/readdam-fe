@@ -1,26 +1,25 @@
 import React, { useEffect, useState } from 'react'
-import { url } from '../../config/config';
 import { Link } from 'react-router-dom';
 import WriteCard from '@components/write/WriteCard';
+import { useAxios } from '@hooks/useAxios';
 
   const HomeWrite = () => {
+    const axios = useAxios();
     const [posts, setPosts] = useState([]);
 
   useEffect(() => {
     const fetchLatestWrites = async () => {
       try {
-        const res = await fetch(`${url}/writes?limit=4`)
-        if (!res.ok) throw new Error('글 불러오기 실패')
-          //응답 본문을 JSON 형태로 변환 (res.json()은 비동기 작업이므로 await 필요)
-        const data = await res.json()
-        setPosts(data)
+        const res = await axios.get('/writes', {
+          params: { limit: 4 },
+        });
+        setPosts(res.data);
       } catch (e) {
-        console.error(e)
+        console.error(e);
       }
-    }
-    // 컴포넌트 마운트 시 1회 실행
-    fetchLatestWrites()
-  }, [])
+    };
+    fetchLatestWrites();
+  }, [axios]);
 
    return (
     <section className="w-full py-16 bg-[#F3F7EC]">
@@ -35,6 +34,11 @@ import WriteCard from '@components/write/WriteCard';
           전체 글 보러가기
         </Link>
 
+        {posts.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">
+            등록된 글이 없습니다. 첫 게시글의 주인공이 되어보세요.
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {posts.map((post) => (
             <Link to={`/writeDetail/${post.writeId}`} key={post.writeId}>
@@ -42,6 +46,7 @@ import WriteCard from '@components/write/WriteCard';
             </Link>
           ))}
         </div>
+        )}
       </div>
     </section>
   );

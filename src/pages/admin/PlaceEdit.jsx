@@ -342,8 +342,6 @@ export default function PlaceEdit() {
       console.log('🟡 updatePlace 호출');
       await updatePlace(token, placeId, formData);
       console.log('🟢 updatePlace 성공');
-      alert('장소 수정 완료!');
-      navigate('/admin/placeList');
     } catch (err) {
       console.error('🔴 updatePlace 실패', err);
 
@@ -426,89 +424,91 @@ export default function PlaceEdit() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center gap-4 mb-8">
-        <button className="p-2 hover:bg-gray-100 rounded-lg">
-          <ArrowLeft
-            className="w-6 h-6"
-            onClick={() => navigate('/admin/placeList')}
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6 max-w-4xl mx-auto space-y-8">
+        <div className="flex items-center gap-4 mb-8">
+          <button className="p-2 hover:bg-gray-100 rounded-lg">
+            <ArrowLeft
+              className="w-6 h-6"
+              onClick={() => navigate('/admin/placeList')}
+            />
+          </button>
+          <h1 className="text-2xl font-bold">장소 수정</h1>
+        </div>
+        <BasicInfoSection
+          placeName={placeName}
+          setPlaceName={setPlaceName}
+          placeAddress={placeAddress}
+          setPlaceAddress={setPlaceAddress}
+          phoneNumber={phoneNumber}
+          setPhoneNumber={setPhoneNumber}
+          setLat={setLat}
+          setLng={setLng}
+          lat={lat}
+          lng={lng}
+          detailAddress={detailAddress}
+          setDetailAddress={setDetailAddress}
+        />
+
+        <AvailableTimeSection
+          selectedWeekdaySlots={selectedWeekdaySlots}
+          setSelectedWeekdaySlots={setSelectedWeekdaySlots}
+          selectedWeekendSlots={selectedWeekendSlots}
+          setSelectedWeekendSlots={setSelectedWeekendSlots}
+        />
+
+        <PlaceDetailForm
+          introduceText={introduceText}
+          setIntroduceText={setIntroduceText}
+          keywords={keywords}
+          setKeywords={setKeywords}
+          newKeyword={newKeyword}
+          setNewKeyword={setNewKeyword}
+          imagePreviews={imagePreviews}
+          setImagePreviews={setImagePreviews}
+          handleImageUpload={handleImageUpload}
+        />
+        <section className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-lg font-semibold mb-6">방 정보</h2>
+          <RoomList
+            rooms={rooms}
+            handleEditRoom={handleEditRoom}
+            handleDeleteRoom={handleDeleteRoom}
+            facilityOptions={facilityOptions}
           />
-        </button>
-        <h1 className="text-2xl font-bold">장소 수정</h1>
-      </div>
-      <BasicInfoSection
-        placeName={placeName}
-        setPlaceName={setPlaceName}
-        placeAddress={placeAddress}
-        setPlaceAddress={setPlaceAddress}
-        phoneNumber={phoneNumber}
-        setPhoneNumber={setPhoneNumber}
-        setLat={setLat}
-        setLng={setLng}
-        lat={lat}
-        lng={lng}
-        detailAddress={detailAddress}
-        setDetailAddress={setDetailAddress}
-      />
 
-      <AvailableTimeSection
-        selectedWeekdaySlots={selectedWeekdaySlots}
-        setSelectedWeekdaySlots={setSelectedWeekdaySlots}
-        selectedWeekendSlots={selectedWeekendSlots}
-        setSelectedWeekendSlots={setSelectedWeekendSlots}
-      />
-
-      <PlaceDetailForm
-        introduceText={introduceText}
-        setIntroduceText={setIntroduceText}
-        keywords={keywords}
-        setKeywords={setKeywords}
-        newKeyword={newKeyword}
-        setNewKeyword={setNewKeyword}
-        imagePreviews={imagePreviews}
-        setImagePreviews={setImagePreviews}
-        handleImageUpload={handleImageUpload}
-      />
-      <section className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold mb-6">방 정보</h2>
-        <RoomList
-          rooms={rooms}
-          handleEditRoom={handleEditRoom}
-          handleDeleteRoom={handleDeleteRoom}
-          facilityOptions={facilityOptions}
-        />
-
-        <RoomForm
-          currentRoom={currentRoom}
-          setCurrentRoom={setCurrentRoom}
-          editingRoom={editingRoom}
-          handleAddRoom={handleAddRoom}
-          handleCancelEdit={() => {
-            setCurrentRoom(createInitialRoom());
-            setEditingRoom(null);
-          }}
-          images={currentRoom.images}
-          setImages={setImages}
-          handleRoomImageUpload={handleRoomImageUpload}
-          handleRemoveImage={handleRemoveRoomImage}
-          facilityOptions={facilityOptions}
-        />
-      </section>
-      <div className="flex gap-4">
-        <button
-          type="button"
-          className="flex-1 px-6 py-3 bg-[#006989] text-white rounded-lg"
-          onClick={handleSubmit}
-        >
-          저장하기
-        </button>
-        <button
-          type="button"
-          className="flex-1 px-6 py-3 border border-gray-300 rounded-lg"
-          onClick={() => navigate(-1)}
-        >
-          취소
-        </button>
+          <RoomForm
+            currentRoom={currentRoom}
+            setCurrentRoom={setCurrentRoom}
+            editingRoom={editingRoom}
+            handleAddRoom={handleAddRoom}
+            handleCancelEdit={() => {
+              setCurrentRoom(createInitialRoom());
+              setEditingRoom(null);
+            }}
+            images={currentRoom.images}
+            setImages={setImages}
+            handleRoomImageUpload={handleRoomImageUpload}
+            handleRemoveImage={handleRemoveRoomImage}
+            facilityOptions={facilityOptions}
+          />
+        </section>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            className="flex-1 px-6 py-3 bg-[#006989] text-white rounded-lg cursor-pointer"
+            onClick={handleSubmit}
+          >
+            저장하기
+          </button>
+          <button
+            type="button"
+            className="flex-1 px-6 py-3 border border-gray-300 rounded-lg cursor-pointer"
+            onClick={() => navigate(-1)}
+          >
+            취소
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  BookIcon,
+  BookOpenIcon,
   CheckCircleIcon,
   SaveIcon,
   SearchIcon,
@@ -10,6 +10,7 @@ import { useAxios } from '../../hooks/useAxios';
 import { url } from '../../config/config';
 import { useNavigate, useParams } from 'react-router-dom';
 import WriteTagSection from "@components/write/WriteTagSection";
+import BookCoverSearchModal from "@components/write/BookCoverSearchModal";
 
 const WriteModify = () => {
   const { id } = useParams();
@@ -33,6 +34,8 @@ const WriteModify = () => {
   const [tags, setTags] = useState([]);
   const [isReviewDeadlinePassed, setIsReviewDeadlinePassed] = useState(false);
   const [commentCnt, setCommentCnt] = useState(0);
+  const [showBookModal, setShowBookModal] = useState(false);
+  const isUrl = (path) => path?.startsWith('http://') || path?.startsWith('https://');
 
   // 기존 글 정보 로드
   useEffect(() => {
@@ -57,12 +60,11 @@ const WriteModify = () => {
         setIsReviewDeadlinePassed(deadlinePassed);
 
         setFormData({
-          type: post.type || '',
+          type: post.writeType || '',
           visibility: post.hide ? 'private' : 'public',
           needReview: !!post.endDate,
           reviewDeadline: post.endDate ? post.endDate.slice(0, 16) : '',
           title: post.title,
-          summary: '',
           content: post.content,
           image: null,
           imagePreview: null,
@@ -71,7 +73,11 @@ const WriteModify = () => {
         setCommentCnt(post.commentCnt || 0);
 
         if (post.img) {
-          setOriginalImageUrl(`${url}/image?filename=${post.img}`);
+          if (isUrl(post.img)) {
+            setOriginalImageUrl(post.img);
+          } else {
+            setOriginalImageUrl(`${url}/image?filename=${post.img}`);
+          }
         }
       } catch (err) {
         console.error('❌ 글 상세 불러오기 실패', err);
@@ -90,15 +96,12 @@ const WriteModify = () => {
     try {
       const payload = new FormData();
       payload.append('writeId', id);
-      payload.append('type', formData.type);
+      payload.append('writeType', formData.type);
       payload.append('visibility', formData.visibility);
       payload.append('needReview', formData.needReview ? 'true' : 'false');
-      payload.append(
-        'endDate',
-        formData.needReview && !isReviewDeadlinePassed
-          ? formData.reviewDeadline
-          : ''
-      );
+      if (formData.needReview && formData.reviewDeadline) {
+        payload.append('endDate', formData.reviewDeadline);
+      }
       payload.append('title', formData.title);
       payload.append('content', formData.content);
 
@@ -112,6 +115,8 @@ const WriteModify = () => {
 
       if (formData.image) {
         payload.append('ifile', formData.image);
+      } else if (formData.imagePreview) {
+        payload.append('thumbnailUrl', formData.imagePreview);
       }
 
       await axios.post(`${url}/my/writeModify/${id}`, payload, {
@@ -126,10 +131,6 @@ const WriteModify = () => {
       console.error('❌ 글 수정 실패', error);
       alert('글 수정 중 오류가 발생했습니다.');
     }
-  };
-
-  const handleTempSave = () => {
-    alert('임시 저장되었습니다. 나의 글쓰기 목록에서 확인할 수 있어요.');
   };
 
   const handleSpellCheck = () => {
@@ -153,7 +154,17 @@ const WriteModify = () => {
   };
 
   const handleSearchCover = () => {
-    alert('북커버 검색 기능은 준비 중입니다.');
+    setShowBookModal(true);
+  };
+
+  const handleSelectCover = (thumbnailUrl) => {
+    setFormData((prev) => ({
+      ...prev,
+      image: null,
+      imagePreview: thumbnailUrl,
+    }));
+    setOriginalImageUrl(null);
+    setShowBookModal(false);
   };
 
   return (
@@ -232,26 +243,45 @@ const WriteModify = () => {
                   이미지 등록
                 </label>
                 <div className="flex gap-4 items-start">
-                  <div className="w-48 h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                  <div className="w-48 h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
                     {formData.imagePreview ? (
-                      <img
-                        src={formData.imagePreview}
-                        alt="업로드 미리보기"
-                        className="w-full h-full object-cover"
-                      />
+                      isUrl(formData.imagePreview) ? (
+                        <div className="w-28 h-42 bg-[#FCD5C9] flex items-center justify-center rounded-lg overflow-hidden">
+                          <img
+                            src={formData.imagePreview}
+                            alt="북커버 미리보기"
+                            className="w-28 h-42 object-cover rounded-md"
+                          />
+                        </div>
+                      ) : (
+                        <img
+                          src={formData.imagePreview}
+                          alt="업로드 미리보기"
+                          className="w-48 h-48 object-cover"
+                        />
+                      )
                     ) : originalImageUrl ? (
-                      <img
-                        src={originalImageUrl}
-                        alt="기존 이미지"
-                        className="w-full h-full object-cover"
-                      />
+                      isUrl(originalImageUrl) && !originalImageUrl.startsWith(`${url}/image`) ? (
+                        <div className="w-28 h-42 bg-[#FCD5C9] flex items-center justify-center rounded-lg overflow-hidden">
+                          <img
+                            src={originalImageUrl}
+                            alt="북커버"
+                            className="w-28 h-42 object-cover rounded-md"
+                          />
+                        </div>
+                      ) : (
+                        <img
+                          src={originalImageUrl}
+                          alt="기존 업로드 이미지"
+                          className="w-48 h-48 object-cover"
+                        />
+                      )
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-[#E88D67]">
-                        <BookIcon className="w-20 h-20 text-white" />
+                      <div className="w-full h-full flex items-center justify-center bg-[#FCD5C9]">
+                        <BookOpenIcon className="w-20 h-20 text-white" />
                       </div>
                     )}
                   </div>
-
                   <div className="flex flex-col gap-2">
                     <button
                       type="button"
@@ -404,23 +434,28 @@ const WriteModify = () => {
               </button>
               <div className="flex items-center gap-4">
                 <button
-                  type="button"
-                  onClick={handleTempSave}
+                  type="submit"
                   className="px-6 py-2 text-[#006989] border border-[#006989] rounded-lg hover:bg-[#F3F7EC] transition-colors flex items-center gap-2"
                 >
                   <SaveIcon className="w-5 h-5" />
-                  임시저장
+                  수정 완료
                 </button>
-                <button
+                {/* <button
                   type="submit"
                   className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
                 >
                   수정 완료
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
         </form>
+        {showBookModal && (
+          <BookCoverSearchModal
+            onClose={() => setShowBookModal(false)}
+            onSelect={handleSelectCover}
+          />
+        )}
       </div>
     </div>
   );

@@ -10,7 +10,6 @@ import PostcardModal from '@components/write/PostcardModal'
 import TimeRemainingText from '@components/write/TimeRemainingText';
 import PostItCard from '@components/write/PostItCard';
 import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
-import singoIcon from "@assets/singo.png";
 import { useReportModal } from '../../hooks/useReportModal';
 import { REPORT_CATEGORY } from '@constants/reportCategory';
 
@@ -91,7 +90,7 @@ const WriteShortList = () => {
     }
   }
 
-  // 답변 작성
+  // 답변 작성 or 수정
   const handleSubmitAnswer = async () => {
     if (!user || !token?.access_token) {
       alert('로그인이 필요한 서비스입니다')
@@ -99,50 +98,92 @@ const WriteShortList = () => {
     }
     if (!answerText.trim()) return
     try {
-      const res = await axios.post(`${url}/my/writeShort`, { content: answerText, color: selectedColor })
-      setAnswers([res.data, ...answers])
-      setHasWritten(true)
-      setShowModal(false)
-      setAnswerText('')
-    } catch (err) {
-      console.error(err)
-      alert('작성 실패')
+      if (hasWritten) {
+            // 수정 API 호출
+            await axios.put(`${url}/my/writeShort`, {
+              content: answerText,
+              color: selectedColor,
+            });
+
+            // answers 배열 순회해서 내가 쓴 글 골라내서 리스트 즉시 반영
+            setAnswers((prevAnswers) =>  
+              prevAnswers.map((a) => 
+                a.username === user.username 
+                  ? { ...a, content: answerText, color: selectedColor } 
+                  : a 
+              )
+            );
+
+          } else {
+            // 신규 작성
+            const res = await axios.post(`${url}/my/writeShort`, { 
+              content: answerText, 
+              color: selectedColor });
+
+            setAnswers([res.data, ...answers])
+            setHasWritten(true)
+          }
+          setShowModal(false)
+          setAnswerText('')
+      } catch (err) {
+        console.error(err)
+        alert('작성 실패')
+      }
     }
-  }
 
     const { openReportModal, ReportModalComponent } = useReportModal({
-    defaultCategory: REPORT_CATEGORY.WRITE_SHORT,
-    onSuccess: () => {
-    },
+      defaultCategory: REPORT_CATEGORY.WRITE_SHORT,
+      onSuccess: () => {
+      },
   });
+
+  const handleOpenModal = () => {
+    if (!user || !token?.access_token) {
+      alert('로그인이 필요한 서비스입니다')
+      return navigate('/login')
+    }
+
+    if (hasWritten) {
+      const myAnswer = answers.find(a => a.username === user.username);
+      if (myAnswer) {
+        setAnswerText(myAnswer.content);
+        setSelectedColor(myAnswer.color || 'mint');
+      }
+    } else {
+      setAnswerText('');
+      setSelectedColor('mint');
+    }
+
+    setShowModal(true);
+  };
 
   return (
     <section className="w-full min-h-screen bg-[#F9F9F7] py-8">
       <div className="container mx-auto px-4">
         {/* 탭 & 작성 버튼 */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex gap-6">
-            <button onClick={() => navigate('/writeList')} className="text-xl font-bold text-gray-400">전체 글</button>
-            <button className="text-xl font-bold text-[#006989]">읽담한줄</button>
+            <button onClick={() => navigate('/writeList')} className="text-3xl font-bold text-gray-400">전체 글</button>
+            <button className="text-3xl font-bold text-[#006989]">읽담한줄</button>
           </div>
           {hasWritten !== null && (
             <button
-              onClick={() => {
-                if (!user || !token?.access_token) {
-                  alert('로그인이 필요한 서비스입니다')
-                  return navigate('/login')
-                }
-                setShowModal(true)
-              }}
-              disabled={hasWritten}
-              className={`flex items-center px-6 py-2.5 rounded-lg transition-colors 
-                ${hasWritten ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#006989] text-white hover:bg-[#005C78]'}`}
+              onClick={handleOpenModal}
+              disabled={false}
+              className={`flex items-center px-6 py-2.5 rounded-lg transition-colors bg-[#006989] text-white hover:bg-[#005C78]}`}
             >
               <PenIcon className="w-5 h-5 mr-2" />
-              {hasWritten ? '이미 작성함' : '답변작성'}
+              {hasWritten ? '답변수정' : '답변작성'}
             </button>
           )}
         </div>
+
+        <div className="mb-8">
+          <p className="text-gray-600">
+            한 문장으로 마음을 나눠요. 좋아요를 많이 주고 받아보세요. 좋은 일이 생길거에요!
+          </p>
+        </div>
+
 
         {/* 이벤트 정보 */}
         <div className="bg-white rounded-lg p-6 mb-8 shadow-sm border-2 border-[#E88D67]">
@@ -162,30 +203,20 @@ const WriteShortList = () => {
         {/* Post-it 답변카드들 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {answers.map((answer) => (
-          <div key={answer.writeshortId} className="relative">
             <PostItCard
-
+              key={answer.writeshortId}
               color={answer.color}
               nickname={answer.nickname}
               content={answer.content}
               likes={answer.likes}
               isLiked={answer.isLiked}
               onLikeClick={() => toggleLike(answer.writeshortId)}
+              onReportClick={() => openReportModal({
+              id: answer.writeshortId,
+              username: answer.username,
+              })}
             />
 
-
-              {/* 신고 버튼 */}
-              <button
-                onClick={() => openReportModal({
-                    id: answer.writeshortId,
-                    username: answer.username,
-                  })
-                }
-                className="absolute bottom-2 right-2 text-gray-400 hover:text-gray-600"
-              >
-                <img src={singoIcon} alt="신고" className="w-5 h-5" />
-              </button>
-            </div>
           ))}
         </div>
 
@@ -214,6 +245,7 @@ const WriteShortList = () => {
             setSelectedColor={setSelectedColor}
             onSubmit={handleSubmitAnswer}
             onClose={() => setShowModal(false)}
+            isEdit={hasWritten}
           />
         )}
 

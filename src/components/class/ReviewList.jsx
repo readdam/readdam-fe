@@ -127,7 +127,7 @@ const ReviewList = ({ classDetail }) => {
 
             <textarea
               className="w-full p-4 border border-gray-300 rounded-lg resize-none mb-2"
-              placeholder="모임 리뷰를 남겨보세요."
+              placeholder="별점 및 모임 참여 소감을 남겨주세요."
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               rows={3}
@@ -195,7 +195,6 @@ const ReviewList = ({ classDetail }) => {
                 </div>
 
                 <p className="text-gray-600 mb-4">{review.content}</p>
-
                 {review.img && (
                   <img
                     src={`${url}/image?filename=${review.img}`}

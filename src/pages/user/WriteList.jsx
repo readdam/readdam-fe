@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAxios } from '../../hooks/useAxios';
 import { SearchIcon,PenIcon } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAtom } from 'jotai';
+import { useAtomValue  } from 'jotai';
 import { tokenAtom } from '../../atoms';
 import { url } from '../../config/config';
 import WriteCard from '@components/write/WriteCard';
@@ -10,7 +10,7 @@ import WriteCard from '@components/write/WriteCard';
 const WriteList = () => {
   const axios = useAxios();
   const navigate = useNavigate();
-  const [token] = useAtom(tokenAtom);
+  const token = useAtomValue(tokenAtom);
   const [searchParams, setSearchParams] = useSearchParams();
   const [writeList, setWriteList] = useState([]);
   const [hasNext, setHasNext] = useState(false);
@@ -35,9 +35,9 @@ const WriteList = () => {
   };
 
   const statusMap = {
-    active: '첨삭 가능',
+    active: '첨삭 요청',
     closed: '첨삭 종료',
-    none: '첨삭 제외',
+    none: '첨삭 없음',
   };
 
   const sortMap = {
@@ -47,9 +47,9 @@ const WriteList = () => {
   };
 
   const getReviewStatus = (endDate) => {
-    if (!endDate) return '첨삭 제외';
+    if (!endDate) return '첨삭 없음';
     const now = new Date();
-    return new Date(endDate) > now ? '첨삭 가능' : '첨삭 종료';
+    return new Date(endDate) > now ? '첨삭 요청' : '첨삭 종료';
   };
 
   // 모든 페이지를 순차 호출하는 fetch
@@ -63,7 +63,7 @@ const WriteList = () => {
       try {
         const res = await axios.post(`${url}/writeList`, {
           page: i,
-          type: normalize(params.type),
+          writeType: normalize(params.type),
           status: normalize(params.status),
           sort: params.sort,
           keyword: normalize(params.keyword),
@@ -186,12 +186,12 @@ const WriteList = () => {
     <div className="w-full min-h-screen bg-[#F9F9F7] py-8">
       <div className="container mx-auto px-4">
         {/* 탭 */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex gap-6">
-            <button className="text-xl font-bold text-[#006989]">전체 글</button>
+            <button className="text-3xl font-bold text-[#006989]">전체 글</button>
             <button
               onClick={() => navigate('/writeShortList')}
-              className="text-xl font-bold text-gray-400"
+              className="text-3xl font-bold text-gray-400"
             >
               읽담한줄
             </button>
@@ -210,6 +210,12 @@ const WriteList = () => {
             <PenIcon className="w-5 h-5 mr-2" />
             글쓰기
           </button>
+        </div>
+
+        <div className="mb-8">
+          <p className="text-gray-600">
+            다양한 글을 탐색하고, 글쓰기의 즐거움을 경험해보세요. 첨삭 서비스도 이용가능해요! 
+          </p>
         </div>
 
         {/* 필터/검색 */}

@@ -4,10 +4,11 @@ import GroupHeader from "@components/class/GroupHeader";
 import GroupDescription from "@components/class/GroupDescription";
 import GroupLeader from "@components/class/GroupLeader";
 import GroupQnAReviews from "@components/class/GroupQnAReviews";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 import { url } from "../../config/config";
 
 const ClassDetail = () => {
+  const axios = useAxios();
   const { classId } = useParams();
   console.log("classId: ", classId);
   const [classData, setClassData] = useState("");
@@ -17,6 +18,7 @@ const ClassDetail = () => {
       try {
         const res = await axios.get(`${url}/classDetail/${classId}`);
         setClassData(res.data.data);
+        // console.log("모임데이터: ", res.data.data);
       } catch (err) {
         console.error("모임 상세정보 불러오기 실패: ", err);
       }

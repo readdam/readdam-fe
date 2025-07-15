@@ -8,10 +8,12 @@ import {
   SendIcon,
   MessageCircleIcon,
 } from "lucide-react";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 import { url } from "../../config/config";
+import dayjs from "dayjs";
 
 const QnAList = ({ classDetail }) => {
+  const axios = useAxios();
   const user = useAtomValue(userAtom); //로그인한 사용자 정보
   const [token] = useAtom(tokenAtom);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -26,7 +28,7 @@ const QnAList = ({ classDetail }) => {
   useEffect(() => {
     setIsLoggedIn(!!user?.username);
     if (classDetail?.leaderUsername && user?.username) {
-      setIsLeader(classDetail.leaderUsername === user.username);
+      setIsLeader(classDetail?.leaderUsername === user?.username);
     }
   }, [user, classDetail]);
 
@@ -155,7 +157,11 @@ const QnAList = ({ classDetail }) => {
         {qnaList.map((item) => {
           const isSecret = item.isSecret;
           const isOwner = !!user && user.username === item.username;
-          const canView = !isSecret || isOwner || isLeader;
+          const isAdmin = !!user?.isAdmin === 1;  // 관리자 여부 확인
+          const canView = !isSecret || isOwner || isLeader || isAdmin;
+          const previewContent =
+            isSecret ? "(비밀글)" 
+            : item.content.length > 50 ? item.content.slice(0,50) + "..." : item.content;
 
           return (
             <div key={item.classQnaId} className=" rounded p-4 bg-gray-50">
@@ -164,19 +170,15 @@ const QnAList = ({ classDetail }) => {
                 className="w-full text-left"
               >
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    {/* <img src={item.writerProfile || '/default-profile.png'}
-                      alt="writer"
-                      className="w-8 h-8 rounded-full"/> */}
+                  <span className="text-gray-800 truncate">{previewContent}</span>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
                     <span className="font-semibold">{item.username}</span>
-                    {isSecret && (
-                      <span className="text-sm text-gray-500">(비밀글)</span>
-                    )}
+                    <span>{dayjs(item.regDate).format("YYYY.MM.DD HH:mm:ss")}</span>  
                   </div>
-                  <span>{item.regDate}</span>
                 </div>
               </button>
 
+            {/* 아코디언 본문 */}
               {expandedId === item.classQnaId && canView && (
                 <div className="mt-4">
                   <p className="mb-2 text-gray-700 whitespace-pre-line">
@@ -189,10 +191,10 @@ const QnAList = ({ classDetail }) => {
                       <p className="whitespace-pre-line">{item.answer}</p>
                     </div>
                   ) : (
-                    isLeader &&
+                    (isLeader || isAdmin) &&
                     (!isSecret ||
                       item.username === user?.username ||
-                      isLeader) && (
+                      isLeader || isAdmin) && (
                       <div className="mt-4">
                         <textarea
                           className="w-full border border-gray-300 rounded-lg p-2"

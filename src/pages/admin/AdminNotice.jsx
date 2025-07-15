@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 import { tokenAtom } from "../../atoms";
-import axios from "axios";
+import { useAxios } from "@hooks/useAxios";
 import { url } from "@config/config";
 import { HomeIcon, PlusIcon, TrashIcon, EditIcon } from "lucide-react";
 import NoticeModal from "@components/admin/notice/NoticeModal";
 const AdminNotice = () => {
+  const axios = useAxios();
   const [token] = useAtom(tokenAtom);
   const [activePage, setActivePage] = useState("공지사항");
 
@@ -39,20 +40,28 @@ const AdminNotice = () => {
   }, []);
 
   // 공지사항 상세모달 상태
-  const [selectedNotice, setSelectedNotice] = useState("");
+  const [selectedNotice, setSelectedNotice] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 공지사항 목록에서 행 클릭시
   const handleRowClick = async (noticeId) => {
     try {
       const response = await axios.get(`${url}/admin/notice/${noticeId}`);
+
+      console.log("noticeId: ", noticeId);
+      console.log(response)
       setSelectedNotice(response.data);
-      setIsModalOpen(true);
     } catch (error) {
       console.log("공지 상세 불러오기 실패: ", error);
       alert("공지사항 내용을 불러오지 못했습니다.");
     }
   };
+
+  
+  useEffect(()=> {
+     selectedNotice && setIsModalOpen(true);
+      
+  },[selectedNotice])
 
   // 공지사항 등록
   const handleNoticeSubmit = async (e) => {
@@ -86,12 +95,11 @@ const AdminNotice = () => {
   };
 
   const formatDate = (dateStr) => {
-
-    if(!dateStr) return "";
+    if (!dateStr) return "";
 
     const date = new Date(dateStr);
-    if(isNaN(date.getTime())) return "날짜 오류";
-    
+    if (isNaN(date.getTime())) return "날짜 오류";
+
     return date
       .toLocaleDateString("ko-KR", {
         year: "numeric",
@@ -103,23 +111,24 @@ const AdminNotice = () => {
   };
 
   const handleDelete = async (noticeId) => {
-    const confirm = window.confirm("정말 삭제하시겠습니까?");
-    if (!confirm) return;
+    const confirmDelete = window.confirm("정말 삭제하시겠습니까?");
+    if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${url}/admin/notice/${selectedNotice.noticeId}`, {
+      await axios.delete(`${url}/admin/notice/${noticeId}`, {
         headers: { Authorization: token.access_token },
       });
 
       alert("삭제 완료됐습니다.");
-      setIsModalOpen(false); // 모달 닫기
       setSelectedNotice(null); //선택 해제
+      setIsModalOpen(false); // 모달 닫기
       fetchNotices();
     } catch (error) {
       console.error("삭제 실패", error);
       alert("삭제 중 오류가 발생했습니다.");
     }
   };
+
 
   const renderNoticePage = () => (
     <div className="space-y-8">
@@ -210,9 +219,6 @@ const AdminNotice = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 고정여부
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                관리
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -237,17 +243,6 @@ const AdminNotice = () => {
                       고정
                     </span>
                   )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    className="text-red-600 hover:text-red-800"
-                    onClick={(e) => {
-                      e.stopPropagation(); //행 클릭 이벤트 전파 방지
-                      handleDelete(notice.noticeId); //선택된 ID로 삭제 실행
-                    }}
-                  >
-                    <TrashIcon className="w-4 h-4 cursor-pointer" />
-                  </button>
                 </td>
               </tr>
             ))}

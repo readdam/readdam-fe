@@ -60,7 +60,7 @@ export default function PlaceDetailForm({
                 <button
                   type="button"
                   onClick={() => handleRemoveKeyword(index)}
-                  className="hover:text-red-500"
+                  className="hover:text-red-500 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -101,7 +101,7 @@ export default function PlaceDetailForm({
                       imagePreviews.filter((_, i) => i !== index)
                     )
                   }
-                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
