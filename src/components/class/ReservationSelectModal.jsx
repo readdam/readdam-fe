@@ -8,7 +8,7 @@ const ReservationSelectModal = ({
 }) => {
   const [selectedIndexes, setSelectedIndexes] = useState([]);
 
-  const handleCheckboxChange = (index) => {
+  const handleItemClick = (index) => {
     if (selectedIndexes.includes(index)) {
       setSelectedIndexes(selectedIndexes.filter((i) => i !== index));
     } else if (selectedIndexes.length < sessionCount) {
@@ -23,7 +23,6 @@ const ReservationSelectModal = ({
       return;
     }
 
-    // 첫 번째 예약에서 장소 정보 추출
     const first = selected[0];
     const venueName = first.placeName || "";
     const venueAddress = first.placeAddress || "";
@@ -42,15 +41,12 @@ const ReservationSelectModal = ({
       return;
     }
 
-    // 날짜 정렬
     const dates = selected
       .map((r) => r.dates[0])
       .sort((a, b) => new Date(a) - new Date(b));
 
-    // 선택된 reservationId 목록
     const reservationIds = selected.map((r) => r.reservationId);
 
-    // 부모 컴포넌트로 전달
     onApply({
       dates,
       venueName,
@@ -63,33 +59,33 @@ const ReservationSelectModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center text-[#006989]">
       <div className="bg-white p-6 rounded-lg max-w-lg w-full space-y-4">
         <h2 className="text-lg font-bold">
           예약 내역 선택 (최대 {sessionCount}개)
         </h2>
         <ul className="space-y-4">
-          {reservations.map((res, idx) => (
-            <li
-              key={idx}
-              className="border p-4 rounded flex justify-between items-center"
-            >
-              <div>
-                <p className="font-medium">{res.placeName}</p>
-                <p className="text-sm text-gray-600">{res.placeAddress}</p>
-                <p className="text-sm text-gray-500">{res.dates[0]}</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={selectedIndexes.includes(idx)}
-                onChange={() => handleCheckboxChange(idx)}
-                disabled={
-                  !selectedIndexes.includes(idx) &&
-                  selectedIndexes.length >= sessionCount
-                }
-              />
-            </li>
-          ))}
+          {reservations.map((res, idx) => {
+            const isSelected = selectedIndexes.includes(idx);
+            const isDisabled =
+              !isSelected && selectedIndexes.length >= sessionCount;
+
+            return (
+              <li
+                key={idx}
+                onClick={() => !isDisabled && handleItemClick(idx)}
+                className={`border p-4 rounded cursor-pointer flex justify-between items-center transition
+                  ${isSelected ? "bg-[#e0f7fa] border-[#006989]" : "bg-white"}
+                  ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div>
+                  <p className="font-medium">{res.placeName}</p>
+                  <p className="text-sm text-gray-600">{res.placeAddress}</p>
+                  <p className="text-sm text-gray-500">{res.dates[0]}</p>
+                </div>
+              </li>
+            );
+          })}
         </ul>
 
         <div className="flex justify-end gap-2 mt-6">
