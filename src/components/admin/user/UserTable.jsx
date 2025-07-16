@@ -58,6 +58,7 @@ const UserTable = ({ members }) => {
               <tr
                 key={member.username}
                 className="hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleDetail(member.username)}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {index + 1}
@@ -75,7 +76,7 @@ const UserTable = ({ members }) => {
               </tr>
             ))
           )}
-          {/* 페이지별 콘텐츠 */}
+          {/* 선택된 회원 상세페이지 이동 */}
           {isModalOpen && selectedUser && (
             <AdminUserModal
               user={selectedUser}
