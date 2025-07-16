@@ -168,7 +168,7 @@ const Header = () => {
 
             {token && user && (user.nickname || user.username) ?  (
               <>
-                <span className="text-sm text-[#006989] font-semibold">{user?.nickname ?? user?.username} 님</span>
+                <Link to="/myLibrary"><span className="text-sm text-[#006989] font-semibold">{user?.nickname ?? user?.username} 님</span></Link>
                 <button
                   onClick={logout}
                   className="px-3 py-1.5 text-sm text-white bg-[#006989] rounded hover:bg-[#005C78]"
@@ -176,7 +176,7 @@ const Header = () => {
                   로그아웃
                 </button>
                 <Link to="/myLibrary" className="px-3 py-1.5 text-sm text-white bg-[#E88D67] rounded hover:opacity-90">
-                  마이페이지
+                  내 서재
                 </Link>
 
                     {/* ✅ 관리자 버튼 */}

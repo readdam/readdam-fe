@@ -269,7 +269,7 @@ const GroupHeader = ({ group }) => {
   const isDisabled     = remainingPoint < 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center text-[#006989]">
       <div className="bg-white p-6 rounded-xl w-[400px]">
         <h2 className="text-xl font-bold mb-4">모임 신청</h2>
 

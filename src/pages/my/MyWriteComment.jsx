@@ -29,6 +29,7 @@ export default function MyWriteComment() {
   const navigate = useNavigate()
   const token = useAtomValue(tokenAtom)
   const axios = useAxios()
+  const isUrl = (path) => path?.startsWith('http://') || path?.startsWith('https://');
 
   const [comments, setComments] = useState([])
   const [page, setPage] = useState(0)
@@ -65,11 +66,10 @@ export default function MyWriteComment() {
           <Link
             key={tab.path}
             to={tab.path}
-            className={`pb-2 transition-all ${
-              location.pathname === tab.path
+            className={`pb-2 transition-all ${location.pathname === tab.path
                 ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
                 : 'text-gray-500 hover:text-[#006989]'
-            }`}
+              }`}
           >
             {tab.label}
           </Link>
@@ -99,15 +99,23 @@ export default function MyWriteComment() {
                 {/* 원글 이미지 또는 아이콘 */}
                 <div className="w-28 h-28 flex-shrink-0 mr-4">
                   {item.writeImage ? (
-                    <img
-                      src={`${url}/image?filename=${item.writeImage.trim()}`}
-                      alt="원글 이미지"
-                      className="w-full h-full object-cover"
-                      onError={e => {
-                        e.currentTarget.onerror = null
-                        e.currentTarget.src = '/static/default-thumbnail.png'
-                      }}
-                    />
+                    isUrl(item.writeImage) ? (
+                      <img
+                        src={item.writeImage}
+                        alt=""
+                        className="w-20 h-30 object-cover mx-auto"
+                      />
+                    ) : (
+                      <img
+                        src={`${url}/image?filename=${item.writeImage.trim()}`}
+                        alt="원글 이미지"
+                        className="w-full h-full object-cover"
+                        onError={e => {
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = '/static/default-thumbnail.png'
+                        }}
+                      />
+                    )
                   ) : (
                     <div className="w-full h-full bg-[#FCD5C9] flex items-center justify-center">
                       <BookOpenIcon className="w-12 h-12 text-white" />
