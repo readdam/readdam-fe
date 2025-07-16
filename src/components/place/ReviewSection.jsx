@@ -50,9 +50,6 @@ const ReviewSection = () => {
 
   const { openReportModal, ReportModalComponent } = useReportModal({
     defaultCategory: REPORT_CATEGORY.PLACE_REVIEW,
-    onSuccess: () => {
-      alert('신고가 접수되었습니다.');
-    },
   });
 
   // 로그인 체크 핸들러

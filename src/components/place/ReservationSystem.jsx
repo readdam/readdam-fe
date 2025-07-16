@@ -188,7 +188,7 @@ const ReservationSystem = ({ rooms = [] }) => {
               setPhone('');
               setRequest('');
             }}
-            className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78]"
+            className="px-4 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] cursor-pointer"
           >
             새로운 예약하기
           </button>
@@ -351,7 +351,7 @@ const ReservationSystem = ({ rooms = [] }) => {
                           type="button"
                           disabled={isReserved}
                           onClick={() => handleTimeSelection(time)}
-                          className={`py-2 px-4 rounded-md text-sm font-medium border transition-colors
+                          className={`py-2 px-4 rounded-md text-sm font-medium border transition-colors cursor-pointer 
                         ${
                           selectedTime.includes(time)
                             ? 'bg-[#006989] text-white border-[#006989]'
@@ -418,7 +418,7 @@ const ReservationSystem = ({ rooms = [] }) => {
                           ]);
                           setSelectedTime([]);
                         }}
-                        className="ml-2 px-3 py-1 bg-[#006989] text-white text-sm rounded hover:bg-[#005C78]"
+                        className="ml-2 px-3 py-1 bg-[#006989] text-white text-sm rounded hover:bg-[#005C78] cursor-pointer"
                       >
                         추가
                       </button>
@@ -455,7 +455,7 @@ const ReservationSystem = ({ rooms = [] }) => {
                                 )
                               );
                             }}
-                            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+                            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 cursor-pointer"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -543,7 +543,7 @@ const ReservationSystem = ({ rooms = [] }) => {
               <button
                 type="submit"
                 disabled={!selectedRoom || !date || selectedRanges.length === 0}
-                className="w-full py-3 bg-[#E88D67] text-white font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-3 bg-[#E88D67] text-white font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer cursor-pointer"
               >
                 예약하기
               </button>
