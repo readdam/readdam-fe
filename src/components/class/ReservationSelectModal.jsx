@@ -18,24 +18,23 @@ const ReservationSelectModal = ({
 
   const handleApply = () => {
     const selected = selectedIndexes.map((i) => reservations[i]);
-    if (selected.length === 0) {
-      alert("예약을 선택해주세요.");
+    if (selected.length !== sessionCount) {
+      alert(`예약을 ${sessionCount}개 선택해주세요.`);
       return;
     }
-    // 모든 예약건이 동일한 장소여야 함을 가정하고 첫 번째 예약에서 venue 정보 추출
-    const first = selected[0];
 
-    // === ✅ 장소 정보 추출 (변경된 필드명 사용) ===
+    // 첫 번째 예약에서 장소 정보 추출
+    const first = selected[0];
     const venueName = first.placeName || "";
     const venueAddress = first.placeAddress || "";
     const lat = first.lat || "";
     const log = first.log || "";
 
     if (
-      !first.placeName ||
-      !first.placeAddress ||
-      !first.lat ||
-      !first.log ||
+      !venueName ||
+      !venueAddress ||
+      !lat ||
+      !log ||
       !Array.isArray(first.dates) ||
       first.dates.length === 0
     ) {
@@ -43,15 +42,22 @@ const ReservationSelectModal = ({
       return;
     }
 
-    // === ✅ ClassCreate.jsx에 넘길 데이터 구조 ===
+    // 날짜 정렬
+    const dates = selected
+      .map((r) => r.dates[0])
+      .sort((a, b) => new Date(a) - new Date(b));
+
+    // 선택된 reservationId 목록
+    const reservationIds = selected.map((r) => r.reservationId);
+
+    // 부모 컴포넌트로 전달
     onApply({
-      dates: selected
-        .map((r) => r.dates[0]) // 각 예약 건의 첫 날짜만 사용
-        .sort((a, b) => new Date(a) - new Date(b)), // 오름차순 정렬
+      dates,
       venueName,
       venueAddress,
       lat,
       log,
+      reservationIds,
     });
     onClose();
   };
@@ -87,7 +93,10 @@ const ReservationSelectModal = ({
         </ul>
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-200 rounded"
+          >
             취소
           </button>
           <button
