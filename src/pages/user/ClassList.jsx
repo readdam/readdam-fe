@@ -207,7 +207,7 @@ const ClassList = () => {
               onClick={() => {
                 fetchClassList(page);
               }}
-              className="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600"
+              className="px-4 py-2 border border-gray-200 rounded text-sm hover:bg-gray-50"
             >
               더보기
             </button>
