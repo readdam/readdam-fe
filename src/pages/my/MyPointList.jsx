@@ -21,22 +21,26 @@ export default function PointList() {
   const setUser = useSetAtom(userAtom)
   const user = useAtomValue(userAtom)
 
-  useEffect(() => {
+  // 포인트 조회 로직 분리
+  const loadPoints = async () => {
     if (!token?.access_token) return
-    ;(async () => {
-      try {
-        const res = await api.post(
-          '/my/myPointList',
-          null,
-          { headers: { Authorization: `Bearer ${token.access_token}` } }
-        )
-        setPoints(res.data.pointList)
-        setUser(prev => ({ ...prev, totalPoint: res.data.totalPoint }))
-      } catch (err) {
-        console.error('포인트 내역 조회 실패:', err)
-      }
-    })()
-  }, [token, api, setUser])
+    try {
+      const res = await api.post(
+        '/my/myPointList',
+        null,
+        { headers: { Authorization: `Bearer ${token.access_token}` } }
+      )
+      setPoints(res.data.pointList)
+      setUser(prev => ({ ...prev, totalPoint: res.data.totalPoint }))
+    } catch (err) {
+      console.error('포인트 내역 조회 실패:', err)
+    }
+  }
+
+  // 컴포넌트 마운트 및 토큰 변경 시 한 번 불러오기
+  useEffect(() => {
+    loadPoints()
+  }, [token])
 
   const filtered = points.filter(p => {
     if (activeTab === '전체') return true
@@ -46,6 +50,7 @@ export default function PointList() {
   })
   const visible = filtered.slice(0, visibleCount)
 
+  // 환불 가능한 포인트 계산
   const refundable = points.filter(p => {
     if (p.point <= 0) return false
     if (!p.reason.includes('충전')) return false
@@ -162,7 +167,14 @@ export default function PointList() {
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <MyPointRefund
             refundablePoints={refundable}
-            onClose={() => setShowRefundModal(false)}
+            onClose={() => {
+              setShowRefundModal(false)
+              loadPoints()
+            }}
+            onRefundSuccess={() => {
+              setShowRefundModal(false)
+              loadPoints()
+            }}
           />
         </div>
       )}
