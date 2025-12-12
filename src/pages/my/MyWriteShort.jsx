@@ -1,107 +1,178 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+// src/pages/my/MyWriteShort.jsx
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useAtomValue } from 'jotai'
+import { useAxios } from '../../hooks/useAxios'
+import { tokenAtom } from '../../atoms'
+import { HeartIcon } from 'lucide-react'
+
+// 색상 매핑
+const getPostItColor = color => {
+  switch (color) {
+    case 'mint':   return 'bg-[#E8F3F1]'
+    case 'yellow': return 'bg-[#FFF8E7]'
+    case 'pink':   return 'bg-[#FFE8F3]'
+    default:       return 'bg-[#E8F3F1]'
+  }
+}
 
 const tabs = [
-    { label: '내가 작성한 글', path: '/myWrite' },
-    { label: '작성한 첨삭', path: '/myWriteComment' },
-    { label: '읽담 한줄', path: '/myWriteShort' },
-];
+  { label: '내가 작성한 글', path: '/myWrite' },
+  { label: '작성한 첨삭',   path: '/myWriteComment' },
+  { label: '읽담 한줄',     path: '/myWriteShort' },
+]
 
-const answers = [
-    {
-        id: 1,
-        question: '오늘 읽은 책에서 가장 인상 깊었던 구절은 무엇인가요?',
-        answer: '삶이 그대로 슬퍼지지도 슬퍼져야만 하지 않다. 삶을 눌렀을 때 고진감래 기쁜 밤이 오리니',
-        likes: 32,
-        bg: 'bg-blue-50',
-    },
-    {
-        id: 2,
-        question: '오늘 읽은 책에서 마음에 남은 조언은 무엇이었나요?',
-        answer: '가장 어두운 밤도 끝나고 결국 해는 떠오른다.',
-        likes: 54,
-        bg: 'bg-yellow-50',
-    },
-    {
-        id: 3,
-        question: '책을 읽다 문득 떠오른 생각이 있나요?',
-        answer: '작은 친절 하나가 하루를 밝히는 빛이 될 수 있구나.',
-        likes: 64,
-        bg: 'bg-rose-50',
-    },
-    {
-        id: 4,
-        question: '오늘 책 속 인물에게 배우고 싶은 점이 있다면요?',
-        answer: '두려움 속에서도 앞으로 나아가던 그 용기. 나도 가져보고 싶다.',
-        likes: 45,
-        bg: 'bg-amber-50',
-    },
-    {
-        id: 5,
-        question: '오늘 책 속에서 기억하고 싶은 문장을 적어주세요.',
-        answer: '행복은 멀리 있는 게 아니라, 지금 내 곁에 있는 것을 알아보는 마음에서 시작된다.',
-        likes: 23,
-        bg: 'bg-indigo-50',
-    },
-    {
-        id: 6,
-        question: '오늘 읽은 책에서 가장 공감 갔던 한 문장은 무엇인가요?',
-        answer: '지금 이 순간에도 당신은 충분히 잘하고 있어. 자신을 믿어도 괜찮아.',
-        likes: 22,
-        bg: 'bg-pink-50',
-    },
-];
+// 한 페이지당 보여줄 아이템 수
+const PAGE_SIZE = 8
 
-const MyShortWrite = () => {
-    const location = useLocation();
+export default function MyWriteShort() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const token    = useAtomValue(tokenAtom)
+  const axios    = useAxios()
+  const [shorts, setShorts] = useState([])
+  const [page, setPage] = useState(0)
 
-    return (
-        <div className="px-4 py-6 max-w-screen-xl mx-auto">
-            <h2 className="text-xl font-bold mb-6">나의 글쓰기</h2>
+  useEffect(() => {
+    if (!token?.access_token) return
+    axios
+      .get('/my/myWriteShort', {
+        headers: { Authorization: `Bearer ${token.access_token}` },
+        withCredentials: true,
+      })
+      .then(res => {
+        setShorts(res.data)
+        setPage(0)
+      })
+      .catch(() => setShorts([]))
+  }, [token, axios])
 
-            {/* Tabs */}
-            <div className="flex space-x-6 border-b mb-8">
-                {tabs.map(tab => (
-                    <Link
-                        key={tab.label}
-                        to={tab.path}
-                        className={`pb-2 transition-all ${location.pathname === tab.path
-                            ? 'text-black border-b-2 border-blue-500 font-semibold'
-                            : 'text-gray-500 hover:text-blue-600'
-                            }`}
-                    >
-                        {tab.label}
-                    </Link>
-                ))}
-            </div>
+  const toggleLike = async (id, e) => {
+    e.stopPropagation()
+    try {
+      const res = await axios.post(
+        `/my/myLikeShort/${id}`,
+        null,
+        {
+          headers: { Authorization: `Bearer ${token.access_token}` },
+          withCredentials: true,
+        }
+      )
+      const { likeCount, isLiked } = res.data
+      setShorts(prev =>
+        prev.map(s =>
+          s.writeshortId === id
+            ? { ...s, likeCount, isLiked }
+            : s
+        )
+      )
+    } catch {
+      alert('좋아요 토글 중 오류가 발생했습니다.')
+    }
+  }
 
-            {/* 읊담 카드 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {answers.map(item => (
-                    <div
-                        key={item.id}
-                        className={`rounded-xl p-4 shadow-sm ${item.bg} aspect-square flex flex-col justify-between`}
-                    >
-                        <div>
-                            <h3 className="font-semibold text-sm text-gray-800 mb-2 line-clamp-2">
-                                {item.question}
-                            </h3>
-                            <p className="text-sm text-gray-700 line-clamp-5">{item.answer}</p>
-                        </div>
-                        <div className="text-right text-xs text-gray-500">❤️ {item.likes}</div>
-                    </div>
-                ))}
-            </div>
+  // 현재 페이지까지 보여줄 아이템
+  const visible = shorts.slice(0, (page + 1) * PAGE_SIZE)
+  const hasMore = (page + 1) * PAGE_SIZE < shorts.length
 
+  return (
+    <div className="max-w-screen-xl mx-auto px-4 py-8 bg-[#F3F7EC]">
+      {/* 헤더 */}
+      <div className="space-y-2 mb-8">
+        <h1 className="text-3xl font-bold text-[#006989]">읽담 한줄</h1>
+        <p className="text-gray-600">작성한 읽담 한줄을 확인하세요</p>
+      </div>
 
-            {/* 더보기 버튼 */}
-            <div className="text-center mt-10">
-                <button className="px-6 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    더보기
-                </button>
-            </div>
+      {/* 탭 */}
+      <div className="flex space-x-6 border-b mb-8 text-sm">
+        {tabs.map(tab => (
+          <button
+            key={tab.path}
+            onClick={() => navigate(tab.path)}
+            className={`pb-2 transition-all ${
+              location.pathname === tab.path
+                ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
+                : 'text-gray-500 hover:text-[#006989]'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 콘텐츠 */}
+      {shorts.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <p className="text-gray-500 mb-4">아직 작성한 읽담 한줄이 없습니다.</p>
+          <button
+            onClick={() => navigate('/writeShortList')}
+            className="px-6 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] transition"
+          >
+            글 작성하기
+          </button>
         </div>
-    );
-};
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {visible.map(item => (
+              <div
+                key={item.writeshortId}
+                className={`
+                  ${getPostItColor(item.color)}
+                  w-full h-[300px]
+                  p-4 rounded-sm shadow-md
+                  hover:shadow-lg transition-shadow
+                  relative transform
+                  hover:-rotate-1 hover:-translate-y-1
+                `}
+                style={{
+                  backgroundImage:
+                    'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)'
+                }}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-base font-semibold text-[#006989]">
+                    {item.eventTitle}
+                  </span>
+                  <button
+                    onClick={e => toggleLike(item.writeshortId, e)}
+                    className="flex items-center gap-1 text-gray-600"
+                  >
+                    <HeartIcon
+                      className={`w-6 h-6 transition-colors ${
+                        item.isLiked
+                          ? 'fill-[#E88D67] text-[#E88D67]'
+                          : 'text-gray-400'
+                      }`}
+                    />
+                    <span className="text-base">{item.likeCount}</span>
+                  </button>
+                </div>
+                <div className="flex items-center justify-center h-[calc(100%-2.5rem)]">
+                  <p
+                    className="text-center text-lg font-bold text-gray-500 leading-snug break-words overflow-hidden"
+                    style={{ fontFamily: 'NanumGaram' }}
+                  >
+                    {item.content}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
 
-export default MyShortWrite;
+          {/* 더보기 버튼 */}
+          {hasMore && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setPage(prev => prev + 1)}
+                className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+              >
+                더보기
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

@@ -1,90 +1,83 @@
-import React from 'react'
-import { MapPinIcon, CalendarIcon, UsersIcon } from 'lucide-react'
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import { userAtom } from '../../atoms';
+import { useAxios } from '../../hooks/useAxios';
+import { url } from '../../config/config';
+import ClassCard from '@components/class/ClassCard';
+
 const HomeClass = () => {
-  const groups = [
-    {
-      id: 1,
-      title: '에세이로 만나는 일상의 소소함',
-      date: '2025.06.11',
-      location: '서울 강남구',
-      image:
-        'https://images.unsplash.com/photo-1506880135364-e28660dc35fa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
-      theme: '에세이',
-    },
-    {
-      id: 2,
-      title: '심리학 명저 함께 읽기',
-      date: '2025.06.11',
-      location: '서울 마포구',
-      image:
-        'https://images.unsplash.com/photo-1532012197267-da84d127e765?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
-      theme: '심리',
-    },
-    {
-      id: 3,
-      title: '자기계발 북클럽',
-      date: '2025.06.11',
-      location: '서울 서초구',
-      image:
-        'https://images.unsplash.com/photo-1513001900722-370f803f498d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
-      theme: '자기계발',
-    },
-    {
-      id: 4,
-      title: '고전문학 깊게 읽기',
-      date: '2025.06.11',
-      location: '서울 종로구',
-      image:
-        'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
-      theme: '문학',
-    },
-  ]
+  const axios = useAxios();
+  const [groups, setGroups] = useState([]);
+  const [user] = useAtom(userAtom);
+
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        let params = {
+          limit: 4,
+        };
+
+      if (user?.lat !== undefined && user?.lng !== undefined) {
+        if (user.lat != null && user.lng != null) {
+          // 로그인했고 좌표 있는 경우 → 거리순
+          params.sort = 'distance';
+          params.lat = user.lat;
+          params.lng = user.lng;
+        } else {
+          // 로그인했지만 좌표 없는 경우 → 최신순
+          params.sort = 'latest';
+        }
+      } else {
+        // user 자체가 아직 undefined → 무조건 latest
+        params.sort = 'latest';
+      }
+
+      const res = await axios.get('/classes', { params });
+      setGroups(res.data);
+    } catch (err) {
+      console.error('모임 데이터를 불러오지 못했습니다.', err);
+      setGroups([]);
+    }
+  };
+
+    fetchClasses();
+  }, [user?.lat, user?.lng, axios]);
+
   return (
     <section className="w-full py-16 bg-white">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800">
-            최근 등록된 독서모임
+        {/* ✅ 상단 타이틀 + 링크 */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <span role="img" aria-label="books">📚</span> 
+            {user?.lat && user?.lng
+              ? '내 근처 독서모임을 찾아보세요!'
+              : '최근 등록된 독서모임을 찾아보세요!'}
           </h2>
+          <Link
+            to="/classList"
+            className="text-sm text-gray-500 underline hover:text-[#006989]"
+          >
+            전체 모임 보러가기
+          </Link>
         </div>
+
+      {/* ✅ 카드 그리드 OR 빈 문구 */}
+      {groups.length === 0 ? (
+        <div className="text-center text-gray-400 py-8">
+          등록된 모임이 없습니다. 첫 모임을 개설해 보시겠어요?
+        </div>
+      ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {groups.map((group) => (
-            <div
-              key={group.id}
-              className="bg-white rounded-lg overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-shadow"
-            >
-              <div className="h-48 overflow-hidden">
-                <img
-                  src={group.image}
-                  alt={group.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-4">
-                <span className="inline-block px-3 py-1 bg-[#F3F7EC] text-[#006989] text-sm font-medium rounded-full mb-2">
-                  {group.theme}
-                </span>
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">
-                  {group.title}
-                </h3>
-                <div className="flex items-center text-gray-600 mb-1">
-                  <CalendarIcon className="w-4 h-4 mr-1" />
-                  <span className="text-sm">{group.date}</span>
-                </div>
-                <div className="flex items-center text-gray-600 mb-3">
-                  <MapPinIcon className="w-4 h-4 mr-1" />
-                  <span className="text-sm">{group.location}</span>
-                </div>
-                <button className="w-full px-4 py-2 bg-[#005C78] text-white rounded-lg hover:bg-[#004a61] transition-colors flex items-center justify-center">
-                  <UsersIcon className="w-4 h-4 mr-1" />
-                  <span>참여하기</span>
-                </button>
-              </div>
-            </div>
+            <ClassCard key={group.classId} group={group} />
           ))}
         </div>
+        )}
       </div>
     </section>
-  )
-}
+  );
+};
+
 export default HomeClass

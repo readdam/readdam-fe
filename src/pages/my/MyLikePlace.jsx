@@ -1,143 +1,212 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+// src/pages/my/MyLikePlace.jsx
+import React, { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { useAtomValue } from 'jotai'
+import { useAxios } from '../../hooks/useAxios'
+import { tokenAtom } from '../../atoms'
+import { url } from '../../config/config'
+import { MapPinIcon, HeartIcon, PhoneIcon } from 'lucide-react'
 
 const tabs = [
-    { label: '모임', path: '/myLikeClass' },
-    { label: '장소', path: '/myLikePlace' },
-    { label: '글쓰기', path: '/myLikeWrite' },
-    { label: '책', path: '/myLikeBook' },
-];
+  { label: '모임', path: '/myLikeClass' },
+  { label: '장소', path: '/myLikePlace' },
+  { label: '글쓰기', path: '/myLikeWrite' },
+  { label: '책', path: '/myLikeBook' },
+]
 
-const places = [
-    {
-        id: 1,
-        category: '북카페',
-        name: '북카페 리드미',
-        address: '서울 마포구 연남동 -4',
-        image: '/images/place1.jpg',
-    },
-    {
-        id: 2,
-        category: '서점',
-        name: '책방 오후',
-        address: '서울 서초구 방배동 9-1',
-        image: '/images/place2.jpg',
-    },
-    {
-        id: 3,
-        category: '스터디룸',
-        name: '스터디룸 페이지',
-        address: '서울 강남구 역삼동 6-7',
-        image: '/images/place3.jpg',
-    },
-    {
-        id: 4,
-        category: '북카페',
-        name: '독서당',
-        address: '서울 서대문구 연희동',
-        image: '',
-    },
-    {
-        id: 5,
-        category: '도서관',
-        name: '지혜의 숲',
-        address: '서울 종로구 삼청동 -4',
-        image: '',
-    },
-    {
-        id: 6,
-        category: '북카페',
-        name: '카페 북스테이',
-        address: '서울 용산구 이태원동',
-        image: '/images/place6.jpg',
-    },
-    {
-        id: 7,
-        category: '스터디카페',
-        name: '스터디카페 집중',
-        address: '서울 송파구 잠실동 4-',
-        image: '/images/place7.jpg',
-    },
-    {
-        id: 8,
-        category: '도서관',
-        name: '책 읽는 공간',
-        address: '서울 영등포구 문산동',
-        image: '/images/place8.jpg',
-    },
-];
+// 한 페이지당 보여줄 아이템 수
+const ITEMS_PER_PAGE = 12
 
-const MyLikePlace = () => {
-    const location = useLocation();
+export default function MyLikePlace() {
+  const location = useLocation()
+  const token = useAtomValue(tokenAtom)
+  const axios = useAxios()
 
-    return (
-        <div className="px-4 py-6 max-w-screen-xl mx-auto">
-            <h2 className="text-xl font-bold mb-6">좋아요</h2>
+  const [places, setPlaces] = useState([])
+  const [page, setPage] = useState(0)  // 페이지 인덱스(0부터)
 
-            {/* Tabs */}
-            <div className="flex space-x-6 border-b mb-8">
-                {tabs.map(tab => (
-                    <Link
-                        key={tab.label}
-                        to={tab.path}
-                        className={`pb-2 transition-all ${location.pathname === tab.path
-                                ? 'text-black border-b-2 border-blue-500 font-semibold'
-                                : 'text-gray-500 hover:text-blue-600'
-                            }`}
-                    >
-                        {tab.label}
-                    </Link>
-                ))}
-            </div>
+  useEffect(() => {
+    if (!token?.access_token) return
 
-            {/* Place Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                {places.map(place => (
-                    <div
-                        key={place.id}
-                        className="bg-white border rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow relative"
-                    >
-                        {/* 하트 아이콘 */}
-                        <button className="absolute top-2 right-2 bg-white p-1 rounded-full shadow">
-                            <svg className="w-4 h-4 text-gray-400 fill-current" viewBox="0 0 24 24">
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 
-                6.5 3.5 5 5.5 5c1.54 0 3.04.99 
-                3.57 2.36h1.87C13.46 5.99 14.96 
-                5 16.5 5 18.5 5 20 6.5 20 
-                8.5c0 3.78-3.4 6.86-8.55 
-                11.54L12 21.35z" />
-                            </svg>
-                        </button>
+    axios
+      .get(`${url}/my/likePlace`, {
+        headers: { Authorization: `Bearer ${token.access_token}` },
+        withCredentials: true,
+      })
+      .then(res => {
+        const list = Array.isArray(res.data) ? res.data : res.data.places || []
+        const mapped = list.map(p => ({
+          id: p.id,
+          type: p.type,
+          name: p.name,
+          basicAddress: p.basicAddress,
+          detailAddress: p.detailAddress,
+          phone: p.phone || '정보 없음',
+          categories: [
+            p.tag1, p.tag2, p.tag3, p.tag4, p.tag5,
+            p.tag6, p.tag7, p.tag8, p.tag9, p.tag10,
+          ].filter(t => t && t.trim()),
+          image: p.img1 || '',
+        }))
+        setPlaces(mapped)
+        setPage(0)  // 데이터 로드할 때마다 페이지 초기화
+      })
+      .catch(() => setPlaces([]))
+  }, [token, axios])
 
-                        {/* 이미지 */}
-                        {place.image ? (
-                            <img src={place.image} alt={place.name} className="w-full h-40 object-cover" />
-                        ) : (
-                            <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
-                                <div className="w-10 h-14 border-2 rounded-md" />
-                            </div>
-                        )}
+  const toggleLike = place => {
+    const { id, type } = place
+    if (!token?.access_token) {
+      alert('로그인이 필요합니다.')
+      return
+    }
 
-                        {/* 정보 */}
-                        <div className="p-3 space-y-1">
-                            <div className="text-xs inline-block bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
-                                {place.category}
-                            </div>
-                            <div className="font-semibold text-sm">{place.name}</div>
-                            <div className="text-sm text-gray-500">{place.address}</div>
-                        </div>
-                    </div>
-                ))}
-            </div>
+    // UI 최적화: 즉시 제거
+    setPlaces(prev => prev.filter(p => !(p.id === id && p.type === type)))
 
-            {/* Load More Button */}
-            <div className="text-center mt-10">
-                <button className="px-6 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    더보기
-                </button>
-            </div>
+    axios
+      .post(
+        `${url}/my/unified-place-like`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token.access_token}` },
+          params: { id, type },
+        }
+      )
+      .then(res => {
+        if (!res.data.liked) {
+          alert('좋아요가 취소되었습니다.')
+        } else {
+          // 다시 좋아요된 경우 복원
+          setPlaces(prev => [place, ...prev])
+        }
+      })
+      .catch(() => {
+        alert('좋아요 처리 중 오류가 발생했습니다.')
+        setPlaces(prev => [place, ...prev])
+      })
+  }
+
+  const safe = Array.isArray(places) ? places : []
+  // slice 범위: 0부터 (page+1)*ITEMS_PER_PAGE
+  const visible = safe.slice(0, (page + 1) * ITEMS_PER_PAGE)
+  const hasMore = (page + 1) * ITEMS_PER_PAGE < safe.length
+
+  return (
+    <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
+      {/* 헤더 */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-[#006989]">좋아요</h1>
+        <p className="text-gray-600">좋아요한 장소를 확인하세요</p>
+      </div>
+
+      {/* 탭 */}
+      <div className="flex space-x-6 border-b mb-8 text-sm">
+        {tabs.map(tab => (
+          <Link
+            key={tab.label}
+            to={tab.path}
+            className={`pb-2 transition-all ${
+              location.pathname === tab.path
+                ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
+                : 'text-gray-500 hover:text-[#006989]'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* 콘텐츠 */}
+      {safe.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="mb-4 text-gray-600">아직 좋아요한 장소가 없습니다.</p>
+          <Link
+            to="/place"
+            className="inline-block px-6 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] transition"
+          >
+            장소 보러가기
+          </Link>
         </div>
-    );
-};
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {visible.map((place, idx) => (
+              <div
+                key={`${place.type}-${place.id}-${idx}`}
+                className="relative bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
+              >
+                <button
+                  onClick={() => toggleLike(place)}
+                  className="absolute top-2 right-2 bg-white p-1 rounded-full shadow z-10"
+                >
+                  <HeartIcon
+                    fill="#E88D67"
+                    stroke="#E88D67"
+                    className="w-5 h-5"
+                  />
+                </button>
 
-export default MyLikePlace;
+                <Link to={`/placeDetail/${place.id}`}>
+                  {place.image ? (
+                    <img
+                      src={`${url}/image?filename=${place.image}`}
+                      alt={place.name}
+                      className="w-full h-40 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
+                      <MapPinIcon className="w-8 h-8 text-gray-300" />
+                    </div>
+                  )}
+
+                  <div className="p-4 space-y-2">
+                    {place.categories.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {place.categories.map(cat => (
+                          <span
+                            key={cat}
+                            className="text-xs bg-[#F3F7EC] text-[#005C78] px-2 py-0.5 rounded-full"
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="font-semibold text-base line-clamp-1">
+                      {place.name}
+                    </div>
+
+                    <div className="flex items-start">
+                      <MapPinIcon className="w-5 h-5 text-[#006989] mr-2 mt-0.5" />
+                      <span className="text-gray-700">
+                        {place.basicAddress} {place.detailAddress}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start">
+                      <PhoneIcon className="w-5 h-5 text-[#006989] mr-2 mt-0.5" />
+                      <span className="text-gray-700">{place.phone}</span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="text-center mt-10">
+              <button
+                onClick={() => setPage(prev => prev + 1)}
+                className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+              >
+                더보기
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

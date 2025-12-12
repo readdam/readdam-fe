@@ -1,192 +1,177 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import MyLibraryShow from './MyLibraryShow';
-import MyLibraryAdd from './MyLibraryAdd';
-import MyLibraryEdit from './MyLibraryEdit';
+// src/pages/my/MyLibrary.jsx
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAxios } from '../../hooks/useAxios'
+import { BookshelfHeader } from '../../components/book/BookshelfHeader'
+import PersonalShelf from '../../components/book/PersonalShelf'
 
-// 예시 데이터: 진짜라면 API로 받아오세요
-const lifeBooks = [];
-const readBooks = Array(17).fill(0).map((_, i) => ({
-  id: i + 1,
-  title: `읽은 책 ${i + 1}`,
-  image: '/images/book1.jpg',
-}));
-const shelves = [
-  { 
-    id: 'read', 
-    title: '읽은 책', 
-    count: 30, 
-    books: readBooks.slice(0, 6)  // 예시로 6개만 프리뷰
-  },
-  { 
-    id: 'share', 
-    title: '공유하고 싶은 책', 
-    count: 10, 
-    books: readBooks.slice(6, 12) 
-  },
-];
+import MyLibraryShow from './MyLibraryShow'
+import MyLibraryAdd from './MyLibraryAdd'
+import MyLibraryEdit from './MyLibraryEdit'
+import { PlusIcon } from 'lucide-react'
 
-const MyLibrary = () => {
-  const navigate = useNavigate();
-  const [showModal, setShowModal] = useState(null);    // 'show'|'add'|'edit'|null
-  const [modalCategory, setModalCategory] = useState('');
-  const [modalBooks, setModalBooks] = useState([]);
+export function MyLibrary() {
+  const navigate = useNavigate()
+  const axios = useAxios()
 
-  const handleBookClick = (id) => navigate(`/book/${id}`);
+  const [libraries, setLibraries] = useState([])
+  const [showModal, setShowModal] = useState(null)
+  const [modalCategory, setModalCategory] = useState('')
+  const [modalBooks, setModalBooks] = useState([])
 
-  const openShowModal = (category, books) => {
-    setModalCategory(category);
-    setModalBooks(books);
-    setShowModal('show');
-  };
-  const openAddModal = () => { setShowModal('add'); };
-  const openEditModal = () => { setShowModal('edit'); };
+  const fetchLibraries = useCallback(() => {
+    axios
+      .get('/my/myLibrary', { withCredentials: true })
+      .then(res => setLibraries(Array.isArray(res.data) ? res.data : []))
+      .catch(err => {
+        if (err.response?.status === 401) navigate('/login', { replace: true })
+        else setLibraries([])
+      })
+  }, [axios, navigate])
+
+  useEffect(() => { fetchLibraries() }, [fetchLibraries])
+
+  const openShowModal = (name, books) => {
+    setModalCategory(name)
+    setModalBooks(books)
+    setShowModal('show')
+  }
+  const openEditModal = name => {
+    setModalCategory(name)
+    setShowModal('edit')
+  }
+  const openAddModal = () => {
+    setModalCategory('')
+    setShowModal('add')
+  }
+
+  const transform = book => ({
+    id: book.librarybookId ?? book.isbn,
+    cover: book.thumbnail ?? '/no-image.png',
+    title: book.title,
+    author: (book.authors || []).join(', '),
+    publisher: book.publisher ?? '출판사 정보 없음'
+  })
+
+  const inLifeApi = libraries.find(l => l.name === '인생 책') || { name: '인생 책', books: [] }
+  const inReadApi = libraries.find(l => l.name === '읽은 책') || { name: '읽은 책', books: [] }
+  const customApi = libraries.filter(l => !['인생 책', '읽은 책'].includes(l.name))
+
+  const inLife = inLifeApi.books.map(transform)
+  const inRead = inReadApi.books.map(transform)
+  const custom = customApi.map(s => ({
+    id: s.libraryId,
+    name: s.name,
+    books: s.books.map(transform)
+  }))
+
+  const handleBookClick = isbn => navigate(`/bookDetail/${isbn}`)
 
   return (
-    <div className="max-w-screen-xl mx-auto px-4 py-8">
-      <h2 className="text-xl font-bold mb-2">내 서재</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        읽고 있는 책과 좋아하는 책들을 관리하세요
-      </p>
+    <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8">
+      <BookshelfHeader />
 
-      {/* 인생 책 섹션 */}
-      <Section
-        title="인생 책"
-        books={lifeBooks}
-        onAdd={openAddModal}
-        onShowAll={() => openShowModal('인생 책', lifeBooks)}
-        onBookClick={handleBookClick}
-      />
-
-      {/* 읽은 책 섹션 */}
-      <Section
-        title="읽은 책"
-        books={readBooks}
-        scrollable
-        onAdd={openAddModal}
-        onShowAll={() => openShowModal('읽은 책', readBooks)}
-        onBookClick={handleBookClick}
-      />
-
-      {/* 나만의 서재(서재 보관함) */}
-      <div className="mt-10">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">나만의 서재 보관함</h3>
-          <button
-            onClick={openAddModal}
-            className="bg-orange-500 text-white text-sm px-3 py-1 rounded hover:bg-orange-600"
-          >
-            + 서재 추가
-          </button>
-        </div>
-        <div className="flex space-x-6 overflow-x-auto">
-          {shelves.map((shelf) => (
-            <div
-              key={shelf.id}
-              onClick={() => openShowModal(shelf.title, shelf.books)}
-              className="flex-shrink-0 w-32 cursor-pointer"
-            >
-              <div className="grid grid-cols-2 gap-1">
-                {shelf.books.slice(0, 4).map((book) => (
-                  <img
-                    key={book.id}
-                    src={book.image}
-                    alt={book.title}
-                    className="w-full h-20 object-cover rounded"
-                  />
-                ))}
+      {/* 인생 책 */}
+      <div className="border border-gray-300 rounded-lg p-6 mb-8">
+        <h2 className="text-xl font-bold text-[#005C78] mb-4">인생 책</h2>
+        <div className="flex gap-6 overflow-x-auto pb-4">
+          {[...inLife, { id: 'plus-life', empty: true }].map(book =>
+            book.empty ? (
+              <div
+                key={book.id}
+                onClick={() => openEditModal(inLifeApi.name)}
+                className="
+                  w-[140px] h-[190px]
+                  flex-shrink-0
+                  border-2 border-dashed border-gray-300
+                  rounded-lg flex items-center justify-center
+                  cursor-pointer transition-colors hover:bg-gray-50
+                "
+              >
+                <PlusIcon size={32} className="text-gray-500" />
               </div>
-              <p className="mt-2 text-center text-sm font-medium">
-                {shelf.title} ({shelf.count})
-              </p>
-            </div>
-          ))}
-          {/* 새 서재 추가 슬롯 */}
-          <div
-            onClick={openAddModal}
-            className="flex-shrink-0 w-32 h-28 flex items-center justify-center border-2 border-dashed rounded cursor-pointer text-gray-400"
-          >
-            +  
-          </div>
+            ) : (
+              <img
+                key={book.id}
+                src={book.cover}
+                alt={book.title}
+                onClick={() => handleBookClick(book.id)}
+                className="w-[140px] h-[190px] object-cover rounded-lg cursor-pointer flex-shrink-0 transition-shadow hover:shadow-lg"
+              />
+            )
+          )}
         </div>
       </div>
 
+      {/* 읽은 책 */}
+      <div className="border border-gray-300 rounded-lg p-6 mb-8">
+        <h2 className="text-xl font-bold text-[#005C78] mb-4">읽은 책</h2>
+        <div className="flex gap-6 overflow-x-auto pb-4">
+          {[...inRead, { id: 'plus-read', empty: true }].map(book =>
+            book.empty ? (
+              <div
+                key={book.id}
+                onClick={() => openEditModal(inReadApi.name)}
+                className="
+                  w-[140px] h-[190px]
+                  flex-shrink-0
+                  border-2 border-dashed border-gray-300
+                  rounded-lg flex items-center justify-center
+                  cursor-pointer transition-colors hover:bg-gray-50
+                "
+              >
+                <PlusIcon size={32} className="text-gray-500" />
+              </div>
+            ) : (
+              <img
+                key={book.id}
+                src={book.cover}
+                alt={book.title}
+                onClick={() => handleBookClick(book.id)}
+                className="w-[140px] h-[190px] object-cover rounded-lg cursor-pointer flex-shrink-0 transition-shadow hover:shadow-lg"
+              />
+            )
+          )}
+        </div>
+      </div>
+
+      {/* 나만의 서재 */}
+      <div className="border border-gray-300 rounded-lg p-6 mb-8">
+        <PersonalShelf
+          shelves={custom}
+          onAdd={openAddModal}
+          onSelect={name => {
+            const shelf = custom.find(s => s.name === name)
+            openShowModal(name, shelf?.books || [])
+          }}
+        />
+      </div>
+
       {/* 모달 */}
+      {showModal === 'add' && (
+        <MyLibraryAdd
+          onClose={() => { setShowModal(null); fetchLibraries() }}
+          onCreate={() => { fetchLibraries(); setShowModal(null) }}
+        />
+      )}
       {showModal === 'show' && (
         <MyLibraryShow
           category={modalCategory}
           books={modalBooks}
           onClose={() => setShowModal(null)}
-          onEdit={openEditModal}
-        />
-      )}
-      {showModal === 'add' && (
-        <MyLibraryAdd
-          onClose={() => setShowModal(null)}
-          onAdd={(newShelf) => {
-            /* 새 서재 추가 로직 */
-            setShowModal(null);
-          }}
+          onEdit={() => openEditModal(modalCategory)}
         />
       )}
       {showModal === 'edit' && (
         <MyLibraryEdit
-          category={modalCategory}
+          shelf={libraries.find(l => l.name === modalCategory)}
           onClose={() => setShowModal(null)}
-          onSave={(updatedShelf) => {
-            /* 서재 수정 로직 */
-            setShowModal(null);
-          }}
+          onSave={() => { fetchLibraries(); setShowModal(null) }}
+          onDelete={() => { fetchLibraries(); setShowModal(null) }}
         />
       )}
     </div>
-  );
-};
+  )
+}
 
-const Section = ({
-  title,
-  books,
-  scrollable,
-  onAdd,
-  onShowAll,
-  onBookClick,
-}) => (
-  <div className="mb-10">
-    <div className="flex justify-between items-center mb-2">
-      <h3 className="text-lg font-semibold">
-        {title} ({books.length})
-      </h3>
-      <div className="flex space-x-2">
-        <button
-          onClick={onAdd}
-          className="bg-orange-500 text-white text-sm px-3 py-1 rounded hover:bg-orange-600"
-        >
-          + 책 추가
-        </button>
-        <button
-          onClick={onShowAll}
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          전체 보기 &gt;
-        </button>
-      </div>
-    </div>
-    <div className={`flex gap-3 ${scrollable ? 'overflow-x-auto pb-2' : ''}`}>
-      {books.length > 0 ? (
-        books.map((book) => (
-          <img
-            key={book.id}
-            src={book.image}
-            alt={book.title}
-            onClick={() => onBookClick(book.id)}
-            className="w-24 h-36 object-cover rounded-md cursor-pointer"
-          />
-        ))
-      ) : (
-        <p className="text-gray-400 text-sm">아직 등록된 책이 없습니다.</p>
-      )}
-    </div>
-  </div>
-);
-
-export default MyLibrary;
+export default MyLibrary

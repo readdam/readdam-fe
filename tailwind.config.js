@@ -8,6 +8,9 @@ export default {
         accent: '#005C78',
         background: '#F3F7EC',
       },
+          fontFamily: {
+      nanum: ['NanumGaram', 'sans-serif'],
+    },
     },
   },
   plugins: [],

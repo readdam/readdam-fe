@@ -1,196 +1,267 @@
-import { useState } from 'react';
-import {
-  PlusIcon,
-  HeartIcon,
-  SearchIcon,
-  FilterIcon,
-  MapPinIcon,
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { HeartIcon, PlusIcon, SearchIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../../atoms';
+import { url } from '../../config/config';
+import { fetchPlaceList } from '@api/place';
+
+function formatTimeRanges(times) {
+  if (!times || times.length === 0) return '';
+  const sorted = [...new Set(times)].sort();
+  const ranges = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const curr = sorted[i];
+    const prevHour = parseInt(prev.split(':')[0], 10);
+    const currHour = parseInt(curr.split(':')[0], 10);
+    if (currHour !== prevHour + 1) {
+      ranges.push(`${start}-${prev}`);
+      start = curr;
+    }
+    prev = curr;
+  }
+  ranges.push(`${start}-${prev}`);
+  return ranges.join(', ');
+}
 
 export default function PlaceList() {
+  const token = useAtomValue(tokenAtom);
+  const navigate = useNavigate();
+  const [places, setPlaces] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const places = [
-    {
-      id: 1,
-      name: '북카페 리드미',
-      address: '서울 마포구 연남동 123-45',
-      phone: '02-1234-5678',
-      createdAt: '2023-11-01',
-      status: '운영중단',
-      schedule: {
-        weekday: '10:00 - 22:00',
-        weekend: '11:00 - 20:00',
-      },
-      image: 'https://images.unsplash.com/photo-1600431521340-491eca880813',
-      description:
-        '조용하고 아늑한 분위기의 북카페입니다. 다양한 커피와 디저트를 제공합니다.',
-      likes: 245,
-      keywords: ['조용한', '아늑한', '커피', '디저트'],
-    },
-    {
-      id: 2,
-      name: '책방 오후',
-      address: '서울 서초구 방배동 789-10',
-      phone: '02-9876-5432',
-      createdAt: '2023-10-28',
-      status: '운영중단',
-      schedule: {
-        weekday: '11:00 - 20:00',
-        weekend: '12:00 - 18:00',
-      },
-      image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952',
-      description: '독립출판물과 커피를 함께 즐길 수 있는 감성적인 공간입니다.',
-      likes: 189,
-      keywords: ['독립출판', '커피', '아늑한'],
-    },
-  ];
+  const [filterField, setFilterField] = useState('name');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const size = 10;
+  const [loading, setLoading] = useState(false);
+
+  const loadPlaces = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchPlaceList(token, {
+        page,
+        size,
+        searchTerm,
+        searchField: filterField,
+      });
+      setPlaces(data.content);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      console.error('장소 목록 조회 실패:', err);
+      setPlaces([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPlaces();
+  }, [page]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setPage(0);
+    loadPlaces();
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setPage(newPage);
+    }
+  };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto overflow-x-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">장소 관리</h1>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-all duration-200 cursor-pointer">
-          <PlusIcon className="w-5 h-5" />새 장소 추가
-        </button>
-      </div>
-
-      <div className="flex gap-4 mb-6">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder="장소명 또는 주소로 검색"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-          />
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6 max-w-7xl mx-auto overflow-x-auto ">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800">장소 관리</h1>
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] cursor-pointer"
+            onClick={() => navigate('/admin/placeAdd')}
+          >
+            <PlusIcon className="w-5 h-5" />새 장소 추가
+          </button>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-          <FilterIcon className="w-4 h-4" />
-          필터
-        </button>
-      </div>
 
-      <div className="bg-white rounded-lg shadow min-w-[1000px]">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                장소 정보
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                연락처
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                운영시간
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                키워드
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                좋아요
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                등록일
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                상태
-              </th>
-              <th className="px-6 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {places.map((place) => (
-              <tr key={place.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="flex items-start gap-4">
-                    <img
-                      src={place.image}
-                      alt={place.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {place.name}
-                      </div>
-                      <div className="text-gray-500 text-sm">
-                        {place.address}
-                      </div>
-                      <div className="text-gray-500 text-sm">
-                        {place.description}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-gray-500">{place.phone}</td>
-                <td className="px-6 py-4 text-gray-500">
-                  <div>평일: {place.schedule.weekday}</div>
-                  <div>주말: {place.schedule.weekend}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    {place.keywords.map((k, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 bg-[#F3F7EC] text-[#006989] text-xs rounded-full"
+        <form className="flex gap-4 mb-6" onSubmit={handleSearch}>
+          <select
+            className="px-4 py-2 border rounded-lg text-sm"
+            value={filterField}
+            onChange={(e) => setFilterField(e.target.value)}
+          >
+            <option value="name">장소명</option>
+            <option value="basic_address">주소</option>
+          </select>
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="장소명 또는 주소로 검색"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 pl-10 border rounded-lg"
+            />
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          </div>
+          <button
+            type="submit"
+            className="bg-[#E88D67] text-white w-16 h-10 rounded text-sm cursor-pointer"
+          >
+            검색
+          </button>
+        </form>
+
+        {loading ? (
+          <div className="p-6">로딩 중...</div>
+        ) : (
+          <>
+            <div className="bg-white rounded-lg shadow min-w-[1000px]">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
+                      장소 정보
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
+                      연락처
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
+                      운영시간
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
+                      태그
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap flex justify-center">
+                      방 개수
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap">
+                      좋아요
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap flex justify-center">
+                      관리
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {places?.map((place) => (
+                    <tr key={place.placeId} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="flex items-start gap-4">
+                          <img
+                            src={`${url}/image?filename=${place.thumbnailImage}`}
+                            className="w-16 h-16 rounded-lg object-cover"
+                            alt="썸네일"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {place.name}
+                            </div>
+                            <div className="text-gray-500 text-sm">
+                              {place.basicAddress} {place.detailAddress}
+                            </div>
+                            <div className="text-gray-500 text-sm text-nowrap">
+                              {place.introduce}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500 text-nowrap">
+                        {place.phone}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500 text-nowrap">
+                        평일: {formatTimeRanges(place.weekdayTime)}
+                        <br />
+                        주말: {formatTimeRanges(place.weekendTime)}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        <div className="flex flex-wrap gap-2">
+                          {place.tags.map((tag, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-1 bg-[#F3F7EC] text-[#006989] text-xs rounded-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500 flex-col">
+                        {place.roomCount}
+                      </td>
+                      <td className="px-6 py-">
+                        <div className="text-red-600 flex items-center gap-1">
+                          <HeartIcon className="w-4 h-4" />
+                          <span>{place.likeCount}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded whitespace-nowrap cursor-pointer"
+                            onClick={() =>
+                              navigate(`/admin/placeEdit/${place.placeId}`)
+                            }
+                          >
+                            수정
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {places?.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="text-center py-4 text-gray-400"
                       >
-                        {k}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-1 text-pink-500">
-                    <HeartIcon className="w-4 h-4" />
-                    <span>{place.likes}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-gray-500">{place.createdAt}</td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold text-nowrap ${
-                      place.status === '운영중단'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-700'
+                        등록된 장소가 없습니다
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {totalPages > 0 && (
+              <div className="flex justify-center items-center gap-2 mt-12">
+                {/* 이전 버튼 */}
+                <button
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 0}
+                  className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+                >
+                  이전
+                </button>
+
+                {/* 페이지 번호 버튼 */}
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i)}
+                    className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${
+                      page === i
+                        ? 'bg-[#006989] text-white'
+                        : 'bg-white text-gray-700 border border-gray-300'
                     }`}
                   >
-                    {place.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    <button className="px-3 py-1.5 text-sm text-[#006989] hover:bg-[#006989] hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
-                      수정
-                    </button>
-                    <button className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-600 hover:text-white rounded transition-all duration-200 text-nowrap cursor-pointer">
-                      삭제
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    {i + 1}
+                  </button>
+                ))}
 
-      <div className="flex justify-center mt-6">
-        <nav className="flex items-center gap-2">
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
-            이전
-          </button>
-          <button className="px-3 py-1 text-sm bg-[#006989] text-white rounded">
-            1
-          </button>
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
-            2
-          </button>
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
-            3
-          </button>
-          <button className="px-3 py-1 text-sm border rounded hover:bg-gray-50">
-            다음
-          </button>
-        </nav>
+                {/* 다음 버튼 */}
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page + 1 >= totalPages}
+                  className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+                >
+                  다음
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

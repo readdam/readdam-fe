@@ -1,68 +1,160 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import { tokenAtom, userAtom } from '../../atoms';
+import { useAxios } from '../../hooks/useAxios';
+import { url } from '../../config/config';
+import WriteTagSection from "@components/write/WriteTagSection";
+import BookCoverSearchModal from "@components/write/BookCoverSearchModal";
 import {
   BookIcon,
-  ClockIcon,
-  GlobeIcon,
   SaveIcon,
-  EyeIcon,
   CheckCircleIcon,
-  HashIcon,
-  AlertCircleIcon,
-  ImageIcon,
   SearchIcon,
   UploadIcon,
 } from 'lucide-react'
+const isUrl = (path) => path?.startsWith('http://') || path?.startsWith('https://');
 const WriteCreate = () => {
+  const axios = useAxios();
   const [formData, setFormData] = useState({
     type: '',
     visibility: 'public',
     needReview: false,
     reviewDeadline: '',
     title: '',
-    summary: '',
-    tags: '',
     content: '',
-    image: null 
-  })
+    image: null
+  });
   const [showGuideQuestions, setShowGuideQuestions] = useState(true)
   const [isSpellchecking, setIsSpellchecking] = useState(false)
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // 실제 제출 로직 구현
-  }
-  const handleTempSave = () => {
-    // 임시저장 로직 구현
-    alert('임시 저장되었습니다. 나의 글쓰기 목록에서 확인할 수 있어요.')
-  }
-  const handleSpellCheck = () => {
-    setIsSpellchecking(true)
-    // 맞춤법 검사 로직 구현
-    setTimeout(() => {
-      setIsSpellchecking(false)
-      alert('맞춤법 검사가 완료되었습니다.')
-    }, 1500)
-  }
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
+  const [token] = useAtom(tokenAtom);
+  const [user] = useAtom(userAtom);
+  const [ifile, setIfile] = useState(null);
+  const navigate = useNavigate();
+  const [tags, setTags] = useState([]);
+  const submit = (e) => {
+    e.preventDefault();
+    //일반필드
+    const submitData = new FormData();
+    submitData.append("writeType", formData.type);
+    submitData.append("title", formData.title);
+    submitData.append("content", formData.content);
+    submitData.append("username", user.username); 
+    submitData.append("visibility", formData.visibility);
+    if (formData.needReview && formData.reviewDeadline) {
+      const formattedDeadline = formData.reviewDeadline.length === 16
+        ? formData.reviewDeadline + ':00'
+        : formData.reviewDeadline;
+      submitData.append("endDate", formattedDeadline);
+    }
+ 
+    // TAG 배열 → FormData 로 전송
+    tags.forEach((tag, i) => {
+      submitData.append(`tag${i + 1}`, tag);
+    });
+    for (let i = tags.length + 1; i <= 5; i++) {
+      submitData.append(`tag${i}`, "");
+    }
+
+    //이미지
+    if (ifile) {
+      submitData.append("ifile", ifile);
+    } else if (formData.image) {
+      submitData.append("thumbnailUrl", formData.image);
+    }
+
+    axios.post(`${url}/my/write`, submitData)
+      .then((res) => {
+        console.log(res);
+
+
+        navigate(`/writeDetail/${res.data.writeId}`); 
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  };
+
+  const SpellCheck = async () => {
+      if (!formData.content.trim()) {
+      alert("본문을 작성해주세요.");
+      return;
+    }
+
+    // 너무 긴 글 검사 방어
+    if (formData.content.length > 5000) {
+      alert("본문이 너무 깁니다. 5000자 이하로 나누어 검사해주세요.");
+      return;
+    }
+
+     console.log("[SpellCheck] 요청 보낼 text:", formData.content);
+     console.log("[SpellCheck] URI 인코딩 후:", encodeURIComponent(formData.content));
+
+
+    setIsSpellchecking(true);
+
+    try {
+      const res = await axios.post(`${url}/write-spellcheck`, {
+        text: formData.content,
+      });
+
+      console.log("[SpellCheck] API 응답:", res.data);
+
+      if (res.data?.errorMessage) {
+        alert(res.data.errorMessage);
+      } else if (res.data?.corrections?.length === 0) {
+        alert("맞춤법 오류가 없습니다.");
+      } else {
+        const message = res.data.corrections
+          .map((c) =>
+            `${c.orgStr} → ${c.candWord} (${c.errorType})\n→ ${c.help}`
+          )
+          .join("\n\n");
+        alert("맞춤법 검사 결과:\n\n" + message);
+      }
+    } catch (error) {
+      console.error("맞춤법 검사 중 오류", error);
+        if (error.response) {
+        console.error("서버 응답 에러 데이터:", error.response.data);
+      }
+      alert("맞춤법 검사 중 오류가 발생했습니다.");
+    } finally {
+      setIsSpellchecking(false);
+    }
+  };
+
+  
+    const readURL = (input) => {
+      const file = input.target.files[0]; 
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
         setFormData({
           ...formData,
-          image: reader.result,
-        })
-      }
-      reader.readAsDataURL(file)
-    }
-  }
+          image: e.target.result, 
+        });
+      };
+
+      reader.readAsDataURL(file);
+      setIfile(file); 
+    };
+  
+  const [showBookModal, setShowBookModal] = useState(false);
   const handleSearchCover = () => {
-    // 북커버 검색 로직 구현
-    alert('북커버 검색 기능은 준비 중입니다.')
+   setShowBookModal(true);
   }
+  const handleSelectCover = (thumbnailUrl) => {
+  setFormData({
+    ...formData,
+    image: thumbnailUrl,
+  });
+  setIfile(null); // 기존 업로드 파일 제거
+  setShowBookModal(false);
+};
   return (
     <div className="w-full bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={submit}>
           {/* 상단 제목 영역 */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-6">
@@ -89,10 +181,11 @@ const WriteCreate = () => {
                     required
                   >
                     <option value="">선택해주세요</option>
-                    <option value="review">독후감</option>
+                    <option value="bookreview">독후감</option>
                     <option value="essay">수필</option>
                     <option value="personal">자기소개서</option>
                     <option value="assignment">과제</option>
+                    <option value="other">기타</option>
                   </select>
                 </div>
                 {/* 공개 범위 선택 */}
@@ -107,6 +200,7 @@ const WriteCreate = () => {
                       setFormData({
                         ...formData,
                         visibility: e.target.value,
+                        needReview: e.target.value === 'private' ? false : formData.needReview // 비공개 선택 시 첨삭 해제
                       })
                     }
                     required
@@ -124,19 +218,29 @@ const WriteCreate = () => {
                 {/* 프리뷰 + 버튼을 가로 정렬 */}
                 <div className="flex gap-4 items-start">
                     {/* 이미지 프리뷰 */}
-                    <div className="w-48 h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                    <div className="w-48 h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
                     {formData.image ? (
-                        <img
-                        src={formData.image}
-                        alt="업로드 이미지"
-                        className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#E88D67]">
-                        <BookIcon className="w-20 h-20 text-white" />
+                      formData.image.startsWith('http://') || formData.image.startsWith('https://') ? (
+                        <div className="w-28 h-42 bg-[#FCD5C9] flex items-center justify-center rounded-lg overflow-hidden">
+                          <img
+                            src={formData.image}
+                            alt="북커버 미리보기"
+                            className="w-28 h-42 object-cover rounded-md"
+                          />
                         </div>
+                      ) : (
+                        <img
+                          src={formData.image}
+                          alt="업로드 이미지"
+                          className="w-full h-full object-cover"
+                        />
+                      )
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-[#FCD5C9]">
+                        <BookIcon className="w-20 h-20 text-white" />
+                      </div>
                     )}
-                    </div>
+                  </div>
 
                     {/* 버튼 그룹 - 세로 정렬 */}
                     <div className="flex flex-col gap-2">
@@ -153,9 +257,10 @@ const WriteCreate = () => {
                         이미지 첨부
                         <input
                         type="file"
+                        name="ifile" 
                         accept="image/*"
                         className="hidden"
-                        onChange={handleImageUpload}
+                        onChange={readURL}
                         />
                     </label>
                     </div>
@@ -176,10 +281,15 @@ const WriteCreate = () => {
                       needReview: e.target.checked,
                     })
                   }
+                  disabled={formData.visibility === 'private'} //비공개 선택 시 체크박스 비활성
                 />
                 <label
                   htmlFor="needReview"
-                  className="text-sm font-medium text-gray-700"
+                    className={`text-sm font-medium ${
+                    formData.visibility === 'private'
+                      ? 'text-gray-400 cursor-not-allowed' //비공개 선택 시 텍스트 흐리게
+                      : 'text-gray-700'
+                  }`}
                 >
                   첨삭 받기를 원합니다
                 </label>
@@ -229,24 +339,7 @@ const WriteCreate = () => {
               />
             </div>
             {/* 태그 */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                태그{' '}
-                <span className="text-sm text-gray-500 ml-2">(최대 5개)</span>
-              </label>
-              <input
-                type="text"
-                placeholder="#자기계발 #자소서 #추천도서"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#006989]"
-                value={formData.tags}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    tags: e.target.value,
-                  })
-                }
-              />
-            </div>
+            <WriteTagSection tags={tags} setTags={setTags} />
             {/* 본문 작성 */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -283,31 +376,36 @@ const WriteCreate = () => {
             <div className="flex items-center gap-4">
               <button
                 type="button"
-                onClick={handleSpellCheck}
+                onClick={SpellCheck}
                 className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-2"
               >
                 <CheckCircleIcon className="w-5 h-5" />
-                맞춤법 검사
+                  {isSpellchecking ? "검사 중..." : "맞춤법 검사"}
               </button>
             </div>
             <div className="flex items-center gap-4">
               <button
-                type="button"
-                onClick={handleTempSave}
+                type="submit"
                 className="px-6 py-2 text-[#006989] border border-[#006989] rounded-lg hover:bg-[#F3F7EC] transition-colors flex items-center gap-2"
               >
                 <SaveIcon className="w-5 h-5" />
-                임시저장
+                등록하기
               </button>
-              <button
+              {/* <button
                 type="submit"
                 className="px-6 py-2 bg-[#006989] text-white rounded-lg hover:bg-[#005C78] transition-colors"
               >
                 등록하기
-              </button>
+              </button> */}
             </div>
           </div>
         </form>
+        {showBookModal && (
+          <BookCoverSearchModal
+            onClose={() => setShowBookModal(false)}
+            onSelect={handleSelectCover}
+          />
+        )}
       </div>
     </div>
   )

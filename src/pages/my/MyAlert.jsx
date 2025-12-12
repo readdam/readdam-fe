@@ -1,57 +1,138 @@
-import React from 'react';
+// src/pages/my/MyAlert.jsx
+import React, { useEffect, useState } from 'react';
+import { useAxios } from '../../hooks/useAxios';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../../atoms';
+import AlertItem from '../../components/AlertItem';
 
-const notifications = [
-    {
-        icon: '💬',
-        title: '1:1 문의 답변 완료',
-        message: '1:1 문의에 답변이 완료되었습니다. 지금 바로 확인 해 보세요.',
-        type: '1:1문의',
-        sender: '관리자',
-    },
-    {
-        icon: '✨',
-        title: '첨삭 포인트 지급',
-        message: '첨삭 서비스 이용에 대한 포인트가 지급되었습니다.',
-        type: 'point',
-        sender: '유저아이디',
-    },
-    {
-        icon: '🎉',
-        title: '입담에 오신 걸 환영합니다',
-        message: '첫 방문을 축하드려요. 다양한 기능을 지금 만나보세요.',
-        type: 'welcome',
-        sender: '관리자',
-    },
-];
+export default function MyAlert() {
+  const api = useAxios();
+  const token = useAtomValue(tokenAtom);
 
-const NotificationPage = () => {
-    return (
-        <div className="max-w-3xl mx-auto px-4 py-8">
-            <h1 className="text-xl font-semibold mb-6">나의 알림</h1>
-            <div className="space-y-4">
-                {notifications.map((item, idx) => (
-                    <div
-                        key={idx}
-                        className="border border-gray-200 rounded-md p-4 bg-white shadow-sm"
-                    >
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-2">
-                                <span className="text-xl">{item.icon}</span>
-                                <div>
-                                    <h2 className="font-semibold">{item.title}</h2>
-                                    <p className="text-gray-600 text-sm">{item.message}</p>
-                                </div>
-                            </div>
-                            <div className="text-xs text-gray-500 whitespace-nowrap">
-                                보낸사람: <span className="font-medium">{item.sender}</span>
-                            </div>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-400">유형: {item.type}</div>
-                    </div>
-                ))}
-            </div>
+  // 페이징 상태
+  const [alerts, setAlerts] = useState([]);
+  const [page, setPage] = useState(0);
+  const [size] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // 알림 목록 불러오기 (page가 바뀔 때마다 호출)
+  useEffect(() => {
+    if (!token?.access_token?.trim()) return;
+    (async () => {
+      try {
+        const res = await api.post(
+          `/my/myAlertList?page=${page}&size=${size}`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token.access_token}` },
+            withCredentials: true,
+          }
+        );
+        const { content, pageInfo } = res.data;
+        setAlerts(prev =>
+          page === 0 ? content : [...prev, ...content]
+        );
+        setTotalPages(pageInfo.getTotalPages ? pageInfo.getTotalPages() : pageInfo.totalPages);
+      } catch (err) {
+        console.error('알림 불러오기 실패:', err);
+      }
+    })();
+  }, [api, token, page, size]);
+
+  const handleClick = async alert => {
+    if (alert.isChecked) return;
+    try {
+      await api.post(
+        '/my/myAlertCheck',
+        { alertId: alert.alertId },
+        {
+          headers: { Authorization: `Bearer ${token.access_token}` },
+          withCredentials: true,
+        }
+      );
+      setAlerts(prev =>
+        prev.map(a =>
+          a.alertId === alert.alertId ? { ...a, isChecked: true } : a
+        )
+      );
+    } catch (err) {
+      console.error('알림 확인 처리 실패:', err);
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await Promise.all(
+        alerts
+          .filter(a => !a.isChecked)
+          .map(a =>
+            api.post(
+              '/my/myAlertCheck',
+              { alertId: a.alertId },
+              {
+                headers: { Authorization: `Bearer ${token.access_token}` },
+                withCredentials: true,
+              }
+            )
+          )
+      );
+      setAlerts(prev => prev.map(a => ({ ...a, isChecked: true })));
+    } catch (err) {
+      console.error('전체 읽음 처리 실패:', err);
+    }
+  };
+
+  const loadMore = () => {
+    if (page + 1 < totalPages) {
+      setPage(prev => prev + 1);
+    }
+  };
+
+  return (
+    <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
+      {/* 헤더 + 전체 읽음 */}
+      <div className="flex justify-between items-center">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-[#006989]">나의 알림</h1>
+          <p className="text-gray-600">최근 30일 간 받은 알림을 확인하세요</p>
         </div>
-    );
-};
+        {alerts.some(a => !a.isChecked) && (
+          <button
+            onClick={markAllRead}
+            className="text-sm bg-[#006989] text-white px-4 py-2 rounded-md hover:bg-[#005C78] transition"
+          >
+            전체 읽음
+          </button>
+        )}
+      </div>
 
-export default NotificationPage;
+      {/* 알림 리스트 */}
+      <div>
+        {alerts.length === 0 ? (
+          <p className="text-center text-gray-500 py-20">알림이 없습니다.</p>
+        ) : (
+          alerts.map(alert => (
+            <AlertItem key={alert.alertId} alert={alert} onClick={handleClick} />
+          ))
+        )}
+      </div>
+
+      {/* 하단 안내 */}
+      <p className="text-center text-xs text-gray-400">
+        ※ 알림은 30일 후 자동 삭제됩니다.
+      </p>
+
+      {/* 더보기 버튼 */}
+      {page + 1 < totalPages && (
+        <div className="text-center">
+          <button
+            onClick={loadMore}
+            className="mt-4 px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+          >
+            더보기
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

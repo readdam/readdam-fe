@@ -1,172 +1,301 @@
-import React, { useState, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
-
-const timeSlots = [
-  '09:00',
-  '09:30',
-  '10:00',
-  '10:30',
-  '11:00',
-  '11:30',
-  '12:00',
-  '12:30',
-  '13:00',
-  '13:30',
-  '14:00',
-  '14:30',
-  '15:00',
-  '15:30',
-  '16:00',
-  '16:30',
-  '17:00',
-  '17:30',
-  '18:00',
-];
+import React, { useEffect, useState } from 'react';
+import { CheckIcon, XIcon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useAxios } from '@hooks/useAxios';
 
 export default function PlaceReservationList() {
-  const [selectedDate, setSelectedDate] = useState('2025-05-31');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [pointCost, setPointCost] = useState(0);
-
-  const reservations = [
-    {
-      id: 1,
-      leader: '김독서',
-      members: 8,
-      place: '북카페 리드미',
-      date: '2023-11-20',
-      time: '14:00 - 16:00',
-    },
-  ];
+  const [page, setPage] = useState(1);
+  const [date, setDate] = useState('');
+  const [status, setStatus] = useState('');
+  const [keyword, setKeyword] = useState('');
+  const axios = useAxios();
+  const [queryParams, setQueryParams] = useState({
+    page: 1,
+    date: '',
+    status: '',
+    keyword: '',
+  });
 
   useEffect(() => {
-    if (startTime && endTime) {
-      const startIdx = timeSlots.indexOf(startTime);
-      const endIdx = timeSlots.indexOf(endTime);
-      const blockCount = endIdx - startIdx;
-      if (blockCount > 0) {
-        // 30분당 250P
-        setPointCost(blockCount * 250);
-      } else {
-        setPointCost(0);
-      }
-    } else {
-      setPointCost(0);
-    }
-  }, [startTime, endTime]);
+    refetch();
+  }, [queryParams]);
 
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
+    queryKey: ['reservations', queryParams],
+    queryFn: async () => {
+      const res = await axios.get('/admin/reservations', {
+        params: {
+          page: queryParams.page,
+          // page: 2,
+          size: 10,
+          date: queryParams.date,
+          status: queryParams.status,
+          keyword: queryParams.keyword,
+        },
+      });
+      console.log('📦 페이지 데이터', {
+        page,
+        totalPages: data?.totalPages,
+        totalElements: data?.totalElements,
+        contentLength: data?.content?.length,
+      });
+
+      return res.data;
+    },
+    enabled: true, // 초기엔 자동 실행하지 않음
+    keepPreviousData: true,
+  });
+
+  const handleSearch = () => {
+    setQueryParams({
+      page: 1, // 검색할 땐 항상 1페이지부터
+      date,
+      status,
+      keyword,
+    });
+    setPage(1);
+    // refetch();
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    setQueryParams((prev) => ({
+      ...prev,
+      page: newPage,
+    }));
+  };
+
+  if (isLoading) return <div>로딩 중...</div>;
+  if (error) return <div>에러 발생</div>;
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">예약 내역</h1>
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6 max-w-7xl mx-auto">
+        <h1 className="text-xl font-bold mb-6">예약 내역</h1>
 
-      {/* 시간 선택 */}
-      <div className="mb-6 flex gap-4 items-end">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            날짜
-          </label>
+        {/* 필터 & 검색 */}
+        <form
+          className="flex items-center gap-2 mb-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSearch();
+          }}
+        >
+          {/* 날짜 달력 */}
           <input
             type="date"
-            className="border px-3 py-1 rounded"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm"
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            시작 시간
-          </label>
-          <select
-            className="border px-3 py-1 rounded"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-          >
-            <option value="">선택</option>
-            {timeSlots.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            종료 시간
-          </label>
-          <select
-            className="border px-3 py-1 rounded"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-          >
-            <option value="">선택</option>
-            {timeSlots.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
 
-      <div className="text-sm mb-4">
-        예약일시: <strong>{selectedDate}</strong>
-        {startTime && endTime && ` (${startTime} ~ ${endTime})`}
-        <br />
-        사용 포인트: <strong>{pointCost.toLocaleString()}P</strong>
-      </div>
+          <input
+            type="text"
+            placeholder="주소, 장소명, 방이름으로 검색하기"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
+          />
+          <button
+            onClick={handleSearch}
+            className="bg-[#006989] text-white text-sm px-4 py-2 rounded hover:bg-[#005470] cursor-pointer"
+          >
+            검색
+          </button>
+        </form>
 
-      {/* 예약 테이블 */}
-      <div className="overflow-x-auto w-full">
-        <table className="min-w-[900px] table-auto border rounded shadow">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
-                모임장
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
-                인원
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
-                장소
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
-                일시
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
-                관리
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {reservations.map((r) => (
-              <tr key={r.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{r.leader}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{r.members}명</td>
-                <td className="px-6 py-4 whitespace-nowrap">{r.place}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {r.date} ({r.time})
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    className="p-1 text-red-600 hover:bg-red-600 hover:text-white rounded"
-                    title="예약 삭제"
+        {/* 상태 라디오 버튼 */}
+        <div className="flex items-center gap-4 mb-8 mt-2">
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="radio"
+              name="status"
+              value=""
+              checked={status === ''}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                setStatus(newStatus);
+                setQueryParams((prev) => ({
+                  ...prev,
+                  page: 1,
+                  status: newStatus,
+                }));
+              }}
+            />
+            전체
+          </label>
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="radio"
+              name="status"
+              value="PENDING"
+              checked={status === 'PENDING'}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                setStatus(newStatus);
+                setQueryParams((prev) => ({
+                  ...prev,
+                  page: 1,
+                  status: newStatus,
+                }));
+              }}
+            />
+            예약중
+          </label>
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="radio"
+              name="status"
+              value="CONFIRMED"
+              checked={status === 'CONFIRMED'}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                setStatus(newStatus);
+                setQueryParams((prev) => ({
+                  ...prev,
+                  page: 1,
+                  status: newStatus,
+                }));
+              }}
+            />
+            예약확정
+          </label>
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="radio"
+              name="status"
+              value="CANCELLED"
+              checked={status === 'CANCELLED'}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                setStatus(newStatus);
+                setQueryParams((prev) => ({
+                  ...prev,
+                  page: 1,
+                  status: newStatus,
+                }));
+              }}
+            />
+            취소완료
+          </label>
+        </div>
+
+        {/* 테이블 */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                {[
+                  '장소명',
+                  '주소',
+                  '방이름',
+                  '일시',
+                  '모임장',
+                  '인원',
+                  '상태',
+                ].map((head) => (
+                  <th
+                    key={head}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 text-nowrap"
                   >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </td>
+                    {head}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
 
-      <button
-        className="mt-6 w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition"
-        disabled={!startTime || !endTime || pointCost === 0}
-      >
-        바로 예약하기
-      </button>
+            <tbody className="divide-y divide-gray-200">
+              {data?.content?.map((r) => (
+                <tr
+                  key={`${r.reservationId}-${r.date}-${r.startTime}`}
+                  className="text-nowrap"
+                >
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.placeName}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.placeAddress}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.roomName}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    <div>
+                      {r.date} {r.time}
+                    </div>
+                    <div>
+                      {r.startTime.slice(0, 5)} - {r.endTime.slice(0, 5)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.reserverName}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    {r.participantCount}명
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs text-nowrap ${
+                        r.status === 'CANCELLED'
+                          ? 'bg-gray-200 text-gray-600'
+                          : r.status === 'CONFIRMED'
+                          ? 'bg-green-100 text-green-700'
+                          : r.status === 'PENDING'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {r.status === 'CANCELLED' && '취소완료'}
+                      {r.status === 'CONFIRMED' && '예약확정'}
+                      {r.status === 'PENDING' && '예약중'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* 페이지네이션 */}
+        {data?.pageInfo && (
+          <div className="flex justify-center items-center gap-2 mt-12">
+            {/* 이전 버튼 */}
+            <button
+              disabled={page === 1}
+              onClick={() => handlePageChange(page - 1)}
+              className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+            >
+              이전
+            </button>
+
+            {/* 페이지 번호 버튼 */}
+            {Array.from({ length: data.pageInfo.totalPages }).map((_, idx) => {
+              const pageNumber = idx + 1;
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={`w-8 h-8 flex items-center justify-center rounded cursor-pointer ${
+                    pageNumber === page
+                      ? 'bg-[#006989] text-white'
+                      : 'bg-white text-gray-700 border border-gray-300'
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
+
+            {/* 다음 버튼 */}
+            <button
+              disabled={page === data.pageInfo.totalPages}
+              onClick={() => handlePageChange(page + 1)}
+              className="px-3 py-1 bg-white border border-gray-300 rounded disabled:opacity-50 cursor-pointer"
+            >
+              다음
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

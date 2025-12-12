@@ -1,38 +1,131 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaComment, FaLeaf } from 'react-icons/fa';
 import { useSetAtom } from 'jotai';
 import { userAtom, tokenAtom } from '../../atoms';
-import axios from 'axios';
 import { url } from '../../config/config';
+import { jwtDecode } from 'jwt-decode';
+import { getFcmToken } from '../../fcmToken';
+import { useAxios } from '../../hooks/useAxios';
 
 const Login = () => {
+  const axios = useAxios(); 
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
-  const [saveId, setSaveId] = useState(false);
+  const [saveId, setSaveId] = useState(false);  // ✅ 로그인 상태 유지 체크박스
   const setUser = useSetAtom(userAtom);
   const setToken = useSetAtom(tokenAtom);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('username', userId);
-    formData.append('password', password);
+  // ✅ 세션에서 아이디/비번 복원
+  useEffect(() => {
+    const savedId = sessionStorage.getItem('savedId') || '';
+    const savedPw = sessionStorage.getItem('savedPw') || '';
+    const savedChecked = sessionStorage.getItem('saveId') === 'true';
 
-    axios
-      .post(`${url}/login`, formData)
-      .then((res) => {
-        const token = res.headers.authorization;
-        setToken(token);
-        setUser(res.data);
+    if (savedChecked) {
+      setUserId(savedId);
+      setPassword(savedPw);
+      setSaveId(true);
+    }
+  }, []);
+
+  // ✅ 1. OAuth 로그인 후 access_token 쿠키에서 꺼내 처리
+  useEffect(() => {
+    if (location.pathname === '/oauth-redirect') {
+      const access_token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('access_token='))
+        ?.split('=')[1];
+
+      if (access_token) {
+        const tokenObj = { access_token, refresh_token: '' };
+        setToken(tokenObj);
+        setUser({ username: '' }); // 필요 시 /me API 호출해서 사용자 정보 가져와도 됨
+        sessionStorage.setItem('token', access_token); // 최소한 저장
         navigate('/');
-      })
-      .catch((err) => {
-        alert('로그인에 실패했습니다.');
-        console.error(err);
-      });
-  };
+      } else {
+        alert('access_token이 없습니다. 다시 로그인해주세요.');
+        navigate('/login');
+      }
+    }
+  }, [location.pathname, setToken, setUser, navigate]);
+
+  // ✅ 2. 일반 로그인 처리
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    // 1) FCM 토큰 가져오기
+    const fcmToken = await getFcmToken();
+
+    // 2) 로그인 요청 (폼 로그인)
+    const response = await axios.post(
+      `${url}/loginProc`,
+      {
+        username: userId,
+        password,
+        fcmToken: fcmToken || null,
+      },
+      {
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    // 3) 응답 바디에서 access_token, refresh_token 꺼내기
+    const { access_token: rawAccess, refresh_token: rawRefresh } = response.data;
+
+    // 4) "Bearer " prefix 처리
+    const accessToken = rawAccess.startsWith("Bearer ")
+      ? rawAccess
+      : `Bearer ${rawAccess}`;
+    const refreshToken = rawRefresh.startsWith("Bearer ")
+      ? rawRefresh.replace(/^Bearer\s/, "")
+      : rawRefresh;
+
+    // 5) JWT 디코딩 (decode 는 prefix 없는 토큰으로)
+    const decoded = jwtDecode(accessToken.replace(/^Bearer\s/, ""));
+
+    // 6) 사용자 정보 구성
+    const userInfo = {
+      username: decoded.sub,
+      nickname: decoded.nickname,
+      isAdmin: decoded.isAdmin,
+      lat: decoded.lat,
+      lng: decoded.lng,
+    };
+
+    // 7) Jotai 상태 및 세션 스토리지에 토큰/유저 저장
+    const tokenObj = {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
+    setToken(tokenObj);
+    setUser(userInfo);
+    sessionStorage.setItem("token", JSON.stringify(tokenObj));
+    sessionStorage.setItem("user", JSON.stringify(userInfo));
+
+    // 8) 아이디/비번 저장 처리
+    if (saveId) {
+      sessionStorage.setItem("savedId", userId);
+      sessionStorage.setItem("savedPw", password);
+      sessionStorage.setItem("saveId", "true");
+    } else {
+      sessionStorage.removeItem("savedId");
+      sessionStorage.removeItem("savedPw");
+      sessionStorage.setItem("saveId", "false");
+    }
+
+    // 9) 홈으로 이동
+    navigate("/");
+  } catch (err) {
+    alert("로그인에 실패했습니다.");
+    console.error(err);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex flex-col pt-28 items-center bg-white text-gray-800 px-4">
@@ -71,7 +164,7 @@ const Login = () => {
               onChange={() => setSaveId(!saveId)}
               className="mr-2 w-4 h-4"
             />
-            <label htmlFor="saveId">로그인 상태 유지</label>
+            <label htmlFor="saveId">아이디/비번 기억하기</label>
           </div>
 
           <button

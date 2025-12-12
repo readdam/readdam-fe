@@ -1,32 +1,42 @@
-import React, { useState } from 'react';
-import {
-  HeartIcon,
-  MessageSquareIcon,
-  ClockIcon,
-  PenIcon,
-} from 'lucide-react';
-import singoIcon from '@assets/singo.png';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import PostItCard from '@components/write/PostItCard';
+import { useAxios } from '../../hooks/useAxios'
+import { useListWriteShortLike } from "../../hooks/useListWriteShortLike";
+import { useReportModal } from '../../hooks/useReportModal';
+import { REPORT_CATEGORY } from '@constants/reportCategory';
 
 const HomeShort = () => {
+  const axios = useAxios();
+  const [answers, setAnswers] = useState([]);
+  const { toggleLike } = useListWriteShortLike(setAnswers);
 
-  const dummyAnswers = [
-    { id: 1, author: '책벌레123', content: '삶이 그대를 속일지라도 슬퍼하거나 노하지 말라...', likes: 12, color: 'mint' },
-    { id: 2, author: '독서광89', content: '우리는 우리가 꿈꾸는 세상을 만들어 갈 수 있다', likes: 8, color: 'yellow' },
-    { id: 3, author: '문학소녀', content: '지나간 시간은 다시 돌아오지 않는다...', likes: 15, color: 'mint' },
-    { id: 4, author: '책읽는밤', content: '별을 따려면 하늘 높이 올라가야 한다', likes: 10, color: 'pink' },
-  ];
+  useEffect(() => {
+    fetchAnswers();
+  }, []);
 
-  const getPostItColor = (color) => {
-    switch (color) {
-      case 'mint': return 'bg-[#E8F3F1]';
-      case 'yellow': return 'bg-[#FFF8E7]';
-      case 'pink': return 'bg-[#FFE8F3]';
-      default: return 'bg-[#E8F3F1]';
+  const fetchAnswers = async () => {
+    try {
+      const res = await axios.get('/shorts?limit=5');
+          console.log("✅ 받아온 데이터", res.data);
+      const { list: writeShortList } = res.data;
+      setAnswers(res.data || []);
+    } catch (err) {
+      console.error('한줄글 목록 불러오기 실패', err);
     }
   };
 
-  const handleReport = (id) => {
-    alert('신고가 접수되었습니다.');
+  const { openReportModal, ReportModalComponent } = useReportModal({
+    defaultCategory: REPORT_CATEGORY.WRITE_SHORT,
+    onSuccess: () => {
+    },
+  });
+
+  const handleReport = (id, username) => {
+    openReportModal({
+      id,
+      username,
+    });
   };
 
   return (
@@ -37,39 +47,36 @@ const HomeShort = () => {
           <h2 className="text-2xl font-bold mb-2">
             <span role="img" aria-label="flag">🧡</span> 오늘의 한 문장으로 마음을 나눠요!
           </h2>
-          <p className="text-sm text-gray-500 underline cursor-pointer hover:text-[#006989]">
+          <Link
+            to="/writeShortList"
+            className="text-sm text-gray-500 underline cursor-pointer hover:text-[#006989]"
+          >
             읽담한줄 보러가기
-          </p>
+          </Link>
         </div>
 
         {/* 카드 리스트 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dummyAnswers.map((answer) => (
-            <div
-              key={answer.id}
-              className={`${getPostItColor(answer.color)} aspect-square p-6 rounded-sm shadow-md hover:shadow-lg transition-shadow relative transform hover:-rotate-1 hover:translate-y-[-2px]`}
-              style={{
-                boxShadow: '2px 2px 5px rgba(0,0,0,0.1)',
-                backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
-              }}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <span className="font-medium text-gray-800">{answer.author}</span>
-                <div className="flex items-center gap-1 text-gray-600">
-                  <HeartIcon className="w-4 h-4" />
-                  <span>{answer.likes}</span>
-                </div>
-              </div>
-              <p className="text-gray-700 text-sm line-clamp-5 mb-6">{answer.content}</p>
-              <button
-                onClick={() => handleReport(answer.id)}
-                className="absolute bottom-4 right-4 text-gray-400 hover:text-gray-600"
-              >
-                <img src={singoIcon} alt="신고" className="w-4 h-4" />
-              </button>
-            </div>
+        {answers.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">
+            등록된 글이 없습니다. 이달의 첫 문장을 작성해보세요.
+          </div>
+        ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {answers.map((answer) => (
+            <PostItCard
+              key={answer.writeshortId}
+              color={answer.color}
+              nickname={answer.nickname}
+              content={answer.content}
+              likes={answer.likes}
+              isLiked={answer.isLiked}
+              onLikeClick={() => toggleLike(answer.writeshortId)}
+              onReportClick={() => handleReport(answer.writeshortId, answer.username)}
+            />
           ))}
         </div>
+        )}
+        {ReportModalComponent}
       </div>
     </div>
   );

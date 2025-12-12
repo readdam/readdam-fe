@@ -1,146 +1,171 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+// src/pages/my/MyLikeBook.jsx
+import React, { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAtomValue } from 'jotai'
+import { useAxios } from '../../hooks/useAxios'
+import { tokenAtom, userAtom } from '../../atoms'
+import { StarIcon, HeartIcon, MessageSquareIcon } from 'lucide-react'
 
 const tabs = [
-    { label: '모임', path: '/myLikeClass' },
-    { label: '장소', path: '/myLikePlace' },
-    { label: '글쓰기', path: '/myLikeWrite' },
-    { label: '책', path: '/myLikeBook' },
-];
+  { label: '모임', path: '/myLikeClass' },
+  { label: '장소', path: '/myLikePlace' },
+  { label: '글쓰기', path: '/myLikeWrite' },
+  { label: '책', path: '/myLikeBook' },
+]
 
-const books = [
-    {
-        id: 1,
-        title: '미움받을 용기',
-        author: '기시미 이치로',
-        publisher: '인플루엔셜',
-        image: '/images/book1.jpg',
-    },
-    {
-        id: 2,
-        title: '사피엔스',
-        author: '유발 하라리',
-        publisher: '김영사',
-        image: '/images/book2.jpg',
-    },
-    {
-        id: 3,
-        title: '어린 왕자',
-        author: '생텍쥐페리',
-        publisher: '열림원',
-        image: '',
-    },
-    {
-        id: 4,
-        title: '1984',
-        author: '조지 오웰',
-        publisher: '민음사',
-        image: '/images/book3.jpg',
-    },
-    {
-        id: 5,
-        title: '데미안',
-        author: '헤르만 헤세',
-        publisher: '민음사',
-        image: '/images/book4.jpg',
-    },
-    {
-        id: 6,
-        title: '아몬드',
-        author: '손원평',
-        publisher: '창비',
-        image: '/images/book5.jpg',
-    },
-    {
-        id: 7,
-        title: '이기적 유전자',
-        author: '리처드 도킨스',
-        publisher: '을유문화사',
-        image: '/images/book6.jpg',
-    },
-    {
-        id: 8,
-        title: '채식주의자',
-        author: '한강',
-        publisher: '창비',
-        image: '/images/book7.jpg',
-    },
-    {
-        id: 9,
-        title: '나미야 잡화점의 기적',
-        author: '히가시노 게이고',
-        publisher: '현대문학',
-        image: '/images/book8.jpg',
-    },
-];
+const ITEMS_PER_PAGE = 16
 
-const MyLikeBook = () => {
-    const location = useLocation();
+export default function MyLikeBook() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const token = useAtomValue(tokenAtom)
+  const user = useAtomValue(userAtom)
+  const axios = useAxios()
 
-    return (
-        <div className="px-4 py-6 max-w-screen-xl mx-auto">
-            <h2 className="text-xl font-bold mb-6">좋아요</h2>
+  const [books, setBooks]     = useState([])        // BookDto[]
+  const [page, setPage]       = useState(0)
+  const [hasMore, setHasMore] = useState(false)
 
-            {/* Tabs */}
-            <div className="flex space-x-6 border-b mb-8">
-                {tabs.map((tab) => (
-                    <Link
-                        key={tab.label}
-                        to={tab.path}
-                        className={`pb-2 transition-all ${location.pathname === tab.path
-                                ? 'text-black border-b-2 border-blue-500 font-semibold'
-                                : 'text-gray-500 hover:text-blue-600'
-                            }`}
-                    >
-                        {tab.label}
-                    </Link>
-                ))}
-            </div>
+  // 페이지가 바뀔 때마다 호출
+  useEffect(() => {
+    if (!token?.access_token) return
 
-            {/* Book Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                {books.map((book) => (
-                    <div key={book.id} className="bg-white border rounded-xl shadow-sm overflow-hidden relative">
-                        {/* 하트 아이콘 */}
-                        <button className="absolute top-2 right-2 bg-white p-1 rounded-full shadow">
-                            <svg className="w-4 h-4 text-gray-400 fill-current" viewBox="0 0 24 24">
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 
-                6.5 3.5 5 5.5 5c1.54 0 3.04.99 
-                3.57 2.36h1.87C13.46 5.99 14.96 
-                5 16.5 5 18.5 5 20 6.5 20 
-                8.5c0 3.78-3.4 6.86-8.55 
-                11.54L12 21.35z" />
-                            </svg>
-                        </button>
+    axios.get('/my/likeBook', {
+      params: { page, size: ITEMS_PER_PAGE },
+      withCredentials: true,
+    })
+    .then(res => {
+      // Spring Data Page<BookDto> : { content, totalPages, ... }
+      const { content, totalPages } = res.data
+      setBooks(prev => page === 0 ? content : [...prev, ...content])
+      setHasMore(page + 1 < totalPages)
+    })
+    .catch(() => {
+      if (page === 0) setBooks([])
+    })
+  }, [token, user.username, axios, page])
 
-                        {/* 이미지 영역 */}
-                        {book.image ? (
-                            <img src={book.image} alt={book.title} className="w-full h-44 object-cover" />
-                        ) : (
-                            <div className="w-full h-44 bg-gray-100 flex items-center justify-center">
-                                <div className="w-10 h-14 border-2 rounded-md" />
-                            </div>
-                        )}
+  const toggleLike = (book) => {
+    if (!token?.access_token) {
+      alert('로그인이 필요합니다.')
+      return navigate('/login')
+    }
 
-                        {/* 책 정보 */}
-                        <div className="p-3">
-                            <div className="text-sm font-semibold truncate">{book.title}</div>
-                            <div className="text-xs text-gray-500 truncate">
-                                {book.author} · {book.publisher}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
+    // UI 즉시 반영
+    setBooks(prev => prev.filter(b => b.bookIsbn !== book.bookIsbn))
 
-            {/* 더보기 버튼 */}
-            <div className="text-center mt-10">
-                <button className="px-6 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    더보기
-                </button>
-            </div>
+    axios.post('/book-like', null, {
+      params: { bookIsbn: book.bookIsbn },
+      withCredentials: true,
+    })
+    .then(res => {
+      if (res.data.includes('취소')) {
+        alert('책 좋아요가 취소되었습니다.')
+      } else {
+        setBooks(prev => [book, ...prev])
+      }
+    })
+    .catch(() => {
+      alert('좋아요 처리 중 오류가 발생했습니다.')
+      setBooks(prev => [book, ...prev])
+    })
+  }
+
+  return (
+    <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
+      {/* 헤더 */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-[#006989]">좋아요</h1>
+        <p className="text-gray-600">좋아요한 책을 확인하세요</p>
+      </div>
+
+      {/* 탭 */}
+      <div className="flex space-x-6 border-b mb-8 text-sm">
+        {tabs.map(tab => (
+          <Link
+            key={tab.label}
+            to={tab.path}
+            className={`pb-2 transition-all ${
+              location.pathname === tab.path
+                ? 'text-[#005C78] border-b-2 border-[#005C78] font-semibold'
+                : 'text-gray-500 hover:text-[#006989]'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* 콘텐츠 */}
+      {books.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <p className="text-gray-500 mb-4">아직 좋아요한 책이 없습니다.</p>
+          <button
+            onClick={() => navigate('/book')}
+            className="px-6 py-2 bg-[#006989] text-white rounded-md hover:bg-[#005C78] transition"
+          >
+            책 보러가기
+          </button>
         </div>
-    );
-};
+      ) : (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {books.map(book => (
+              <div
+                key={book.bookIsbn}
+                className="relative rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
+              >
+                {/* 좋아요 버튼 */}
+                <button
+                  onClick={() => toggleLike(book)}
+                  className="absolute top-2 right-2 bg-white p-1 rounded-full shadow z-10"
+                >
+                  <HeartIcon fill="#E88D67" stroke="#E88D67" className="w-5 h-5" />
+                </button>
 
-export default MyLikeBook;
+                <Link to={`/bookDetail/${book.bookIsbn}`} className="block">
+                  <div className="bg-gray-100 p-1">
+                    <div className="w-32 h-48 mx-auto overflow-hidden rounded">
+                      <img
+                        src={book.bookImg}
+                        alt={book.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                  <div className="p-3 bg-white space-y-1">
+                    <div className="text-base font-semibold truncate">
+                      {book.title}
+                    </div>
+                    <div className="text-sm text-gray-500 truncate">
+                      {book.writer} · {book.publisher}
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-gray-700 mt-1">
+                      <StarIcon className="w-4 h-4 text-[#E88D67]" />
+                      <span>{book.rating?.toFixed(1) ?? '0.0'}</span>
+                      <span className="ml-4">
+                        <MessageSquareIcon className="w-4 h-4 inline-block" />{' '}
+                        {book.reviewCnt ?? 0}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="text-center mt-10">
+              <button
+                onClick={() => setPage(prev => prev + 1)}
+                className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+              >
+                더보기
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

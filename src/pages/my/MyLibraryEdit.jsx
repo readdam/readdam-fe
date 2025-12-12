@@ -1,57 +1,93 @@
-import React, { useState } from 'react';
+// src/components/MyLibraryEdit.jsx
+import React, { useState, useEffect, useCallback } from 'react'
+import { useAxios } from '../../hooks/useAxios'
 
-// 전체 책 데이터 (실제 API 데이터로 교체하세요)
-const allBooks = [
-  { id: 1, title: '쇼펜하우머의 인생수업', author: '쇼펜하우머', image: '/images/book1.jpg' },
-  { id: 2, title: '듀얼 브레인',     author: '모티머 애들러', image: '/images/book2.jpg' },
-  { id: 3, title: '철학책',           author: '철학 작가',     image: '/images/book3.jpg' },
-  // … 그 외 모든 책
-];
+const MyLibraryEdit = ({ shelf, onClose, onSave, onDelete }) => {
+  const axios = useAxios()
+  const isDefault = shelf.name === '인생 책' || shelf.name === '읽은 책'
+  const [title, setTitle] = useState(shelf.name)
+  const [query, setQuery] = useState('')
+  const [books, setBooks] = useState([...shelf.books])
+  const [searchResults, setSearchResults] = useState([])
 
-const MyLibraryEdit = ({ shelf, onClose, onSave }) => {
-  const [title, setTitle] = useState(shelf.title);
-  const [query, setQuery] = useState('');
-  const [books, setBooks] = useState([...shelf.books]);
+  useEffect(() => {
+    if (!query.trim()) return
+    const timer = setTimeout(() => {
+      axios
+        .get('/bookSearch', { params: { query, page: 1, size: 10, sort: 'accuracy' } })
+        .then(res => setSearchResults(res.data.documents || []))
+        .catch(() => setSearchResults([]))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [query, axios])
 
-  // 검색 결과: 제목 또는 저자에 query 포함 + 이미 추가된 책 제외
-  const results = allBooks.filter(
-    (b) =>
-      (b.title.toLowerCase().includes(query.toLowerCase()) ||
-        b.author.toLowerCase().includes(query.toLowerCase())) &&
-      !books.find((sb) => sb.id === b.id)
-  );
+  const isBookAdded = useCallback(
+    book => books.some(b => b.isbn.trim() === book.isbn.trim()),
+    [books]
+  )
 
-  const addBook = (book) => {
-    setBooks((prev) => [...prev, book]);
-    setQuery('');
-  };
+  const addBook = book => {
+    if (!isBookAdded(book)) setBooks(prev => [...prev, book])
+  }
+  const removeBook = isbn => {
+    if (window.confirm('이 책을 서재에서 삭제하시겠습니까?')) {
+      setBooks(prev => prev.filter(b => b.isbn !== isbn))
+    }
+  }
 
-  const removeBook = (id) => {
-    setBooks((prev) => prev.filter((b) => b.id !== id));
-  };
+  const handleSubmit = async () => {
+    if (!title) return
+    try {
+      const { data: updated } = await axios.post('/my/myLibraryUpdate', {
+        libraryId: shelf.libraryId,
+        name: title,
+        books,
+      })
+      alert('서재가 수정되었습니다.')
+      onSave(updated)
+      onClose()
+    } catch (e) {
+      console.error(e)
+      alert('서재 수정 실패')
+    }
+  }
 
-  const handleSubmit = () => {
-    onSave({ ...shelf, title, books });
-    onClose();
-  };
+  const handleShelfDelete = async () => {
+    if (isDefault) return
+    if (window.confirm('이 서재를 삭제하시겠습니까?')) {
+      try {
+        await axios.post('/my/myLibraryDelete', null, {
+          params: { libraryId: shelf.libraryId },
+        })
+        alert('서재 삭제 완료')
+        onDelete(shelf.libraryId)
+        onClose()
+      } catch (e) {
+        console.error(e)
+        alert('서재 삭제 실패')
+      }
+    }
+  }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-lg p-6 rounded shadow-lg overflow-y-auto max-h-full">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 text-[#006989]">
+      <div className="bg-white w-full max-w-3xl p-6 rounded shadow-lg overflow-y-auto max-h-[90vh]">
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">서재 수정하기</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-black text-lg">&times;</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-black text-lg">
+            &times;
+          </button>
         </div>
 
-        {/* 서재 제목 */}
+        {/* 제목 */}
         <label className="block text-sm font-medium mb-1">서재 제목</label>
         <input
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="서재 제목을 입력해 주세요"
-          className="w-full border px-3 py-2 rounded mb-4"
+          onChange={e => setTitle(e.target.value)}
+          disabled={isDefault}
+          className="w-full border px-3 py-2 rounded mb-4 disabled:bg-gray-100"
         />
 
         {/* 책 검색 */}
@@ -59,79 +95,114 @@ const MyLibraryEdit = ({ shelf, onClose, onSave }) => {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="책 제목 또는 저자 입력"
-          className="w-full border px-3 py-2 rounded mb-3 focus:outline-none focus:border-orange-400"
+          onChange={e => setQuery(e.target.value)}
+          className="w-full border px-3 py-2 rounded mb-4"
+          placeholder="제목이나 저자를 입력하세요"
         />
-
-        {/* 검색 결과 */}
         {query && (
-          <div className="max-h-40 overflow-y-auto mb-4">
-            {results.length > 0 ? results.map((book) => (
-              <div
-                key={book.id}
-                onClick={() => addBook(book)}
-                className="flex items-center p-2 mb-1 rounded hover:bg-orange-50 cursor-pointer"
-              >
-                <img
-                  src={book.image}
-                  alt={book.title}
-                  className="w-10 h-14 object-cover rounded mr-3"
-                />
-                <div>
-                  <p className="font-medium">{book.title}</p>
-                  <p className="text-xs text-gray-500">{book.author}</p>
-                </div>
-              </div>
-            )) : (
-              <p className="text-gray-400 text-sm text-center py-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-40 overflow-y-auto mb-6">
+            {searchResults.length > 0 ? (
+              searchResults.map(book => {
+                const already = isBookAdded(book)
+                return (
+                  <div
+                    key={book.isbn.trim()}
+                    onClick={() => !already && addBook(book)}
+                    className={`cursor-pointer flex flex-col space-y-2 w-[140px] p-2 rounded ${
+                      already ? 'bg-gray-100' : 'hover:bg-orange-50'
+                    }`}
+                  >
+                    <img
+                      src={book.thumbnail}
+                      alt={book.title}
+                      className="w-full h-[190px] object-cover rounded"
+                    />
+                    <p className="text-sm font-semibold line-clamp-2">{book.title}</p>
+                    <p className="text-xs text-gray-500">{book.authors?.join(', ')}</p>
+                  </div>
+                )
+              })
+            ) : (
+              <p className="text-gray-400 text-sm col-span-full text-center py-4">
                 검색 결과가 없습니다.
               </p>
             )}
           </div>
         )}
 
-        {/* 현재 서재 책 리스트 */}
-        <label className="block text-sm font-medium mb-2">서재에 있는 책</label>
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {books.map((book) => (
-            <div key={book.id} className="relative">
-              <img
-                src={book.image}
-                alt={book.title}
-                className="w-full h-28 object-cover rounded"
-              />
-              <button
-                onClick={() => removeBook(book.id)}
-                className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 shadow hover:bg-gray-100"
-                aria-label="삭제"
+        {/* 담긴 책 */}
+        <label className="block text-sm font-medium mb-2">서재에 담긴 책</label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+          {books.map(book => {
+            const publisher = book.publisher || '출판사 정보 없음'
+            return (
+              <div
+                key={book.isbn}
+                className="relative cursor-pointer flex flex-col space-y-2 w-[140px]"
               >
-                ✕
-              </button>
-              <p className="text-xs mt-1 line-clamp-1">{book.title}</p>
-            </div>
-          ))}
+                <img
+                  src={book.thumbnail}
+                  alt={book.title}
+                  className="w-full h-[190px] object-cover rounded"
+                />
+                <button
+                  onClick={() => removeBook(book.isbn)}
+                  className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 shadow hover:bg-gray-100"
+                >
+                  ✕
+                </button>
+                <p className="text-sm font-semibold line-clamp-2">{book.title}</p>
+                <p className="text-xs text-gray-600 line-clamp-1">{publisher}</p>
+              </div>
+            )
+          })}
         </div>
 
-        {/* 저장 / 취소 버튼 */}
-        <div className="flex justify-end space-x-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50"
-          >
-            취소
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!title || books.length === 0}
-            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50"
-          >
-            저장하기
-          </button>
-        </div>
+        {/* 버튼 */}
+        {isDefault ? (
+          <div className="flex justify-end space-x-2 mt-4">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border border-[#006989] text-[#006989] rounded hover:bg-gray-50"
+            >
+              취소
+            </button>
+      <button
+        onClick={handleSubmit}
+        disabled={!title}
+        className="px-4 py-2 bg-[#E88D67] text-white rounded hover:bg-[#D07D5D] disabled:opacity-50"
+      >
+        저장하기
+      </button>
+          </div>
+        ) : (
+          <div className="flex justify-between items-center mt-4">
+            <button
+              onClick={handleShelfDelete}
+              className="text-sm text-[#E88D67] hover:underline"
+            >
+              서재 삭제
+            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-[#006989] text-[#006989] rounded hover:bg-gray-50"
+              >
+                취소
+              </button>
+                     <button
+          onClick={handleSubmit}
+          disabled={!title}
+          className="px-4 py-2 bg-[#E88D67] text-white rounded hover:bg-[#D07D5D] disabled:opacity-50"
+        >
+          저장하기
+        </button>
+           </div>
+          </div>
+        )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default MyLibraryEdit;
+export default MyLibraryEdit

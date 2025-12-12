@@ -1,85 +1,192 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import MyPointRefund from './MyPointRefund';
+// src/components/PointList.jsx
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { tokenAtom, userAtom } from '../../atoms'
+import { useAxios } from '../../hooks/useAxios'
+import MyPointRefund from './MyPointRefund'
+import MyPointCharge from './MyPointCharge'
 
-const dummyData = [
-    { type: '적립', point: 100, reason: '모임 참여', date: '2024-03-15' },
-    { type: '사용', point: -50, reason: '프리미엄 기능 이용', date: '2024-03-10' },
-    { type: '적립', point: 500, reason: '포인트 구매', date: '2024-03-01' },
-];
+export default function PointList() {
+  const ITEMS_PER_PAGE = 15
+  const [points, setPoints] = useState([])
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
+  const [activeTab, setActiveTab] = useState('전체')
+  const [showRefundModal, setShowRefundModal] = useState(false)
+  const [showChargeModal, setShowChargeModal] = useState(false)
 
-const PointHistory = () => {
-    const [activeTab, setActiveTab] = useState('전체');
-    const [showModal, setShowModal] = useState(false);
-    const navigate = useNavigate();
+  const navigate = useNavigate()
+  const api = useAxios()
+  const token = useAtomValue(tokenAtom)
+  const setUser = useSetAtom(userAtom)
+  const user = useAtomValue(userAtom)
 
-    const filtered = activeTab === '전체' ? dummyData : dummyData.filter(item => item.type === activeTab);
+  // 포인트 조회 로직 분리
+  const loadPoints = async () => {
+    if (!token?.access_token) return
+    try {
+      const res = await api.post(
+        '/my/myPointList',
+        null,
+        { headers: { Authorization: `Bearer ${token.access_token}` } }
+      )
+      setPoints(res.data.pointList)
+      setUser(prev => ({ ...prev, totalPoint: res.data.totalPoint }))
+    } catch (err) {
+      console.error('포인트 내역 조회 실패:', err)
+    }
+  }
 
-    return (
-        <div className="max-w-3xl mx-auto p-6 bg-white rounded shadow">
-            <h2 className="text-lg font-bold mb-4">보유 포인트</h2>
-            <div className="text-2xl font-bold text-orange-500 mb-6">1,000 P</div>
+  // 컴포넌트 마운트 및 토큰 변경 시 한 번 불러오기
+  useEffect(() => {
+    loadPoints()
+  }, [token])
 
-            <div className="flex border-b mb-4">
-                {['전체', '적립', '사용'].map(tab => (
-                    <button
-                        key={tab}
-                        className={`px-4 py-2 font-medium ${activeTab === tab ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'
-                            }`}
-                        onClick={() => setActiveTab(tab)}
-                    >
-                        {tab}
-                    </button>
-                ))}
-            </div>
+  const filtered = points.filter(p => {
+    if (activeTab === '전체') return true
+    if (activeTab === '적립') return p.point > 0
+    if (activeTab === '사용') return p.point < 0
+    return true
+  })
+  const visible = filtered.slice(0, visibleCount)
 
-            <table className="w-full text-sm text-left mb-6">
-                <thead>
-                    <tr className="border-b">
-                        <th className="py-2">구분</th>
-                        <th className="py-2">포인트</th>
-                        <th className="py-2">사유</th>
-                        <th className="py-2">일시</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filtered.map((item, idx) => (
-                        <tr key={idx} className="border-b">
-                            <td className="py-2 text-blue-500 font-semibold">{item.type}</td>
-                            <td className={`py-2 ${item.point < 0 ? 'text-red-500' : 'text-blue-600'}`}>
-                                {item.point > 0 ? `+${item.point}` : item.point}P
-                            </td>
-                            <td className="py-2">{item.reason}</td>
-                            <td className="py-2">{item.date}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+  // 환불 가능한 포인트 계산
+  const refundable = points.filter(p => {
+    if (p.point <= 0) return false
+    if (!p.reason.includes('충전')) return false
+    const t = new Date(p.date).getTime()
+    if (Date.now() - t > 7 * 86400000) return false
+    return !points.some(q => q.point < 0 && new Date(q.date).getTime() > t)
+  })
 
-            <div className="text-center mb-8">
-                <button className="text-gray-500 hover:underline">더보기</button>
-            </div>
+  return (
+    <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-8 bg-[#F3F7EC]">
+      {/* 제목 */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-[#006989]">나의 포인트</h1>
+        <p className="text-gray-600">포인트 잔액과 내역을 확인하세요</p>
+      </div>
 
-            <div className="flex justify-end space-x-2">
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="bg-orange-500 text-white px-4 py-2 rounded"
-                >
-                    환불신청
-                </button>
-                <button
-                    onClick={() => navigate('/myPointCharge')}
-                    className="bg-orange-500 text-white px-4 py-2 rounded"
-                >
-                    충전하기
-                </button>
-            </div>
-
-            {/* 환불 신청 모달 */}
-            
-            {showModal && <MyPointRefund onClose={() => setShowModal(false)} />}
+      {/* 보유 포인트 카드 */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="text-2xl font-bold text-[#E88D67]">
+          {(user?.totalPoint ?? 0).toLocaleString()} P
         </div>
-    );
-};
+      </div>
 
-export default PointHistory;
+      {/* 탭 */}
+      <div className="flex border-b mb-4 text-sm">
+        {['전체', '적립', '사용'].map(tab => (
+          <button
+            key={tab}
+            onClick={() => {
+              setActiveTab(tab)
+              setVisibleCount(ITEMS_PER_PAGE)
+            }}
+            className={`px-4 py-2 font-medium ${
+              activeTab === tab
+                ? 'text-[#005C78] border-b-2 border-[#005C78]'
+                : 'text-gray-500 hover:text-[#006989]'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* 내역 테이블 */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        {/* 헤더 */}
+        <div className="grid grid-cols-12 px-4 py-2 text-sm font-medium bg-gray-50 border-b border-gray-200">
+          <div className="col-span-3 text-gray-500">구분</div>
+          <div className="col-span-3 text-gray-500">포인트</div>
+          <div className="col-span-3 text-gray-500">사유</div>
+          <div className="col-span-2 text-right text-gray-500">일시</div>
+        </div>
+
+        {/* 항목 */}
+        {visible.map((p, i) => (
+          <div
+            key={i}
+            className="grid grid-cols-12 px-4 py-4 text-sm border-b border-gray-200 items-center hover:bg-gray-50 cursor-pointer"
+          >
+            <div className="col-span-3 text-[#005C78] font-semibold">
+              {p.point > 0 ? '적립' : '사용'}
+            </div>
+            <div
+              className={`col-span-3 font-medium ${
+                p.point > 0 ? 'text-[#006989]' : 'text-red-500'
+              }`}
+            >
+              {p.point > 0 ? `+${p.point}` : p.point}P
+            </div>
+            <div className="col-span-4 truncate">{p.reason}</div>
+            <div className="col-span-2 text-right text-gray-600">
+              {new Date(p.date).toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 더보기 버튼 */}
+      {visibleCount < filtered.length && (
+        <div className="text-center mt-6">
+          <button
+            onClick={() => setVisibleCount(c => c + ITEMS_PER_PAGE)}
+            className="px-6 py-2 border border-[#006989] text-[#006989] rounded-md text-sm hover:bg-[#F3F7EC] transition"
+          >
+            더보기
+          </button>
+        </div>
+      )}
+
+      {/* 액션 버튼 */}
+      <div className="flex justify-end space-x-3">
+        <button
+          onClick={() => setShowRefundModal(true)}
+          className="bg-[#E88D67] text-white px-4 py-2 rounded hover:bg-[#d47c5a] transition"
+        >
+          환불신청
+        </button>
+        <button
+          onClick={() => setShowChargeModal(true)}
+          className="bg-[#E88D67] text-white px-4 py-2 rounded hover:bg-[#d47c5a] transition"
+        >
+          충전하기
+        </button>
+      </div>
+
+      {/* 환불 모달 */}
+      {showRefundModal && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <MyPointRefund
+            refundablePoints={refundable}
+            onClose={() => {
+              setShowRefundModal(false)
+              loadPoints()
+            }}
+            onRefundSuccess={() => {
+              setShowRefundModal(false)
+              loadPoints()
+            }}
+          />
+        </div>
+      )}
+
+      {/* 충전 모달 */}
+      {showChargeModal && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="relative w-full max-w-lg mx-4">
+            <MyPointCharge onClose={() => setShowChargeModal(false)} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

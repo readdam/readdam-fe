@@ -1,130 +1,182 @@
-import React, { useState } from 'react';
-
-const sampleBooks = [
-  { id: 1, title: '쇼펜하우머의 인생수업', author: '쇼펜하우머', image: '/images/book1.jpg' },
-  { id: 2, title: '듀얼 브레인',     author: '모티머 애들러', image: '/images/book2.jpg' },
-  { id: 3, title: '철학책',           author: '철학 작가',     image: '/images/book3.jpg' },
-  // …실제 데이터로 교체
-];
+// src/components/MyLibraryAdd.jsx
+import React, { useEffect, useState } from 'react';
+import { useAxios } from '../../hooks/useAxios';
+import { url } from '../../config/config';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '../../atoms';
 
 const MyLibraryAdd = ({ onClose, onCreate }) => {
+  const token = useAtomValue(tokenAtom);
+  const axios = useAxios();
+
   const [shelfTitle, setShelfTitle] = useState('');
   const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const [selectedBooks, setSelectedBooks] = useState([]);
 
-  // 검색 결과: 제목 혹은 저자에 query 포함, 이미 선택된 책은 제외
-  const results = sampleBooks.filter(
-    (b) =>
-      (b.title.toLowerCase().includes(query.toLowerCase()) ||
-        b.author.toLowerCase().includes(query.toLowerCase())) &&
-      !selectedBooks.find((sb) => sb.id === b.id)
-  );
+  // 도서 검색
+  useEffect(() => {
+    if (!query.trim()) return;
+    const timer = setTimeout(() => {
+      axios
+        .get(`${url}/bookSearch`, {
+          params: { query, page: 1, size: 10, sort: 'accuracy' },
+        })
+        .then(res => setSearchResults(res.data.documents || []))
+        .catch(() => setSearchResults([]));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, axios]);
 
-  const handleSelect = (book) => {
-    setSelectedBooks((prev) => [...prev, book]);
-    setQuery('');
+  const handleSelectBook = book => {
+    if (!selectedBooks.find(b => b.isbn === book.isbn)) {
+      setSelectedBooks(prev => [...prev, book]);
+    }
   };
 
-  const handleCreate = () => {
-    onCreate({
-      id: Date.now(),
-      title: shelfTitle,
-      books: selectedBooks,
-    });
-    onClose();
+  const handleRemoveBook = isbn => {
+    setSelectedBooks(prev => prev.filter(b => b.isbn !== isbn));
+  };
+
+  const handleCreate = async () => {
+    if (!shelfTitle || selectedBooks.length === 0) return;
+    try {
+      const { data: newShelfDto } = await axios.post(
+        `${url}/my/myLibraryAdd`,
+        { name: shelfTitle, books: selectedBooks },
+        {
+          headers: {
+            Authorization: token.access_token.startsWith('Bearer ')
+              ? token.access_token
+              : `Bearer ${token.access_token}`,
+          },
+          withCredentials: true,
+        }
+      );
+      const newShelf = {
+        libraryId: newShelfDto.libraryId,
+        name: newShelfDto.name,
+        isShow: newShelfDto.isShow,
+        books: newShelfDto.books || [],
+      };
+      onCreate?.(newShelf);
+      alert('서재가 생성되었습니다.');
+      onClose();
+    } catch (e) {
+      console.error(e);
+      alert('서재 생성 실패');
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white w-full max-w-md p-6 rounded shadow-lg relative">
-        {/* 헤더 */}
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center text-[#006989]">
+      <div className="bg-white w-full max-w-3xl p-6 rounded shadow-lg overflow-y-auto max-h-[90vh]">
         <h2 className="text-xl font-bold mb-4">서재 만들기</h2>
 
-        {/* 서재 제목 */}
         <label className="block text-sm font-medium mb-1">제목</label>
         <input
           type="text"
-          placeholder="서재 제목을 입력 해 주세요"
           className="w-full border px-3 py-2 rounded mb-4"
+          placeholder="서재 제목을 입력하세요"
           value={shelfTitle}
-          onChange={(e) => setShelfTitle(e.target.value)}
+          onChange={e => setShelfTitle(e.target.value)}
         />
 
-        {/* 책 검색 */}
         <label className="block text-sm font-medium mb-1">책 검색</label>
         <input
           type="text"
+          className="w-full border px-3 py-2 rounded mb-4"
           placeholder="책 제목 또는 저자 입력"
-          className="w-full border px-3 py-2 rounded mb-3 focus:outline-none focus:border-orange-400"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
         />
 
-        {/* 검색 결과 */}
-        <div className="max-h-48 overflow-y-auto mb-4">
-          {results.map((book) => (
-            <div
-              key={book.id}
-              onClick={() => handleSelect(book)}
-              className="flex items-center p-2 mb-1 rounded hover:bg-orange-50 cursor-pointer"
-            >
-              <img
-                src={book.image}
-                alt={book.title}
-                className="w-10 h-14 object-cover rounded mr-3"
-              />
-              <div>
-                <p className="font-medium">{book.title}</p>
-                <p className="text-xs text-gray-500">{book.author}</p>
-              </div>
-            </div>
-          ))}
-          {results.length === 0 && query && (
-            <p className="text-gray-400 text-sm text-center py-4">
-              검색 결과가 없습니다.
-            </p>
-          )}
-        </div>
+        {query && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-40 overflow-y-auto mb-6">
+            {searchResults.length > 0 ? (
+              searchResults.map(book => {
+                const already = selectedBooks.some(b => b.isbn === book.isbn);
+                return (
+                  <div
+                    key={book.isbn.trim()}
+                    onClick={() => !already && handleSelectBook(book)}
+                    className={`cursor-pointer flex flex-col space-y-2 w-[140px] p-2 rounded ${
+                      already ? 'bg-gray-100' : 'hover:bg-orange-50'
+                    }`}
+                  >
+                    <img
+                      src={book.thumbnail || '/no-image.png'}
+                      alt={book.title}
+                      className="w-full h-[190px] object-cover rounded"
+                    />
+                    <p className="text-sm font-semibold line-clamp-2">
+                      {book.title}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {book.authors?.join(', ')}
+                    </p>
+                    <p className="text-xs text-gray-600 line-clamp-1">
+                      {book.publisher || '출판사 정보 없음'}
+                    </p>
+                    {already && (
+                      <span className="text-xs text-green-500 font-semibold">
+                        ✔ 담김
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-gray-400 text-sm col-span-full text-center py-4">
+                검색 결과가 없습니다.
+              </p>
+            )}
+          </div>
+        )}
 
-        {/* 선택된 책 */}
         {selectedBooks.length > 0 && (
           <>
             <p className="text-sm font-medium mb-2">선택한 책</p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {selectedBooks.map((book) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+              {selectedBooks.map(book => (
                 <div
-                  key={book.id}
-                  className="flex items-center bg-gray-100 px-2 py-1 rounded"
+                  key={book.isbn.trim()}
+                  className="relative flex flex-col space-y-2 w-[140px]"
                 >
-                  <span className="text-sm mr-2">{book.title}</span>
+                  <img
+                    src={book.thumbnail || '/no-image.png'}
+                    alt={book.title}
+                    className="w-full h-[190px] object-cover rounded"
+                  />
                   <button
-                    onClick={() =>
-                      setSelectedBooks((prev) =>
-                        prev.filter((b) => b.id !== book.id)
-                      )
-                    }
-                    className="text-gray-500 hover:text-gray-800 text-xs"
+                    onClick={() => handleRemoveBook(book.isbn)}
+                    className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 shadow hover:bg-gray-100"
                   >
                     ✕
                   </button>
+                  <p className="text-sm font-semibold line-clamp-2">
+                    {book.title}
+                  </p>
+                  <p className="text-xs text-gray-600 line-clamp-1">
+                    {book.publisher || '출판사 정보 없음'}
+                  </p>
                 </div>
               ))}
             </div>
           </>
         )}
 
-        {/* 하단 버튼 */}
         <div className="flex justify-end space-x-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50"
+            className="px-4 py-2 border border-[#006989] text-[#006989] rounded hover:bg-gray-50"
           >
             취소
           </button>
           <button
             onClick={handleCreate}
             disabled={!shelfTitle || selectedBooks.length === 0}
-            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50"
+            className="px-4 py-2 bg-[#E88D67] text-white rounded hover:bg-[#D07D5D] disabled:opacity-50"
           >
             저장하기
           </button>
