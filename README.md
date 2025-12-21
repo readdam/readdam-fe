@@ -27,9 +27,11 @@
 
 
 ### 화면 설계
-| 마이페이지 | 관리자/모임 | 공통 | 책/모임 |
-|:-:|:-:|:-:|:-:|
-| <img width="1011" height="866" alt="image" src="https://github.com/user-attachments/assets/be4b61a4-00ed-44f5-8ecb-2e4ce66dd6a2" /> | <img width="1265" height="883" alt="image" src="https://github.com/user-attachments/assets/9fff94cd-b135-4dfa-9890-364ff19405e0" />| <img width="1467" height="882" alt="image" src="https://github.com/user-attachments/assets/ca659304-b362-4668-9a07-835b1e607537" /> | <img width="821" height="533" alt="image" src="https://github.com/user-attachments/assets/b1e68efa-b2df-4f4d-abc1-11ff287544e1" /> |
+| 마이페이지 | 관리자/모임 |
+|:---:|:---:|
+| <img width="400" alt="image" src="https://github.com/user-attachments/assets/be4b61a4-00ed-44f5-8ecb-2e4ce66dd6a2" /> | <img width="400" alt="image" src="https://github.com/user-attachments/assets/9fff94cd-b135-4dfa-9890-364ff19405e0" /> |
+| **공통** | **책/모임** |
+| <img width="400" alt="image" src="https://github.com/user-attachments/assets/ca659304-b362-4668-9a07-835b1e607537" /> | <img width="400" alt="image" src="https://github.com/user-attachments/assets/b1e68efa-b2df-4f4d-abc1-11ff287544e1" /> |
 
 
 ### ERD
